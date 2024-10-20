@@ -16,6 +16,8 @@
   ![GitHub Created At](https://img.shields.io/github/created-at/denv3rr/AirTrace)
   ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
   ![GitHub branch status](https://img.shields.io/github/checks-status/denv3rr/AirTrace/main)
+  ![GitHub repo size](https://img.shields.io/github/repo-size/denv3rr/AirTrace)
+
   <br></br>
   <br></br>
   <br></br>
