@@ -2,7 +2,7 @@
 #define MAIN_H
 
 #include <iostream>
-#include "Tracker.h"
 #include "Object.h"
+#include "Tracker.h"
 
 #endif // MAIN_H

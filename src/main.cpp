@@ -1,8 +1,8 @@
-#include "main.h"
+#include "../include/main.h"
 
 int main()
 {
-    std::cout << "Starting Tracking System...\n";
+    std::cout << "\n\033[32mStarting Tracking System...\033[0m\n\n\n";
 
     // Create objects
     Object target(1, "Target", {10, 10});
@@ -24,6 +24,6 @@ int main()
         tracker.update();
     }
 
-    std::cout << "Tracking system stopped.\n";
+    std::cout << "\n\nTracking system stopped.\n\n";
     return 0;
 }

@@ -1,8 +1,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <string>
 #include <utility>
+#include <string>
 
 class Object
 {

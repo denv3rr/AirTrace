@@ -6,7 +6,9 @@
 #include "Object.h"
 #include "PathCalculator.h"
 #include "PredictionAlgorithm.h"
+#include "KalmanFilter.h"
 #include "HeatSignatureAlgorithm.h"
+#include "DeadReckoning.h"
 
 class Tracker
 {
