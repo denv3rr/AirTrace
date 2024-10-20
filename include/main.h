@@ -7,5 +7,8 @@
 #include <chrono>
 #include "Object.h"
 #include "Tracker.h"
+#include "menu.h"
+#include "inputValidation.h"
+#include "simulation.h"
 
 #endif // MAIN_H
