@@ -86,7 +86,10 @@ void runTestMode()
     followerY = getValidatedIntInput("Enter initial follower Y position: ", -10000, 10000);
 
     speed = getValidatedIntInput("Enter movement speed (1-10): ", 1, 10);
-    iterations = getValidatedIntInput("Enter number of iterations for the simulation: ", 1, 100);
+
+    // Ask if user wants to run for a fixed number of iterations or continuous mode
+    std::cout << "Enter number of iterations for the simulation (0 for infinite): ";
+    iterations = getValidatedIntInput("Enter number of iterations: ", 0, 1000); // 0 means infinite
 
     // Menu for selecting the tracking mode
     std::cout << "Choose tracking mode: \n";
@@ -127,12 +130,13 @@ void runTestMode()
     tracker.setTrackingMode(trackingMode);
     tracker.setTarget(target);
 
-    // Run simulation in test mode with user-defined iterations and speed
-    for (int i = 0; i < iterations; i++)
+    // Run simulation in test mode with user-defined iterations or continuous
+    int stepCount = 0;
+    while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {
         tracker.update();
-        // Simulate delay or time step
-        std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed)); // Slows down based on speed
+        std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed)); // Adjust based on speed
+        stepCount++;
     }
 
     std::cout << "\n\n\nTest simulation finished.\n\n";

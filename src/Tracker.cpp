@@ -47,13 +47,11 @@ void Tracker::update()
     auto followerPos = follower.getPosition();
     auto targetPos = target->getPosition();
 
-    // Check if the follower is "close enough" to the target
-    int threshold = 1; // Set a threshold for proximity (can be adjusted)
-    if (std::abs(followerPos.first - targetPos.first) <= threshold &&
-        std::abs(followerPos.second - targetPos.second) <= threshold)
+    // Stop only when the follower exactly matches the target position
+    if (followerPos == targetPos)
     {
-        std::cout << "\n\033[32mFollower has reached the target at: " << followerPos << "\033[0m\n\n\n";
-        active = false; // Stop tracking once the target is reached
+        std::cout << "Follower has reached the target at: " << follower.getPosition() << "\n";
+        active = false; // Stop tracking
         return;
     }
 
