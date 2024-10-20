@@ -29,6 +29,20 @@
 
 Adaptable.
 
+An tracking solution designed for precision and reliability in dynamic environments.
+This is currently a C++ console application using tracking algorithms including
+Kalman filtering, heat signature detection, and predictive modeling, to deliver unparalleled tracking accuracy.
+
+Key Features:
+
+Kalman Filtering: Leverages statistical methods for optimal state estimation, ensuring accurate position tracking even in noisy conditions.
+Heat Signature Detection: Integrate thermal data to enhance tracking capabilities, enabling the identification of objects based on their heat emissions.
+Predictive Algorithms: Employ cutting-edge prediction techniques to anticipate movements and improve response times in real-time scenarios.
+Dead Reckoning Failsafe: Maintain tracking integrity when GPS or thermal inputs are compromised, ensuring continuous operation through smart estimations of position.
+Real-Time and Test Modes: Seamlessly switch between real-time tracking and a comprehensive test mode for simulations and performance evaluations, facilitating robust development and debugging.
+
+Built with CMake for modularity and scalability, this application is designed for developers looking to integrate sophisticated tracking capabilities into their projects. Experience the future of tracking technology—where accuracy meets reliability.
+
 <br></br>
 <br></br>
 <br></br>
