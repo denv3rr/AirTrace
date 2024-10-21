@@ -10,9 +10,47 @@
 #include <iomanip> // For output formatting
 #include <thread>
 #include <chrono>
+#include <fstream> // For file operations
 
 // Global vector to store simulation history
 std::vector<SimulationData> simulationHistory;
+
+void saveSimulationHistory()
+{
+    std::ofstream outFile("simulation_history.txt");
+    if (!outFile)
+    {
+        std::cerr << "Error: Unable to open file for saving history.\n";
+        return;
+    }
+
+    for (const auto &sim : simulationHistory)
+    {
+        outFile << sim.targetPos.first << " " << sim.targetPos.second << " "
+                << sim.followerPos.first << " " << sim.followerPos.second << " "
+                << sim.speed << " " << sim.mode << " " << sim.iterations << "\n";
+    }
+    outFile.close();
+}
+
+void loadSimulationHistory()
+{
+    std::ifstream inFile("simulation_history.txt");
+    if (!inFile)
+    {
+        std::cerr << "No saved simulation history found.\n";
+        return;
+    }
+
+    SimulationData simData;
+    while (inFile >> simData.targetPos.first >> simData.targetPos.second >>
+           simData.followerPos.first >> simData.followerPos.second >>
+           simData.speed >> simData.mode >> simData.iterations)
+    {
+        simulationHistory.push_back(simData);
+    }
+    inFile.close();
+}
 
 void simulateDeadReckoning(int speed, int iterations)
 {
@@ -198,7 +236,7 @@ void runTestMode()
     }
     else if (trackingMode == "dead_reckoning")
     {
-        simulateDeadReckoning(speed, iterations);
+        simulateDeadReckoning(speed, iterations); // Skip manual input
     }
     else
     {

@@ -16,6 +16,8 @@ struct SimulationData
 
 extern std::vector<SimulationData> simulationHistory;
 
+void saveSimulationHistory();
+void loadSimulationHistory();
 void simulateHeatSeeking(int speed, int iterations);
 void simulateManualConfig(const SimulationData &simData);
 void runTestMode();
