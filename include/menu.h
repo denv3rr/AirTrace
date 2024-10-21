@@ -7,4 +7,7 @@ void showMainMenu();
 // Function to handle the test mode
 void runTestMode();
 
+// Forward declaration in menu.h
+void runTestMode();
+
 #endif // MENU_H

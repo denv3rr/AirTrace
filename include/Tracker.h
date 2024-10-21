@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 #include <iostream>
+#include <cmath>
 
 #include "Object.h"
 #include "PathCalculator.h"
@@ -32,9 +33,9 @@ private:
     float heatSignatureData;
 };
 
-// Overload the << operator for std::pair<int, int>
+// Make sure the function template is inline to avoid redefinition
 template <typename T1, typename T2>
-std::ostream &operator<<(std::ostream &os, const std::pair<T1, T2> &p)
+inline std::ostream &operator<<(std::ostream &os, const std::pair<T1, T2> &p)
 {
     os << "(" << p.first << ", " << p.second << ")";
     return os;

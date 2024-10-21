@@ -14,9 +14,9 @@ std::vector<SimulationData> simulationHistory;
 
 void simulateHeatSeeking(int speed, int iterations)
 {
-    std::srand(static_cast<unsigned int>(std::time(0))); // Ensure casting for time seed
+    std::srand(static_cast<unsigned int>(std::time(0))); // Seed for random movements
 
-    // Create objects with random initial positions
+    // Initialize random positions for target and follower
     Object target(1, "Target", {std::rand() % 100, std::rand() % 100});
     Object follower(2, "Follower", {std::rand() % 100, std::rand() % 100});
 
@@ -26,59 +26,59 @@ void simulateHeatSeeking(int speed, int iterations)
 
     int stepCount = 0;
 
-    // Simulate dynamic movement for the target in heat-seeking mode
+    // Dynamically move target and update heat signature
     while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {
-        // Randomly move the target by a small amount to simulate movement
-        int randomX = (std::rand() % 3) - 1; // Movement of -1, 0, or 1
+        // Random movement for the target simulating real-world data
+        int randomX = (std::rand() % 3) - 1; // -1, 0, or 1
         int randomY = (std::rand() % 3) - 1;
         target.moveTo({target.getPosition().first + randomX, target.getPosition().second + randomY});
 
-        // Update heat signature data (for simplicity, let's base it on the inverse of the distance)
+        // Calculate distance between target and follower
         auto targetPos = target.getPosition();
         auto followerPos = follower.getPosition();
-
-        // Calculate distance between follower and target
         double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
                                     std::pow(targetPos.second - followerPos.second, 2));
 
-        // Generate a heat signature reading (this could represent the heat intensity or sensor reading)
-        float heatSignature = 100.0f / (1.0f + static_cast<float>(distance)); // Inverse relation to distance
+        // Simulate a heat signature, stronger the closer the follower is
+        float heatSignature = 100.0f / (1.0f + static_cast<float>(distance));
 
-        // Update the tracker with heat signature data
+        // Update tracker with the heat signature data
         tracker.updateHeatSignature(heatSignature);
-
-        // Call the tracker update to move follower towards target
         tracker.update();
 
-        // Display heat signature and distance data in a formatted, enterprise-quality manner
         std::cout << "\n\033[33m[Iteration " << stepCount << "]\033[0m\n";
         std::cout << "--------------------------------------------\n";
-        std::cout << std::fixed << std::setprecision(2); // Format numbers with two decimal places
+        std::cout << std::fixed << std::setprecision(2); // Two decimal places for numbers
         std::cout << "\033[32mTarget Position: (" << targetPos.first << ", " << targetPos.second << ")\033[0m\n";
         std::cout << "\033[34mFollower Position: (" << followerPos.first << ", " << followerPos.second << ")\033[0m\n";
         std::cout << "\033[31mDistance to Target: " << distance << " units\033[0m\n";
         std::cout << "\033[36mHeat Signature: " << heatSignature << " units\033[0m\n";
         std::cout << "--------------------------------------------\n";
 
-        // Wait for the next iteration, slowing down based on speed
+        // If distance is extremely small, stop the simulation (the follower "reaches" the target)
+        if (distance < 0.1)
+        {
+            std::cout << "\033[32mFollower has crashed into the target.\033[0m\n";
+            break;
+        }
+
+        // Sleep based on speed
         std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
         stepCount++;
     }
 
-    std::cout << "\n\033[32mHeat-seeking test simulation finished.\033[0m\n";
+    std::cout << "\n\033[32mHeat-seeking simulation finished.\033[0m\n";
 }
 
 void runTestMode()
 {
-    // Get user input for positions and speed
-    int targetX, targetY, followerX, followerY, speed, iterations, modeChoice;
+    int speed, iterations, modeChoice, targetX, targetY, followerX, followerY;
     std::string trackingMode;
 
-    targetX = getValidatedIntInput("Enter initial target X position: ", -10000, 10000);
-    targetY = getValidatedIntInput("Enter initial target Y position: ", -10000, 10000);
-    followerX = getValidatedIntInput("Enter initial follower X position: ", -10000, 10000);
-    followerY = getValidatedIntInput("Enter initial follower Y position: ", -10000, 10000);
+    int stepCount = 0; // Declare stepCount outside to use in all cases
+
+    // General user input for speed and iterations
     speed = getValidatedIntInput("Enter movement speed (1-10): ", 1, 10);
     iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 1000);
 
@@ -99,21 +99,54 @@ void runTestMode()
         trackingMode = "kalman";
         break;
     case 3:
-        trackingMode = "heat_signature";
+        trackingMode = "heat_signature"; // Heat-seeking shouldn't require manual input
         break;
     case 4:
         trackingMode = "dead_reckoning";
         break;
     default:
+        std::cout << "\033[31mInvalid choice. Defaulting to prediction mode.\033[0m\n";
         trackingMode = "prediction";
     }
 
-    // Store the simulation data
-    SimulationData simData = {{targetX, targetY}, {followerX, followerY}, speed, trackingMode, iterations};
-    simulationHistory.push_back(simData); // Store the current simulation config
+    // If heat signature mode is selected, bypass manual target/follower input
+    if (trackingMode == "heat_signature")
+    {
+        simulateHeatSeeking(speed, iterations); // Skip manual input for heat-seeking
+    }
+    else
+    {
+        // Get manual input for target and follower positions for non-heat-seeking modes
+        int targetX = getValidatedIntInput("Enter initial target X position: ", -10000, 10000);
+        int targetY = getValidatedIntInput("Enter initial target Y position: ", -10000, 10000);
+        int followerX = getValidatedIntInput("Enter initial follower X position: ", -10000, 10000);
+        int followerY = getValidatedIntInput("Enter initial follower Y position: ", -10000, 10000);
 
-    // Run the simulation
-    simulateManualConfig(simData);
+        SimulationData simData = {{targetX, targetY}, {followerX, followerY}, speed, trackingMode, iterations};
+        simulationHistory.push_back(simData); // Store the current simulation config
+
+        simulateManualConfig(simData); // Call simulate with manual configuration
+    }
+
+    if (trackingMode == "kalman")
+    {
+        // Make sure the initial positions are set correctly here
+        Object target(1, "Target", {targetX, targetY});
+        Object follower(2, "Follower", {followerX, followerY});
+
+        // Kalman filter initialization
+        Tracker tracker(follower);
+        tracker.setTrackingMode("kalman");
+        tracker.setTarget(target);
+
+        // Run the Kalman filter tracking
+        while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
+        {
+            tracker.update();
+            std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
+            stepCount++;
+        }
+    }
 }
 
 void viewAndRerunPreviousSimulations()
@@ -134,7 +167,7 @@ void viewAndRerunPreviousSimulations()
     }
 
     // Ask the user if they want to rerun any previous simulation
-    int choice = getValidatedIntInput("Select a simulation to rerun (0 to go back): ", 0, simulationHistory.size());
+    int choice = getValidatedIntInput("Select a simulation to rerun (0 to go back): ", 0, static_cast<int>(simulationHistory.size()));
 
     if (choice > 0)
     {

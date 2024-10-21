@@ -4,14 +4,6 @@
 
 Tracker::Tracker(Object &follower) : follower(follower), target(nullptr), active(true), heatSignatureData(0.0f) {}
 
-// Overload the << operator for std::pair<int, int>
-template <typename T1, typename T2>
-std::ostream &operator<<(std::ostream &os, const std::pair<T1, T2> &p)
-{
-    os << "(" << p.first << ", " << p.second << ")";
-    return os;
-}
-
 void Tracker::setTrackingMode(const std::string &mode)
 {
     if (mode == "prediction")
@@ -43,6 +35,7 @@ void Tracker::updateHeatSignature(float heatSignatureData)
     this->heatSignatureData = heatSignatureData; // Store the heat signature data
 }
 
+// Update info based on heat threshold required to stop tracking
 void Tracker::update()
 {
     if (!target || !active)
@@ -51,7 +44,11 @@ void Tracker::update()
     auto followerPos = follower.getPosition();
     auto targetPos = target->getPosition();
 
-    if (followerPos == targetPos)
+    // Calculate the distance between the follower and the target
+    double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
+                                std::pow(targetPos.second - followerPos.second, 2));
+
+    if (distance < 0.1) // Threshold to "stop" once the follower reaches the target
     {
         std::cout << "Follower has reached the target at: " << follower.getPosition() << "\n";
         active = false; // Stop tracking
