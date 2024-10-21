@@ -61,11 +61,16 @@ void Tracker::update()
         }
         return;
     }
-
-    if (trackingMode == "heat_signature" && heatSignatureData < 1 /*< THRESHOLD*/)
+    else if (trackingMode == "heat_signature" && heatSignatureData < 1 /*< THRESHOLD*/)
     {
         std::cerr << "Heat sensor failure detected. Attempting to use GPS.\n";
         setTrackingMode("gps");
+    }
+    else if (followerPos == targetPos)
+    {
+        std::cout << "Follower has reached the target at: " << follower.getPosition() << "\n";
+        active = false;
+        return;
     }
 
     // Otherwise, calculate new path and update position

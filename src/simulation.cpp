@@ -14,6 +14,29 @@
 // Global vector to store simulation history
 std::vector<SimulationData> simulationHistory;
 
+void simulateDeadReckoning(int speed, int iterations)
+{
+    std::srand(static_cast<unsigned int>(std::time(0)));
+
+    Object target(1, "Target", {std::rand() % 100, std::rand() % 100});
+    Object follower(2, "Follower", {std::rand() % 100, std::rand() % 100});
+
+    Tracker tracker(follower);
+    tracker.setTrackingMode("dead_reckoning");
+    tracker.setTarget(target);
+
+    int stepCount = 0;
+
+    while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
+    {
+        tracker.update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
+        stepCount++;
+    }
+
+    std::cout << "\n\033[32mDead Reckoning simulation finished.\033[0m\n";
+}
+
 void simulateHeatSeeking(int speed, int iterations)
 {
     std::srand(static_cast<unsigned int>(std::time(0))); // Seed for random movements
@@ -154,21 +177,7 @@ void runTestMode()
     {
         simulateHeatSeeking(speed, iterations); // Skip manual input for heat-seeking
     }
-    else
-    {
-        // Get manual input for target and follower positions for non-heat-seeking modes
-        int targetX = getValidatedIntInput("Enter initial target X position: ", -10000, 10000);
-        int targetY = getValidatedIntInput("Enter initial target Y position: ", -10000, 10000);
-        int followerX = getValidatedIntInput("Enter initial follower X position: ", -10000, 10000);
-        int followerY = getValidatedIntInput("Enter initial follower Y position: ", -10000, 10000);
-
-        SimulationData simData = {{targetX, targetY}, {followerX, followerY}, speed, trackingMode, iterations};
-        simulationHistory.push_back(simData); // Store the current simulation config
-
-        simulateManualConfig(simData); // Call simulate with manual configuration
-    }
-
-    if (trackingMode == "kalman")
+    else if (trackingMode == "kalman")
     {
         // Make sure the initial positions are set correctly here
         Object target(1, "Target", {targetX, targetY});
@@ -186,6 +195,23 @@ void runTestMode()
             std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
             stepCount++;
         }
+    }
+    else if (trackingMode == "dead_reckoning")
+    {
+        simulateDeadReckoning(speed, iterations);
+    }
+    else
+    {
+        // Get manual input for target and follower positions for non-heat-seeking modes
+        int targetX = getValidatedIntInput("Enter initial target X position: ", -10000, 10000);
+        int targetY = getValidatedIntInput("Enter initial target Y position: ", -10000, 10000);
+        int followerX = getValidatedIntInput("Enter initial follower X position: ", -10000, 10000);
+        int followerY = getValidatedIntInput("Enter initial follower Y position: ", -10000, 10000);
+
+        SimulationData simData = {{targetX, targetY}, {followerX, followerY}, speed, trackingMode, iterations};
+        simulationHistory.push_back(simData); // Store the current simulation config
+
+        simulateManualConfig(simData); // Call simulate with manual configuration
     }
 }
 
