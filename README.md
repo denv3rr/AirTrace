@@ -56,14 +56,13 @@ Key Features:
 
   - **Kalman Filtering:** Leverages a few statistical methods for optimal state estimation, ensuring accurate position tracking even in noisy conditions.
    
-  - **Heat Signature Detection:** Integrate thermal data to enhance tracking capabilities, enabling the identification of objects based on their heat emissions.
+  - **Heat Signature Detection:** Integrates thermal data to enhance tracking capabilities, enabling the identification of objects based on their heat emissions.
    
   - **Predictive Algorithms:** Employ quick prediction techniques to anticipate movements and improve response times in any potential scenarios.
     
-  - **Dead Reckoning Failsafe:** Maintain tracking integrity when GPS or thermal inputs are compromised, ensuring continuous operation through smart estimations of position.
+  - **Dead Reckoning Failsafe:** Maintains tracking integrity when GPS or thermal inputs are compromised, ensuring continuous operation through smart estimations of position.
     
-  - **Real-Time and Test Modes:** Seamlessly switch between real-time tracking and a comprehensive test mode for simulations and performance evaluations, facilitating robust development and debugging.
-    
+  - **Real-Time and Test Modes:** Easily switch between real-time tracking and a comprehensive test mode for simulations and performance evaluations, facilitating robust development and debugging.   
 
   - **Built with CMake** for modularity and scalability, this application is designed for developers looking to integrate sophisticated tracking capabilities into their projects.
     
