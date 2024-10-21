@@ -14,9 +14,9 @@
   
   ![GitHub top language](https://img.shields.io/github/languages/top/denv3rr/AirTrace)
   ![GitHub Created At](https://img.shields.io/github/created-at/denv3rr/AirTrace)
-  ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
-  ![GitHub branch status](https://img.shields.io/github/checks-status/denv3rr/AirTrace/main)
   ![GitHub repo size](https://img.shields.io/github/repo-size/denv3rr/AirTrace)
+  ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
+  ![Website](https://img.shields.io/website?url=https%3A%2F%2Fseperet.com)
 
   <br></br>
   <br></br>
@@ -45,7 +45,13 @@ Kalman filtering, heat signature detection, and predictive modeling.
 <div align="left">
 
 ##
+<br></br>
   
+Built with:
+
+![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) ![CMake](https://img.shields.io/badge/CMake-%23008FBA.svg?style=for-the-badge&logo=cmake&logoColor=white)
+<br></br>
+
 Key Features:
 
   - **Kalman Filtering:** Leverages a few statistical methods for optimal state estimation, ensuring accurate position tracking even in noisy conditions.
@@ -120,7 +126,7 @@ Contributions are welcome. Please fork this repository and create a pull request
 
 ## Links
   
-- seperet.com || [Seperet](https://seperet.com)
+- seperet.com || [Seperet](https://seperet.com) ![Website](https://img.shields.io/website?url=https%3A%2F%2Fseperet.com)
 
 </div>
 
@@ -136,11 +142,8 @@ Contributions are welcome. Please fork this repository and create a pull request
 <div align="center">
     <a href="https://seperet.com">
         <img src="https://images.squarespace-cdn.com/content/v1/612e9679ca3ada2f6398ebb3/5c5d2752-5b10-4535-9591-acff011443fa/3dgifmaker21328.gif?format=1500w" width="300" height="300"/>
-        seperet.com
     </a>
 </div>
 <br></br>
 <br></br>
-<br></br>
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
-<br></br>
