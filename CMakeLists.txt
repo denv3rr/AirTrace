@@ -13,6 +13,7 @@ add_executable(AirTrace
         src/menu.cpp
         src/simulation.cpp
         src/inputValidation.cpp
+        src/scenario.cpp
         src/Object.cpp
         src/Tracker.cpp
         src/PathCalculator.cpp

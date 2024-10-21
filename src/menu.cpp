@@ -1,6 +1,8 @@
 #include "menu.h"
-#include "simulation.h"
 #include "inputValidation.h"
+#include "simulation.h"
+#include "scenario.h"
+
 #include <iostream>
 
 void showMainMenu()
@@ -16,7 +18,7 @@ void showMainMenu()
         std::cout << "3. Exit\n";
         std::cout << "Select an option: ";
 
-        choice = getValidatedIntInput("Select an option: ", 1, 3); // Menu validation
+        choice = getValidatedIntInput("Select an option: ", 1, 3);
 
         switch (choice)
         {
@@ -24,7 +26,7 @@ void showMainMenu()
             runRealInputScenario();
             break;
         case 2:
-            runTestMode();
+            runTestMode(); // Ensure this is defined and included correctly
             break;
         case 3:
             std::cout << "Exiting the system.\n";
@@ -32,5 +34,51 @@ void showMainMenu()
         default:
             std::cout << "\033[31mInvalid choice. Please try again.\033[0m\n";
         }
+    }
+}
+
+void runTestMode()
+{
+    std::cout << "\n\033[32mTest Mode\033[0m\n";
+
+    int speed, iterations, modeChoice;
+    std::string trackingMode;
+
+    speed = getValidatedIntInput("Enter movement speed (1-10): ", 1, 10);
+    iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 1000);
+
+    std::cout << "Choose tracking mode: \n";
+    std::cout << "1. Prediction\n";
+    std::cout << "2. Kalman Filter\n";
+    std::cout << "3. Heat Signature\n";
+    std::cout << "4. Dead Reckoning\n";
+    modeChoice = getValidatedIntInput("Select a tracking mode: ", 1, 4);
+
+    switch (modeChoice)
+    {
+    case 1:
+        trackingMode = "prediction";
+        break;
+    case 2:
+        trackingMode = "kalman";
+        break;
+    case 3:
+        trackingMode = "heat_signature";
+        break;
+    case 4:
+        trackingMode = "dead_reckoning";
+        break;
+    default:
+        std::cout << "\033[31mInvalid choice. Defaulting to prediction mode.\033[0m\n";
+        trackingMode = "prediction";
+    }
+
+    if (trackingMode == "heat_signature")
+    {
+        simulateHeatSeeking(speed, iterations);
+    }
+    else
+    {
+        simulateManualConfig(trackingMode, speed, iterations);
     }
 }

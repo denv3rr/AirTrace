@@ -19,13 +19,16 @@ public:
     void update();
     bool isTrackingActive() const;
 
+    // Add a method to update heat signature
+    void updateHeatSignature(float heatSignatureData);
+
 private:
     Object &follower;
     std::unique_ptr<PathCalculator> pathCalculator;
     const Object *target;
     std::string trackingMode;
     bool active;
-    float heatSignatureData;
+    float heatSignatureData; // To store the current heat signature
 };
 
 #endif // TRACKER_H

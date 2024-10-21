@@ -1,16 +1,16 @@
 #include "Tracker.h"
 #include <iostream>
 #include <utility>
-#include <cmath>
 
+Tracker::Tracker(Object &follower) : follower(follower), target(nullptr), active(true), heatSignatureData(0.0f) {}
+
+// Overload the << operator for std::pair<int, int>
 template <typename T1, typename T2>
 std::ostream &operator<<(std::ostream &os, const std::pair<T1, T2> &p)
 {
     os << "(" << p.first << ", " << p.second << ")";
     return os;
 }
-
-Tracker::Tracker(Object &follower) : follower(follower), target(nullptr), active(true), heatSignatureData(0.0f) {}
 
 void Tracker::setTrackingMode(const std::string &mode)
 {
@@ -20,10 +20,7 @@ void Tracker::setTrackingMode(const std::string &mode)
     }
     else if (mode == "kalman")
     {
-        auto kalmanFilter = std::make_unique<KalmanFilter>();
-        // Initialize Kalman filter with the follower's current position
-        kalmanFilter->initialize(follower.getPosition());
-        pathCalculator = std::move(kalmanFilter);
+        pathCalculator = std::make_unique<KalmanFilter>();
     }
     else if (mode == "heat_signature")
     {
@@ -31,7 +28,7 @@ void Tracker::setTrackingMode(const std::string &mode)
     }
     else
     {
-        std::cerr << "\n\nUnknown tracking mode: " << mode << "\n\n";
+        std::cerr << "Unknown tracking mode: " << mode << "\n";
         active = false;
     }
 }
@@ -39,6 +36,11 @@ void Tracker::setTrackingMode(const std::string &mode)
 void Tracker::setTarget(const Object &targetObj)
 {
     target = &targetObj;
+}
+
+void Tracker::updateHeatSignature(float heatSignatureData)
+{
+    this->heatSignatureData = heatSignatureData; // Store the heat signature data
 }
 
 void Tracker::update()
@@ -52,14 +54,15 @@ void Tracker::update()
     if (followerPos == targetPos)
     {
         std::cout << "Follower has reached the target at: " << follower.getPosition() << "\n";
-        active = false;
+        active = false; // Stop tracking
         return;
     }
 
+    // Otherwise, calculate new path and update position
     auto newPosition = pathCalculator->calculatePath(follower, *target);
     follower.moveTo(newPosition);
 
-    std::cout << "\033[32mFollower updated to position: " << follower.getPosition() << "\033[0m\n";
+    std::cout << "Follower updated to position: " << follower.getPosition() << "\n";
 }
 
 bool Tracker::isTrackingActive() const
