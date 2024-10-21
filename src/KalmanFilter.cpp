@@ -1,10 +1,17 @@
 #include "KalmanFilter.h"
+#include <cmath>
 
 KalmanFilter::KalmanFilter()
     : estimate({0.0, 0.0}), variance({1.0, 1.0}),
       processNoise(1e-2), measurementNoise(1e-1)
 {
-    // Kalman Filter initialized, waiting for first measurement.
+    // No default initialization of estimates here
+}
+
+void KalmanFilter::initialize(const std::pair<int, int> &initialPosition)
+{
+    estimate.first = initialPosition.first;
+    estimate.second = initialPosition.second;
 }
 
 void KalmanFilter::updateEstimates(std::pair<int, int> measurement)
@@ -26,19 +33,12 @@ void KalmanFilter::updateEstimates(std::pair<int, int> measurement)
 
 std::pair<int, int> KalmanFilter::calculatePath(const Object &follower, const Object &target)
 {
-    auto followerPos = follower.getPosition(); // Get the follower's current position
-    if (estimate == std::pair<double, double>({0.0, 0.0}))
-    {
-        // If the estimate has not been initialized, initialize it to the follower's position
-        estimate.first = followerPos.first;
-        estimate.second = followerPos.second;
-    }
-
+    // Get the target's position
     auto targetPos = target.getPosition();
 
     // Update estimates based on the target's position
     updateEstimates(targetPos);
 
-    // Predict the next position based on the current estimates
-    return {static_cast<int>(estimate.first), static_cast<int>(estimate.second)};
+    // Return the next predicted position based on current estimates
+    return {static_cast<int>(std::round(estimate.first)), static_cast<int>(std::round(estimate.second))};
 }

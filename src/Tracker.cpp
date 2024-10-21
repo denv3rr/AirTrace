@@ -1,8 +1,8 @@
 #include "Tracker.h"
 #include <iostream>
 #include <utility>
+#include <cmath>
 
-// Overload << for std::pair
 template <typename T1, typename T2>
 std::ostream &operator<<(std::ostream &os, const std::pair<T1, T2> &p)
 {
@@ -20,7 +20,10 @@ void Tracker::setTrackingMode(const std::string &mode)
     }
     else if (mode == "kalman")
     {
-        pathCalculator = std::make_unique<KalmanFilter>();
+        auto kalmanFilter = std::make_unique<KalmanFilter>();
+        // Initialize Kalman filter with the follower's current position
+        kalmanFilter->initialize(follower.getPosition());
+        pathCalculator = std::move(kalmanFilter);
     }
     else if (mode == "heat_signature")
     {
@@ -43,19 +46,16 @@ void Tracker::update()
     if (!target || !active)
         return;
 
-    // Get the current position of the follower and the target
     auto followerPos = follower.getPosition();
     auto targetPos = target->getPosition();
 
-    // Stop only when the follower exactly matches the target position
     if (followerPos == targetPos)
     {
         std::cout << "Follower has reached the target at: " << follower.getPosition() << "\n";
-        active = false; // Stop tracking
+        active = false;
         return;
     }
 
-    // Otherwise, calculate new path and update position
     auto newPosition = pathCalculator->calculatePath(follower, *target);
     follower.moveTo(newPosition);
 

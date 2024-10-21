@@ -1,21 +1,23 @@
-#ifndef KALMANFILTER_H
-#define KALMANFILTER_H
+#ifndef KALMAN_FILTER_H
+#define KALMAN_FILTER_H
 
 #include "PathCalculator.h"
-#include <utility>
+#include <utility> // For std::pair
 
 class KalmanFilter : public PathCalculator
 {
 public:
-    KalmanFilter();
-    std::pair<int, int> calculatePath(const Object &follower, const Object &target) override;
-    void updateEstimates(std::pair<int, int> measurement);
+    KalmanFilter();                                                                           // Constructor
+    void initialize(const std::pair<int, int> &initialPosition);                              // Method to initialize with follower's starting position
+    std::pair<int, int> calculatePath(const Object &follower, const Object &target) override; // Override calculatePath
 
 private:
-    std::pair<double, double> estimate;
-    std::pair<double, double> variance;
+    std::pair<double, double> estimate; // Estimate position (x, y)
+    std::pair<double, double> variance; // Variance for Kalman filter
     double processNoise;
     double measurementNoise;
+
+    void updateEstimates(std::pair<int, int> measurement); // Update estimates based on measurement
 };
 
-#endif // KALMANFILTER_H
+#endif // KALMAN_FILTER_H
