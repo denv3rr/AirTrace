@@ -1,12 +1,24 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
+#include <utility>
 #include <string>
+#include <vector>
 
-// Function to simulate heat-seeking mode with dynamic target movements
-void simulateHeatSeeking(int speed, int iterations);
+struct SimulationData
+{
+    std::pair<int, int> targetPos;
+    std::pair<int, int> followerPos;
+    int speed;
+    std::string mode;
+    int iterations;
+};
 
-// Function to simulate manually configured modes (e.g., prediction, Kalman, dead reckoning)
-void simulateManualConfig(const std::string &trackingMode, int speed, int iterations);
+extern std::vector<SimulationData> simulationHistory;
+
+void simulateHeatSeeking(int speed, int iterations); // Add this declaration
+void simulateManualConfig(const SimulationData &simData);
+void runTestMode();
+void viewAndRerunPreviousSimulations();
 
 #endif // SIMULATION_H

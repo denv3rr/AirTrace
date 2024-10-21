@@ -3,6 +3,9 @@
 
 #include <string>
 #include <memory>
+#include <utility>
+#include <iostream>
+
 #include "Object.h"
 #include "PathCalculator.h"
 #include "PredictionAlgorithm.h"
@@ -16,11 +19,9 @@ public:
     Tracker(Object &follower);
     void setTrackingMode(const std::string &mode);
     void setTarget(const Object &target);
+    void updateHeatSignature(float heatSignatureData);
     void update();
     bool isTrackingActive() const;
-
-    // Add a method to update heat signature
-    void updateHeatSignature(float heatSignatureData);
 
 private:
     Object &follower;
@@ -28,7 +29,15 @@ private:
     const Object *target;
     std::string trackingMode;
     bool active;
-    float heatSignatureData; // To store the current heat signature
+    float heatSignatureData;
 };
+
+// Overload the << operator for std::pair<int, int>
+template <typename T1, typename T2>
+std::ostream &operator<<(std::ostream &os, const std::pair<T1, T2> &p)
+{
+    os << "(" << p.first << ", " << p.second << ")";
+    return os;
+}
 
 #endif // TRACKER_H

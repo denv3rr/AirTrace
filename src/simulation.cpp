@@ -1,5 +1,6 @@
 #include "simulation.h"
 #include "Tracker.h"
+#include "inputValidation.h"
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
@@ -7,6 +8,9 @@
 #include <iomanip> // For output formatting
 #include <thread>
 #include <chrono>
+
+// Global vector to store simulation history
+std::vector<SimulationData> simulationHistory;
 
 void simulateHeatSeeking(int speed, int iterations)
 {
@@ -63,4 +67,98 @@ void simulateHeatSeeking(int speed, int iterations)
     }
 
     std::cout << "\n\033[32mHeat-seeking test simulation finished.\033[0m\n";
+}
+
+void runTestMode()
+{
+    // Get user input for positions and speed
+    int targetX, targetY, followerX, followerY, speed, iterations, modeChoice;
+    std::string trackingMode;
+
+    targetX = getValidatedIntInput("Enter initial target X position: ", -10000, 10000);
+    targetY = getValidatedIntInput("Enter initial target Y position: ", -10000, 10000);
+    followerX = getValidatedIntInput("Enter initial follower X position: ", -10000, 10000);
+    followerY = getValidatedIntInput("Enter initial follower Y position: ", -10000, 10000);
+    speed = getValidatedIntInput("Enter movement speed (1-10): ", 1, 10);
+    iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 1000);
+
+    // Menu for selecting the tracking mode
+    std::cout << "Choose tracking mode: \n";
+    std::cout << "1. Prediction\n";
+    std::cout << "2. Kalman Filter\n";
+    std::cout << "3. Heat Signature\n";
+    std::cout << "4. Dead Reckoning\n";
+    modeChoice = getValidatedIntInput("Select a tracking mode: ", 1, 4);
+
+    switch (modeChoice)
+    {
+    case 1:
+        trackingMode = "prediction";
+        break;
+    case 2:
+        trackingMode = "kalman";
+        break;
+    case 3:
+        trackingMode = "heat_signature";
+        break;
+    case 4:
+        trackingMode = "dead_reckoning";
+        break;
+    default:
+        trackingMode = "prediction";
+    }
+
+    // Store the simulation data
+    SimulationData simData = {{targetX, targetY}, {followerX, followerY}, speed, trackingMode, iterations};
+    simulationHistory.push_back(simData); // Store the current simulation config
+
+    // Run the simulation
+    simulateManualConfig(simData);
+}
+
+void viewAndRerunPreviousSimulations()
+{
+    if (simulationHistory.empty())
+    {
+        std::cout << "\033[31mNo previous simulations found.\033[0m\n";
+        return;
+    }
+
+    std::cout << "\n\033[32mPrevious Simulations:\033[0m\n";
+    for (size_t i = 0; i < simulationHistory.size(); ++i)
+    {
+        const auto &sim = simulationHistory[i];
+        std::cout << i + 1 << ". Target (" << sim.targetPos.first << ", " << sim.targetPos.second << "), Follower ("
+                  << sim.followerPos.first << ", " << sim.followerPos.second << "), Speed: " << sim.speed
+                  << ", Mode: " << sim.mode << ", Iterations: " << (sim.iterations == 0 ? "Infinite" : std::to_string(sim.iterations)) << "\n";
+    }
+
+    // Ask the user if they want to rerun any previous simulation
+    int choice = getValidatedIntInput("Select a simulation to rerun (0 to go back): ", 0, simulationHistory.size());
+
+    if (choice > 0)
+    {
+        simulateManualConfig(simulationHistory[choice - 1]); // Rerun the selected simulation
+    }
+}
+
+void simulateManualConfig(const SimulationData &simData)
+{
+    // Use the simData to run the simulation
+    Object target(1, "Target", simData.targetPos);
+    Object follower(2, "Follower", simData.followerPos);
+
+    Tracker tracker(follower);
+    tracker.setTrackingMode(simData.mode);
+    tracker.setTarget(target);
+
+    int stepCount = 0;
+    while (tracker.isTrackingActive() && (simData.iterations == 0 || stepCount < simData.iterations))
+    {
+        tracker.update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500 / simData.speed)); // Adjust based on speed
+        stepCount++;
+    }
+
+    std::cout << "\n\nTest simulation finished.\n\n";
 }
