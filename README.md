@@ -52,7 +52,7 @@ Built with:
 ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) ![CMake](https://img.shields.io/badge/CMake-%23008FBA.svg?style=for-the-badge&logo=cmake&logoColor=white)
 <br></br>
 
-Key Features:
+Key Features (Planned):
 
   - **Kalman Filtering:** Leverages a few statistical methods for optimal state estimation, ensuring accurate position tracking even in noisy conditions.
    
