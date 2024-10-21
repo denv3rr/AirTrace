@@ -13,6 +13,7 @@
   AirTrace
   
   ![GitHub top language](https://img.shields.io/github/languages/top/denv3rr/AirTrace)
+  ![CMake Min Version Required](https://img.shields.io/badge/cmake_min_vers_req-3.10-green)
   ![GitHub Created At](https://img.shields.io/github/created-at/denv3rr/AirTrace)
   ![GitHub repo size](https://img.shields.io/github/repo-size/denv3rr/AirTrace)
   ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
@@ -52,7 +53,7 @@ Built with:
 ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) ![CMake](https://img.shields.io/badge/CMake-%23008FBA.svg?style=for-the-badge&logo=cmake&logoColor=white)
 <br></br>
 
-Key Features:
+Key Features (Planned):
 
   - **Kalman Filtering:** Leverages a few statistical methods for optimal state estimation, ensuring accurate position tracking even in noisy conditions.
    
