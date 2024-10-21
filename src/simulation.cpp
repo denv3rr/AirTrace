@@ -1,3 +1,5 @@
+// This file holds test functionality for different modes
+
 #include "simulation.h"
 #include "Tracker.h"
 #include "inputValidation.h"
@@ -59,7 +61,7 @@ void simulateHeatSeeking(int speed, int iterations)
         // If distance is extremely small, stop the simulation (the follower "reaches" the target)
         if (distance < 0.1)
         {
-            std::cout << "\033[32mFollower has crashed into the target.\033[0m\n";
+            std::cout << "\n\033[32mFollower has hit the target and stopped.\033[0m\n";
             break;
         }
 
@@ -68,7 +70,45 @@ void simulateHeatSeeking(int speed, int iterations)
         stepCount++;
     }
 
-    std::cout << "\n\033[32mHeat-seeking simulation finished.\033[0m\n";
+    std::cout << "\n\033[32mHeat-seeking simulation finished.\033[0m\n\n--------------------------------------------\n\n";
+}
+
+void simulateGPSSeeking(int speed, int iterations)
+{
+    // Simulate target and follower
+    Object target(1, "Target", {std::rand() % 100, std::rand() % 100});
+    Object follower(2, "Follower", {std::rand() % 100, std::rand() % 100});
+
+    Tracker tracker(follower);
+    tracker.setTrackingMode("gps"); // GPS-based tracking
+    tracker.setTarget(target);
+
+    int stepCount = 0;
+
+    // Simulate GPS data fetch and follower movement
+    while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
+    {
+        // Fetch GPS coordinates (simulated here as small movements)
+        int randomX = (std::rand() % 3) - 1;
+        int randomY = (std::rand() % 3) - 1;
+        target.moveTo({target.getPosition().first + randomX, target.getPosition().second + randomY});
+
+        // Call tracker update to move follower towards target
+        tracker.update();
+
+        // Display GPS and follower info
+        std::cout << "\033[33m[Iteration " << stepCount << "] GPS Mode\033[0m\n";
+        std::cout << "--------------------------------------------\n";
+        std::cout << "\033[32mTarget GPS Position: (" << target.getPosition().first << ", " << target.getPosition().second << ")\033[0m\n";
+        std::cout << "\033[34mFollower GPS Position: (" << follower.getPosition().first << ", " << follower.getPosition().second << ")\033[0m\n";
+        std::cout << "--------------------------------------------\n";
+
+        // Sleep based on speed
+        std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
+        stepCount++;
+    }
+
+    std::cout << "\033[32mGPS-based simulation finished.\033[0m\n";
 }
 
 void runTestMode()

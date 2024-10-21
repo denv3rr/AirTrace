@@ -1,4 +1,5 @@
 #include "Tracker.h"
+#include "HeatSignatureAlgorithm.h"
 #include <iostream>
 #include <utility>
 
@@ -38,21 +39,33 @@ void Tracker::updateHeatSignature(float heatSignatureData)
 // Update info based on heat threshold required to stop tracking
 void Tracker::update()
 {
+
     if (!target || !active)
         return;
 
     auto followerPos = follower.getPosition();
     auto targetPos = target->getPosition();
 
-    // Calculate the distance between the follower and the target
-    double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
-                                std::pow(targetPos.second - followerPos.second, 2));
-
-    if (distance < 0.1) // Threshold to "stop" once the follower reaches the target
+    if (trackingMode == "kalman")
     {
-        std::cout << "Follower has reached the target at: " << follower.getPosition() << "\n";
-        active = false; // Stop tracking
+        auto newPosition = pathCalculator->calculatePath(follower, *target); // Prediction step
+        follower.moveTo(newPosition);                                        // Move based on Kalman prediction
+
+        // If the distance is small enough, stop
+        double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
+                                    std::pow(targetPos.second - followerPos.second, 2));
+        if (distance < 0.1)
+        {
+            std::cout << "\n\n\nFollower has reached the target at: " << follower.getPosition() << "\n";
+            active = false; // Stop tracking
+        }
         return;
+    }
+
+    if (trackingMode == "heat_signature" && heatSignatureData < 1 /*< THRESHOLD*/)
+    {
+        std::cerr << "Heat sensor failure detected. Attempting to use GPS.\n";
+        setTrackingMode("gps");
     }
 
     // Otherwise, calculate new path and update position

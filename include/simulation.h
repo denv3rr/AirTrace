@@ -16,7 +16,7 @@ struct SimulationData
 
 extern std::vector<SimulationData> simulationHistory;
 
-void simulateHeatSeeking(int speed, int iterations); // Add this declaration
+void simulateHeatSeeking(int speed, int iterations);
 void simulateManualConfig(const SimulationData &simData);
 void runTestMode();
 void viewAndRerunPreviousSimulations();
