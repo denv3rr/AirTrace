@@ -18,7 +18,7 @@ void showMainMenu()
         std::cout << "4. Exit\n\n";
         std::cout << "Select an option: ";
 
-        choice = getValidatedIntInput("Select an option: ", 1, 4);
+        choice = getValidatedIntInput("", 1, 4);
 
         switch (choice)
         {
