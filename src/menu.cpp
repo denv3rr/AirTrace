@@ -15,7 +15,7 @@ void showMainMenu()
         std::cout << "1. Real Input Mode\n";
         std::cout << "2. Test Mode (Manual Configuration)\n";
         std::cout << "3. View and Rerun Previous Simulations\n";
-        std::cout << "4. Exit\n";
+        std::cout << "4. Exit\n\n";
         std::cout << "Select an option: ";
 
         choice = getValidatedIntInput("Select an option: ", 1, 4);
