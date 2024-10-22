@@ -41,8 +41,11 @@ void logSimulationResult(const std::string &mode, const std::string &details, co
         auto now = std::chrono::system_clock::now();
         std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
 
+        std::tm localTime;
+        localtime_s(&localTime, &currentTime); // Use localtime_s instead of localtime
+
         file << "Simulation Mode: " << mode << "\n";
-        file << "Time: " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S") << "\n";
+        file << "Time: " << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S") << "\n";
         file << logDetails << "\n"; // Log a concise version for the history
         file << "---------------------------------------------\n";
         file.close();
@@ -237,8 +240,8 @@ void simulateGPSSeeking(int speed, int iterations)
 
 void runGPSMode()
 {
-    int speed = getValidatedIntInput("Enter movement speed (1-10): ", 1, 10);
-    int iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 1000);
+    int speed = getValidatedIntInput("Enter movement speed (1-100): ", 1, 100);
+    int iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 10000);
 
     simulateGPSSeeking(speed, iterations);
 
@@ -252,9 +255,12 @@ void runTestMode()
 
     int stepCount = 0; // Declare stepCount outside to use in all cases
 
-    // General user input for speed and iterations
-    speed = getValidatedIntInput("Enter movement speed (1-10): ", 1, 10);
-    iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 1000);
+    speed = 100;
+    iterations = 0;
+
+    // General manual user input for speed and iterations
+    // speed = getValidatedIntInput("Enter movement speed (1-100): ", 1, 100);
+    // iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 10000);
 
     // Menu for selecting the tracking mode
     std::cout << "\nChoose tracking mode: \n";
@@ -263,7 +269,7 @@ void runTestMode()
     std::cout << "3. Heat Signature\n";
     std::cout << "4. GPS\n";
     std::cout << "5. Dead Reckoning\n\n";
-    modeChoice = getValidatedIntInput("Select a tracking mode: ", 1, 4);
+    modeChoice = getValidatedIntInput("Select a tracking mode: ", 1, 5);
 
     switch (modeChoice)
     {
