@@ -26,5 +26,7 @@ void simulateManualConfig(const SimulationData &simData);
 void runGPSMode();
 void runTestMode();
 void viewAndRerunPreviousSimulations();
+void deletePreviousSimulation();
+void saveSimulationHistoryToFile();
 
 #endif // SIMULATION_H

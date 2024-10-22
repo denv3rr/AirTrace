@@ -33,7 +33,7 @@ void saveSimulationHistory()
     outFile.close();
 }
 
-void logSimulation(const std::string &mode, const std::string &details, const std::string &logDetails)
+void logSimulationResult(const std::string &mode, const std::string &details, const std::string &logDetails)
 {
     std::ofstream file("simulation_history.txt", std::ios::app);
     if (file.is_open())
@@ -115,7 +115,7 @@ void simulateDeadReckoning(int speed, int iterations)
     }
 
     std::cout << "\n\033[32mDead Reckoning simulation finished.\033[0m\n";
-    logSimulation("Dead Reckoning", simulationLog, condensedLog);
+    logSimulationResult("Dead Reckoning", simulationLog, condensedLog);
 }
 
 void simulateHeatSeeking(int speed, int iterations)
@@ -232,7 +232,7 @@ void simulateGPSSeeking(int speed, int iterations)
     }
 
     std::cout << "\033[32mGPS-based simulation finished.\033[0m\n";
-    logSimulation("GPS", simulationLog, condensedLog); // Use the new modular function
+    logSimulationResult("GPS", simulationLog, condensedLog); // Use the new modular function
 }
 
 void runGPSMode()
@@ -358,6 +358,57 @@ void viewAndRerunPreviousSimulations()
     {
         simulateManualConfig(simulationHistory[choice - 1]); // Rerun the selected simulation
     }
+}
+
+void deletePreviousSimulation()
+{
+    if (simulationHistory.empty())
+    {
+        std::cout << "\033[31mNo previous simulations found.\033[0m\n";
+        return;
+    }
+
+    std::cout << "\n\033[32mPrevious Simulations:\033[0m\n";
+    for (size_t i = 0; i < simulationHistory.size(); ++i)
+    {
+        const auto &sim = simulationHistory[i];
+        std::cout << i + 1 << ". Target (" << sim.targetPos.first << ", " << sim.targetPos.second << "), Follower ("
+                  << sim.followerPos.first << ", " << sim.followerPos.second << "), Speed: " << sim.speed
+                  << ", Mode: " << sim.mode << ", Iterations: " << (sim.iterations == 0 ? "Infinite" : std::to_string(sim.iterations)) << "\n";
+    }
+
+    int choice = getValidatedIntInput("Select a simulation to delete (0 to go back): ", 0, static_cast<int>(simulationHistory.size()));
+
+    if (choice > 0)
+    {
+        // Delete the selected simulation from memory and the file
+        simulationHistory.erase(simulationHistory.begin() + (choice - 1));
+        saveSimulationHistoryToFile(); // Re-save the updated history after deletion
+
+        std::cout << "\033[32mSimulation deleted successfully.\033[0m\n";
+    }
+    else
+    {
+        std::cout << "\033[33mReturning to the menu.\033[0m\n";
+    }
+}
+
+void saveSimulationHistoryToFile()
+{
+    std::ofstream outFile("simulation_history.txt");
+    if (!outFile)
+    {
+        std::cerr << "Error: Unable to open file for saving history.\n";
+        return;
+    }
+
+    for (const auto &sim : simulationHistory)
+    {
+        outFile << sim.targetPos.first << " " << sim.targetPos.second << " "
+                << sim.followerPos.first << " " << sim.followerPos.second << " "
+                << sim.speed << " " << sim.mode << " " << sim.iterations << "\n";
+    }
+    outFile.close();
 }
 
 void simulateManualConfig(const SimulationData &simData)

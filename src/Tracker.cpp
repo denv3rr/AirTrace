@@ -46,7 +46,7 @@ void Tracker::startTracking(int iterations, int speed)
     }
 }
 
-// Update info based on heat threshold required to stop tracking
+// Update info
 void Tracker::update()
 {
     if (!target || !active)
@@ -58,42 +58,61 @@ void Tracker::update()
     // Kalman filter tracking logic
     if (trackingMode == "kalman")
     {
-        auto newPosition = pathCalculator->calculatePath(follower, *target); // Prediction step
-        follower.moveTo(newPosition);                                        // Move based on Kalman prediction
+        auto newPosition = pathCalculator->calculatePath(follower, *target);
+        follower.moveTo(newPosition);
 
-        // If the distance is small enough, stop
         double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
                                     std::pow(targetPos.second - followerPos.second, 2));
         if (distance < 0.1)
         {
-            std::cout << "\n\n\nFollower has reached the target at: " << follower.getPosition() << "\n";
-            active = false; // Stop tracking
+            std::cout << "\n\nFollower has reached the target at: " << follower.getPosition() << "\n";
+            active = false;
         }
         return;
     }
 
     // Heat signature tracking logic
-    else if (trackingMode == "heat_signature" && heatSignatureData < 1 /*< THRESHOLD*/)
+    else if (trackingMode == "heat_signature")
     {
-        std::cerr << "Heat sensor failure detected. Attempting to use GPS.\n";
-        setTrackingMode("gps");
+        // Dynamically calculate heat signature and update
+        double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
+                                    std::pow(targetPos.second - followerPos.second, 2));
+        float heatSignature = 100.0f / (1.0f + static_cast<float>(distance));
+        updateHeatSignature(heatSignature);
+
+        if (heatSignature < 1) // Threshold to switch modes
+        {
+            std::cerr << "Heat sensor failure detected. Switching to GPS.\n";
+            setTrackingMode("gps");
+            return;
+        }
+
+        auto newPosition = pathCalculator->calculatePath(follower, *target);
+        follower.moveTo(newPosition);
     }
 
-    // GPS fallback if heat sensor fails
-    else if (followerPos == targetPos)
+    // GPS or other modes fallback
+    else if (trackingMode == "gps")
+    {
+        auto newPosition = pathCalculator->calculatePath(follower, *target);
+        follower.moveTo(newPosition);
+    }
+
+    if (followerPos == targetPos)
     {
         std::cout << "Follower has reached the target at: " << follower.getPosition() << "\n";
         active = false;
-        return;
     }
 
-    // Regular path update
-    auto newPosition = pathCalculator->calculatePath(follower, *target);
-    follower.moveTo(newPosition);
     std::cout << "Follower updated to position: " << follower.getPosition() << "\n";
 }
 
 bool Tracker::isTrackingActive() const
 {
     return active;
+}
+
+void Tracker::updateHeatSignature(float heatSignatureData)
+{
+    this->heatSignatureData = heatSignatureData;
 }

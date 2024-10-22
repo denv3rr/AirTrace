@@ -21,6 +21,7 @@ add_executable(AirTrace
         src/KalmanFilter.cpp
         src/HeatSignature.cpp
         src/DeadReckoning.cpp
+        src/GPSAlgorithm.cpp
 )
 
 # Include directories for headers
