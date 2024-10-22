@@ -240,8 +240,11 @@ void simulateGPSSeeking(int speed, int iterations)
 
 void runGPSMode()
 {
-    int speed = getValidatedIntInput("Enter movement speed (1-100): ", 1, 100);
-    int iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 10000);
+    int speed = 100;
+    int iterations = 0;
+
+    // int speed = getValidatedIntInput("Enter movement speed (1-100): ", 1, 100);
+    // int iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 10000);
 
     simulateGPSSeeking(speed, iterations);
 
@@ -328,10 +331,10 @@ void runTestMode()
     else
     {
         // Get manual input for target and follower positions for non-heat-seeking modes
-        int targetX = getValidatedIntInput("Enter initial target X position: ", -10000, 10000);
-        int targetY = getValidatedIntInput("Enter initial target Y position: ", -10000, 10000);
-        int followerX = getValidatedIntInput("Enter initial follower X position: ", -10000, 10000);
-        int followerY = getValidatedIntInput("Enter initial follower Y position: ", -10000, 10000);
+        int targetX = getValidatedIntInput("Enter initial target X position: ", -100000, 100000);
+        int targetY = getValidatedIntInput("Enter initial target Y position: ", -100000, 100000);
+        int followerX = getValidatedIntInput("Enter initial follower X position: ", -100000, 10000);
+        int followerY = getValidatedIntInput("Enter initial follower Y position: ", -100000, 100000);
 
         SimulationData simData = {{targetX, targetY}, {followerX, followerY}, speed, trackingMode, iterations};
         simulationHistory.push_back(simData); // Store the current simulation config
