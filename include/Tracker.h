@@ -15,6 +15,7 @@
 #include "KalmanFilter.h"
 #include "HeatSignatureAlgorithm.h"
 #include "DeadReckoning.h"
+#include "GPSAlgorithm.h"
 
 class Tracker
 {

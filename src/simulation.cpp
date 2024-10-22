@@ -33,6 +33,26 @@ void saveSimulationHistory()
     outFile.close();
 }
 
+void logSimulation(const std::string &mode, const std::string &details, const std::string &logDetails)
+{
+    std::ofstream file("simulation_history.txt", std::ios::app);
+    if (file.is_open())
+    {
+        auto now = std::chrono::system_clock::now();
+        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+        file << "Simulation Mode: " << mode << "\n";
+        file << "Time: " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S") << "\n";
+        file << logDetails << "\n"; // Log a concise version for the history
+        file << "---------------------------------------------\n";
+        file.close();
+    }
+    else
+    {
+        std::cerr << "Unable to open file for writing.\n";
+    }
+}
+
 void loadSimulationHistory()
 {
     std::ifstream inFile("simulation_history.txt");
@@ -54,8 +74,6 @@ void loadSimulationHistory()
 
 void simulateDeadReckoning(int speed, int iterations)
 {
-    std::srand(static_cast<unsigned int>(std::time(0)));
-
     Object target(1, "Target", {std::rand() % 100, std::rand() % 100});
     Object follower(2, "Follower", {std::rand() % 100, std::rand() % 100});
 
@@ -64,15 +82,40 @@ void simulateDeadReckoning(int speed, int iterations)
     tracker.setTarget(target);
 
     int stepCount = 0;
+    std::string simulationLog;
+    std::string condensedLog;
 
     while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {
         tracker.update();
+
+        auto targetPos = target.getPosition();
+        auto followerPos = follower.getPosition();
+        double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
+                                    std::pow(targetPos.second - followerPos.second, 2));
+
+        std::cout << "\033[33m[Iteration " << stepCount << "] Dead Reckoning Mode\033[0m\n";
+        std::cout << "--------------------------------------------\n";
+        std::cout << "\033[32mTarget Position: (" << targetPos.first << ", " << targetPos.second << ")\033[0m\n";
+        std::cout << "\033[34mFollower Position: (" << followerPos.first << ", " << followerPos.second << ")\033[0m\n";
+        std::cout << "\033[31mDistance to Target: " << distance << " units\033[0m\n";
+        std::cout << "--------------------------------------------\n";
+
+        simulationLog += "Iteration: " + std::to_string(stepCount) + ", Distance: " + std::to_string(distance) + "\n";
+        condensedLog += "Iteration " + std::to_string(stepCount) + " - Distance: " + std::to_string(distance) + " units\n";
+
+        if (distance < 0.1)
+        {
+            std::cout << "\n\033[32mFollower has reached the target.\033[0m\n";
+            break;
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
         stepCount++;
     }
 
     std::cout << "\n\033[32mDead Reckoning simulation finished.\033[0m\n";
+    logSimulation("Dead Reckoning", simulationLog, condensedLog);
 }
 
 void simulateHeatSeeking(int speed, int iterations)
@@ -88,6 +131,8 @@ void simulateHeatSeeking(int speed, int iterations)
     tracker.setTarget(target);
 
     int stepCount = 0;
+    std::string simulationLog;
+    std::string condensedLog;
 
     // Dynamically move target and update heat signature
     while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
@@ -103,13 +148,14 @@ void simulateHeatSeeking(int speed, int iterations)
         double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
                                     std::pow(targetPos.second - followerPos.second, 2));
 
-        // Simulate a heat signature, stronger the closer the follower is
+        // Simulate a heat signature for test, stronger the closer the follower is
         float heatSignature = 100.0f / (1.0f + static_cast<float>(distance));
 
         // Update tracker with the heat signature data
         tracker.updateHeatSignature(heatSignature);
         tracker.update();
 
+        // Detailed output for the user
         std::cout << "\n\033[33m[Iteration " << stepCount << "]\033[0m\n";
         std::cout << "--------------------------------------------\n";
         std::cout << std::fixed << std::setprecision(2); // Two decimal places for numbers
@@ -118,6 +164,10 @@ void simulateHeatSeeking(int speed, int iterations)
         std::cout << "\033[31mDistance to Target: " << distance << " units\033[0m\n";
         std::cout << "\033[36mHeat Signature: " << heatSignature << " units\033[0m\n";
         std::cout << "--------------------------------------------\n";
+
+        // Logging compact information for the text file
+        simulationLog += "Iteration: " + std::to_string(stepCount) + ", Distance: " + std::to_string(distance) +
+                         ", Heat Signature: " + std::to_string(heatSignature) + "\n";
 
         // If distance is extremely small, stop the simulation (the follower "reaches" the target)
         if (distance < 0.1)
@@ -132,44 +182,67 @@ void simulateHeatSeeking(int speed, int iterations)
     }
 
     std::cout << "\n\033[32mHeat-seeking simulation finished.\033[0m\n\n--------------------------------------------\n\n";
+    logSimulationResult("Heat Seeking", simulationLog, condensedLog); // Log simulation details
 }
 
 void simulateGPSSeeking(int speed, int iterations)
 {
-    // Simulate target and follower
     Object target(1, "Target", {std::rand() % 100, std::rand() % 100});
     Object follower(2, "Follower", {std::rand() % 100, std::rand() % 100});
 
     Tracker tracker(follower);
-    tracker.setTrackingMode("gps"); // GPS-based tracking
+    tracker.setTrackingMode("gps");
     tracker.setTarget(target);
 
     int stepCount = 0;
+    std::string simulationLog;
+    std::string condensedLog;
 
-    // Simulate GPS data fetch and follower movement
     while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {
-        // Fetch GPS coordinates (simulated here as small movements)
         int randomX = (std::rand() % 3) - 1;
         int randomY = (std::rand() % 3) - 1;
         target.moveTo({target.getPosition().first + randomX, target.getPosition().second + randomY});
 
-        // Call tracker update to move follower towards target
         tracker.update();
 
-        // Display GPS and follower info
+        auto targetPos = target.getPosition();
+        auto followerPos = follower.getPosition();
+        double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
+                                    std::pow(targetPos.second - followerPos.second, 2));
+
         std::cout << "\033[33m[Iteration " << stepCount << "] GPS Mode\033[0m\n";
         std::cout << "--------------------------------------------\n";
-        std::cout << "\033[32mTarget GPS Position: (" << target.getPosition().first << ", " << target.getPosition().second << ")\033[0m\n";
-        std::cout << "\033[34mFollower GPS Position: (" << follower.getPosition().first << ", " << follower.getPosition().second << ")\033[0m\n";
+        std::cout << "\033[32mTarget GPS Position: (" << targetPos.first << ", " << targetPos.second << ")\033[0m\n";
+        std::cout << "\033[34mFollower GPS Position: (" << followerPos.first << ", " << followerPos.second << ")\033[0m\n";
+        std::cout << "\033[31mDistance to Target: " << distance << " units\033[0m\n";
         std::cout << "--------------------------------------------\n";
 
-        // Sleep based on speed
+        simulationLog += "Iteration: " + std::to_string(stepCount) + ", Distance: " + std::to_string(distance) + "\n";
+        condensedLog += "Iteration " + std::to_string(stepCount) + " - Distance: " + std::to_string(distance) + " units\n";
+
+        if (distance < 0.1)
+        {
+            std::cout << "\n\033[32mFollower has reached the target.\033[0m\n";
+            break;
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
         stepCount++;
     }
 
     std::cout << "\033[32mGPS-based simulation finished.\033[0m\n";
+    logSimulation("GPS", simulationLog, condensedLog); // Use the new modular function
+}
+
+void runGPSMode()
+{
+    int speed = getValidatedIntInput("Enter movement speed (1-10): ", 1, 10);
+    int iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 1000);
+
+    simulateGPSSeeking(speed, iterations);
+
+    std::string details = "GPS Tracking\nSpeed: " + std::to_string(speed) + "\nIterations: " + std::to_string(iterations);
 }
 
 void runTestMode()
@@ -188,7 +261,8 @@ void runTestMode()
     std::cout << "1. Prediction\n";
     std::cout << "2. Kalman Filter\n";
     std::cout << "3. Heat Signature\n";
-    std::cout << "4. Dead Reckoning\n\n";
+    std::cout << "4. GPS\n";
+    std::cout << "5. Dead Reckoning\n\n";
     modeChoice = getValidatedIntInput("Select a tracking mode: ", 1, 4);
 
     switch (modeChoice)
@@ -200,9 +274,12 @@ void runTestMode()
         trackingMode = "kalman";
         break;
     case 3:
-        trackingMode = "heat_signature"; // Heat-seeking shouldn't require manual input
+        trackingMode = "heat_signature";
         break;
     case 4:
+        trackingMode = "gps";
+        break;
+    case 5:
         trackingMode = "dead_reckoning";
         break;
     default:
@@ -233,6 +310,10 @@ void runTestMode()
             std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
             stepCount++;
         }
+    }
+    else if (trackingMode == "gps")
+    {
+        runGPSMode();
     }
     else if (trackingMode == "dead_reckoning")
     {
