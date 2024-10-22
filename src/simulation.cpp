@@ -184,11 +184,11 @@ void runTestMode()
     iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 1000);
 
     // Menu for selecting the tracking mode
-    std::cout << "Choose tracking mode: \n";
+    std::cout << "\nChoose tracking mode: \n";
     std::cout << "1. Prediction\n";
     std::cout << "2. Kalman Filter\n";
     std::cout << "3. Heat Signature\n";
-    std::cout << "4. Dead Reckoning\n";
+    std::cout << "4. Dead Reckoning\n\n";
     modeChoice = getValidatedIntInput("Select a tracking mode: ", 1, 4);
 
     switch (modeChoice)

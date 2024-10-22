@@ -19,6 +19,10 @@ void Tracker::setTrackingMode(const std::string &mode)
     {
         pathCalculator = std::make_unique<HeatSignatureAlgorithm>();
     }
+    else if (mode == "gps")
+    {
+        pathCalculator = std::make_unique<GPSAlgorithm>(); // Assuming GPSAlgorithm exists
+    }
     else
     {
         std::cerr << "Unknown tracking mode: " << mode << "\n";
@@ -31,21 +35,27 @@ void Tracker::setTarget(const Object &targetObj)
     target = &targetObj;
 }
 
-void Tracker::updateHeatSignature(float heatSignatureData)
+void Tracker::startTracking(int iterations, int speed)
 {
-    this->heatSignatureData = heatSignatureData; // Store the heat signature data
+    int stepCount = 0;
+    while (isTrackingActive() && (iterations == 0 || stepCount < iterations))
+    {
+        update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
+        stepCount++;
+    }
 }
 
 // Update info based on heat threshold required to stop tracking
 void Tracker::update()
 {
-
     if (!target || !active)
         return;
 
     auto followerPos = follower.getPosition();
     auto targetPos = target->getPosition();
 
+    // Kalman filter tracking logic
     if (trackingMode == "kalman")
     {
         auto newPosition = pathCalculator->calculatePath(follower, *target); // Prediction step
@@ -61,11 +71,15 @@ void Tracker::update()
         }
         return;
     }
+
+    // Heat signature tracking logic
     else if (trackingMode == "heat_signature" && heatSignatureData < 1 /*< THRESHOLD*/)
     {
         std::cerr << "Heat sensor failure detected. Attempting to use GPS.\n";
         setTrackingMode("gps");
     }
+
+    // GPS fallback if heat sensor fails
     else if (followerPos == targetPos)
     {
         std::cout << "Follower has reached the target at: " << follower.getPosition() << "\n";
@@ -73,10 +87,9 @@ void Tracker::update()
         return;
     }
 
-    // Otherwise, calculate new path and update position
+    // Regular path update
     auto newPosition = pathCalculator->calculatePath(follower, *target);
     follower.moveTo(newPosition);
-
     std::cout << "Follower updated to position: " << follower.getPosition() << "\n";
 }
 

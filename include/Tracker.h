@@ -6,6 +6,8 @@
 #include <utility>
 #include <iostream>
 #include <cmath>
+#include <chrono>
+#include <thread>
 
 #include "Object.h"
 #include "PathCalculator.h"
@@ -20,6 +22,7 @@ public:
     Tracker(Object &follower);
     void setTrackingMode(const std::string &mode);
     void setTarget(const Object &target);
+    void startTracking(int iterations, int speed);
     void updateHeatSignature(float heatSignatureData);
     void update();
     bool isTrackingActive() const;

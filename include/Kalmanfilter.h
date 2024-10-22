@@ -3,6 +3,7 @@
 
 #include "PathCalculator.h"
 #include <utility> // For std::pair
+#include <iostream>
 
 class KalmanFilter : public PathCalculator
 {

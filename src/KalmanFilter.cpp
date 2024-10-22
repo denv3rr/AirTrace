@@ -18,15 +18,21 @@ void KalmanFilter::updateEstimates(std::pair<int, int> measurement)
 {
     auto [measuredX, measuredY] = measurement;
 
-    // Kalman gain calculation
+    // If the follower is close to the target, halt further updates
+    double distance = std::sqrt(std::pow(estimate.first - measuredX, 2) + std::pow(estimate.second - measuredY, 2));
+    if (distance < 0.1)
+    {
+        std::cout << "\nFollower has reached the target.\n";
+        return;
+    }
+
+    // Kalman gain calculation and update
     double kalmanGainX = variance.first / (variance.first + measurementNoise);
     double kalmanGainY = variance.second / (variance.second + measurementNoise);
 
-    // Update estimates
     estimate.first += kalmanGainX * (measuredX - estimate.first);
     estimate.second += kalmanGainY * (measuredY - estimate.second);
 
-    // Update variances
     variance.first = (1.0 - kalmanGainX) * variance.first + processNoise;
     variance.second = (1.0 - kalmanGainY) * variance.second + processNoise;
 }
