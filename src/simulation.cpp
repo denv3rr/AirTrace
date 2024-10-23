@@ -274,6 +274,7 @@ void runTestMode()
     std::cout << "4. GPS\n";
     std::cout << "5. Dead Reckoning\n\n";
     modeChoice = getValidatedIntInput("Select a tracking mode: ", 1, 5);
+    std::cout << "\n\n--------------------------------------------\n\n";
 
     switch (modeChoice)
     {
