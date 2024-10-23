@@ -22,7 +22,7 @@
   <br></br>
     <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
     <br></br>
-[About](#adaptable) | [Run](#run) | [Issues](#issues) | [Contributing](#contributing) | [Links](#links) | [Contact](#contact)
+[About](#adaptable) | [Run and Debug](#run-and-debug) | [Issues](#issues) | [Contributing](#contributing) | [Links](#links) | [Contact](#contact)
     <br></br>
   <a href="https://seperet.com">
     <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
@@ -36,17 +36,17 @@
 
 A **tracking solution** designed for precision in dynamic environments.
 
-This is *currently* a **C++ console application** being built to include:
+This is *currently* a **console application** being built to research:
 
 Kalman filtering, heat signature detection, and predictive modeling.
 
 <br></br>
 <br></br>
-<br></br>
-<a href="https://seperet.com">
-    <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
+<a href="https://seperet.com" align="center">
+    <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="300">
 </a>
 
+<br></br>
 <div align="left">
   
 **Built with:**
@@ -79,7 +79,7 @@ Kalman filtering, heat signature detection, and predictive modeling.
 
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
 
-### **Run**
+### **Run and Debug**
 
 <details><summary>Expand</summary>
 
@@ -109,15 +109,16 @@ Kalman filtering, heat signature detection, and predictive modeling.
 
         -  ````
             > .\AirTrace.exe
-            
-            AirTrace Tracking System
-            
+           
+            AirTrace
+
             Main Menu: Select Mode
             
             1. Real Input Mode
             2. Test Mode (Manual Configuration)
             3. View and Rerun Previous Simulations
-            4. Exit
+            4. Delete a Previous Simulation
+            5. Exit
             
             Select an option:
           
@@ -159,9 +160,9 @@ If you have any problems with anything, **submit an issue** to let me know.
 
 Contributions are welcome.
 
-Feel free to fork this repository and create a pull request with any changes.
+Feel free to fork this repo and create a pull request with any changes.
 
-[Create a new Fork](https://github.com/denv3rr/AirTrace/fork)
+[Create a new fork](https://github.com/denv3rr/AirTrace/fork)
 
 </details>
 <br></br>
@@ -177,14 +178,16 @@ Feel free to fork this repository and create a pull request with any changes.
 
 <div align="left">
   
-- **Seperet** || [Seperet](https://seperet.com) ![Website](https://img.shields.io/website?url=https%3A%2F%2Fseperet.com)
-- **Kalman Filter** || [Kalman Filter: A Brief Introduction](https://www.mathworks.com/help/control/ug/kalman-filter.html)
-- **Understanding Kalman Filters** || [A Practical Introduction to the Kalman Filter](https://www.johndcook.com/blog/2018/06/15/kalman-filter/)
-- **Predictive Algorithms in Motion Tracking** || [A Survey of Motion Tracking](https://www.researchgate.net/publication/301231112_A_Survey_of_Motion_Tracking_Techniques)
-- **Heat Signature Detection Algorithms** || [Detection of Heat Signatures Using Image Processing](https://www.sciencedirect.com/science/article/pii/S1877050919318233)
-- **Dynamic Modeling and Kalman Filtering** || [Dynamic Modeling and Kalman Filtering in Motion Tracking](https://ieeexplore.ieee.org/document/4491744)
-- **Object Tracking using Kalman Filter** || [Kalman Filtering for Object Tracking](https://www.researchgate.net/publication/318123371_Kalman_Filter_for_Tracking_Moving_Objects)
-- **Predictive Tracking Algorithms** || [Predictive Tracking of Moving Objects](https://link.springer.com/chapter/10.1007/978-3-642-28070-7_12)
+- **Seperet** || [Seperet](https://seperet.com) ![Website](https://img.shields.io/website?url=https%3A%2F%2Fseperet.com)  
+<img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="300">
+<br></br>
+  
+- **Kalman Filter** || [An Introduction to the Kalman Filter - MIT](http://www.mit.edu/~jwilson/kalman.pdf)
+- **Understanding Kalman Filters** || [An Introduction to the Kalman Filter - University of North Carolina](https://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf)
+- **Tutorial: The Kalman Filter** || [Tutorial: The Kalman Filter - MIT](https://web.mit.edu/kirtley/kirtley/binlustuff/literature/control/Kalman%20filter.pdf)
+- **Predictive Algorithms in Motion Tracking** || [An Elementary Introduction to Kalman Filtering - University of Texas](https://www.cs.utexas.edu/~mooney/cs343/kalman.pdf)
+- **Thermal Detection** || [Long-Range Thermal Target Detection in Data-Limited Settings Using Restricted Receptive Fields](https://www.mdpi.com/1424-8220/23/18/7806) 
+- **Detecting Minimal Thermal Signatures** || [Detecting Small Size and Minimal Thermal Signature Targets in Infrared Imagery Using Biologically Inspired Vision](https://www.mdpi.com/1424-8220/21/5/1812)
 
 </div>
 </details>
