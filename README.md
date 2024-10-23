@@ -34,11 +34,9 @@
 
 ### **Adaptable.**
 
-A **tracking solution** designed for precision in dynamic environments.
+A **tracking solution** designed for dynamic environments with precision via automated mode-switching - reliability even in the event of a sensor failure or error.
 
-This is *currently* a **console application** being built to research:
-
-Kalman filtering, heat signature detection, and predictive modeling.
+This is (*currently*) a **console application** being built to research movement patterns, Kalman filtering, heat signature detection, and predictive modeling.
 
 <br></br>
 <br></br>
