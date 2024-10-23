@@ -266,7 +266,8 @@ void runTestMode()
     // iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 10000);
 
     // Menu for selecting the tracking mode
-    std::cout << "\nChoose tracking mode: \n";
+    std::cout << "\n\n--------------------------------------------\n";
+    std::cout << "\n\nTesting and Debugging Menu\n\n\033[33mNOTE: YOU ARE IN 'TEST MODE'\nThe 'scenario mode' is being designed for dynamic switching\nbetween these modes automatically based on external input.\033[0m\n\n";
     std::cout << "1. Prediction\n";
     std::cout << "2. Kalman Filter\n";
     std::cout << "3. Heat Signature\n";
