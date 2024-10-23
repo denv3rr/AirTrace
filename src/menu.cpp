@@ -10,14 +10,13 @@ void showMainMenu()
 
     while (choice != 5) // Adding a new option for deleting simulations
     {
-        std::cout << "\n\033[32mAirTrace Tracking System\033[0m\n\n";
-        std::cout << "Main Menu: Select Mode\n\n";
+        std::cout << "\n\033[32mAirTrace\033[0m\n\n";
+        std::cout << "Main Menu\n\n";
         std::cout << "1. Real Input Mode\n";
         std::cout << "2. Test Mode (Manual Configuration)\n";
         std::cout << "3. View and Rerun Previous Simulations\n";
         std::cout << "4. Delete a Previous Simulation\n"; // New option
         std::cout << "5. Exit\n\n";
-        std::cout << "Select an option: ";
 
         choice = getValidatedIntInput("Select an option: ", 1, 5);
 
