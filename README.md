@@ -90,7 +90,7 @@ This is (*currently*) a **console application** being built to research movement
     - Clone: `git clone https://github.com/denv3rr/AirTrace`
     - `.zip`: https://github.com/denv3rr/AirTrace/archive/refs/heads/main.zip
    
-2. **Build and run.**
+2. **Build and run** (as of 10/23/2024)
    
     - **To build using CMake:**
   
@@ -120,7 +120,53 @@ This is (*currently*) a **console application** being built to research movement
             
             Select an option:
           
-            ````    
+            ````
+          - Select option `2`.
+          - ````
+            --------------------------------------------
+
+
+            Testing and Debugging Menu
+            
+            NOTE: YOU ARE IN 'TEST MODE'
+            The 'scenario mode' is being designed for dynamic switching
+            between these modes automatically based on external input.
+            
+            1. Prediction
+            2. Kalman Filter
+            3. Heat Signature
+            4. GPS
+            5. Dead Reckoning
+            
+            Select a tracking mode:
+            
+            ````
+          - Selection `3` output example:
+          - ````
+            Select a tracking mode: 3
+
+            --------------------------------------------
+
+            Follower updated to position: (60, 33)
+            
+            [Iteration 0]
+            --------------------------------------------
+            Target Position: (43, 90)
+            Follower Position: (60, 33)
+            Distance to Target: 59.48 units
+            Heat Signature: 1.65 units
+            --------------------------------------------
+            Follower updated to position: (60, 33)
+
+            [Iteration 1]
+            --------------------------------------------
+            ...
+            ...
+            <Updates here>
+            ...
+            ...
+            
+            ````
 </div>
 </details>
 <br></br>
