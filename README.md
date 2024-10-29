@@ -255,7 +255,7 @@ Feel free to fork this repo and create a pull request with any changes.
 <br></br>
 <div align="center">
     <a href="https://seperet.com">
-        <img src="https://images.squarespace-cdn.com/content/v1/612e9679ca3ada2f6398ebb3/5c5d2752-5b10-4535-9591-acff011443fa/3dgifmaker21328.gif?format=1500w" width="300" height="300"/>
+        <img src="https://github.com/denv3rr/denv3rr/raw/main/Seperet_Slam_White.gif/" width="500" height="500"/>
     </a>
 </div>
 <br></br>
