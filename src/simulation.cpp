@@ -11,10 +11,27 @@
 #include <thread>
 #include <chrono>
 #include <fstream> // For file operations
-#include <conio.h> // Win
 
 // Global vector to store simulation history
 std::vector<SimulationData> simulationHistory;
+
+// Atomic variable to allow exit during test mode
+std::atomic<bool> exitRequested(false);
+
+// Monitor function to check for user input without blocking
+void monitorExitKey()
+{
+    std::string input;
+    while (!exitRequested)
+    {
+        std::cin >> input;
+        if (input == "x")
+        {
+            exitRequested = true;
+            std::cout << "\033[31m\nExiting to test menu...\033[0m\n";
+        }
+    }
+}
 
 void saveSimulationHistory()
 {

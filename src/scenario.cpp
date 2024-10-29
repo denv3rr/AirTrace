@@ -1,28 +1,39 @@
 #include "scenario.h"
-#include "Object.h"
 #include "Tracker.h"
+#include "GPSAlgorithm.h"
 #include <iostream>
+#include <vector>
 
-void runRealInputScenario()
+// Main Scenario Mode
+void runScenarioMode(Object &follower, int speed, int iterations)
 {
-    std::cout << "\nStarting Real Input Scenario...\n\n";
-
-    // Create objects
-    Object target(1, "Target", {10, 10});
-    Object follower(2, "Follower", {0, 0});
-
-    // Initialize tracker
-    Tracker tracker(follower);
-    std::string trackingMode = "prediction"; // Can change dynamically
-    tracker.setTrackingMode(trackingMode);
-    tracker.setTarget(target);
-
-    // Start tracking
-    while (tracker.isTrackingActive())
+    if (follower.getPosition() == std::pair<int, int>({0, 0}))
     {
-        tracker.update();
+        std::cerr << "\033[31mNo valid GPS data or input stream. Scenario Mode halted.\033[0m\n";
+        return;
     }
 
-    std::cout << "\nTracking system stopped.\n\n";
-    std::cout << "*********************************************\n\n";
+    std::vector<Object> targets = generateTargets(); // Hypothetical helper to generate targets
+    Tracker tracker(follower);
+    tracker.setTrackingMode("gps"); // Start in GPS mode
+    tracker.setTarget(targets[0]);
+
+    tracker.startTracking(iterations, speed);
+
+    // Switch to heat signature tracking
+    std::cout << "\n\033[32mSwitching to Heat Signature Tracking Mode\033[0m\n";
+    tracker.setTrackingMode("heat_signature");
+
+    for (int i = 0; tracker.isTrackingActive() && i < iterations; ++i)
+    {
+        for (const auto &target : targets)
+        {
+            float heatSignature = calculateHeatSignature(follower, target); // Function to calculate heat
+            tracker.updateHeatSignature(heatSignature);
+            tracker.update();
+        }
+
+        logDiagnostics(follower, targets); // Log diagnostics for review
+        std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
+    }
 }
