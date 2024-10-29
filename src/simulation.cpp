@@ -18,6 +18,14 @@ std::vector<SimulationData> simulationHistory;
 // Atomic variable to allow exit during test mode
 std::atomic<bool> exitRequested(false);
 
+/****************************************
+ *
+ *
+ * PROGRAM/INTERACTIVITY FUNCTIONS
+ *
+ *
+ *****************************************/
+
 // Monitor function to check for user input without blocking
 void monitorExitKey()
 {
@@ -33,64 +41,33 @@ void monitorExitKey()
     }
 }
 
-void saveSimulationHistory()
+/****************************************
+ *
+ *
+ * SIMULATION FUNCTIONS
+ *
+ *
+ *****************************************/
+
+void simulateManualConfig(const SimulationData &simData)
 {
-    std::ofstream outFile("simulation_history.txt");
-    if (!outFile)
+    // Use the simData to run the simulation
+    Object target(1, "Target", simData.targetPos);
+    Object follower(2, "Follower", simData.followerPos);
+
+    Tracker tracker(follower);
+    tracker.setTrackingMode(simData.mode);
+    tracker.setTarget(target);
+
+    int stepCount = 0;
+    while (tracker.isTrackingActive() && (simData.iterations == 0 || stepCount < simData.iterations))
     {
-        std::cerr << "Error: Unable to open file for saving history.\n";
-        return;
+        tracker.update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500 / simData.speed)); // Adjust based on speed
+        stepCount++;
     }
 
-    for (const auto &sim : simulationHistory)
-    {
-        outFile << sim.targetPos.first << " " << sim.targetPos.second << " "
-                << sim.followerPos.first << " " << sim.followerPos.second << " "
-                << sim.speed << " " << sim.mode << " " << sim.iterations << "\n";
-    }
-    outFile.close();
-}
-
-void logSimulationResult(const std::string &mode, const std::string &details, const std::string &logDetails)
-{
-    std::ofstream file("simulation_history.txt", std::ios::app);
-    if (file.is_open())
-    {
-        auto now = std::chrono::system_clock::now();
-        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-
-        std::tm localTime;
-        localtime_s(&localTime, &currentTime); // Use localtime_s instead of localtime
-
-        file << "Simulation Mode: " << mode << "\n";
-        file << "Time: " << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S") << "\n";
-        file << logDetails << "\n"; // Log a concise version for the history
-        file << "---------------------------------------------\n";
-        file.close();
-    }
-    else
-    {
-        std::cerr << "Unable to open file for writing.\n";
-    }
-}
-
-void loadSimulationHistory()
-{
-    std::ifstream inFile("simulation_history.txt");
-    if (!inFile)
-    {
-        std::cerr << "No saved simulation history found.\n";
-        return;
-    }
-
-    SimulationData simData;
-    while (inFile >> simData.targetPos.first >> simData.targetPos.second >>
-           simData.followerPos.first >> simData.followerPos.second >>
-           simData.speed >> simData.mode >> simData.iterations)
-    {
-        simulationHistory.push_back(simData);
-    }
-    inFile.close();
+    std::cout << "\n\nTest simulation finished.\n\n";
 }
 
 void simulateDeadReckoning(int speed, int iterations)
@@ -363,56 +340,41 @@ void runTestMode()
     }
 }
 
-void runScenarioMode()
+// Test function for Scenario Mode with exit prompt and logging
+void runTestScenarioMode()
 {
+    std::cout << "\033[32mStarting Test Mode for Scenario. Press 'x' to exit.\033[0m\n";
+    Object follower(2, "Follower", {0, 0}); // Initialize follower at origin
     int speed = 100;
-    int iterations = 0;
+    int iterations = 100;
+    std::string logData;
 
-    std::cout << "\n\033[32mStarting Scenario Mode in GPS Mode\033[0m\n";
+    std::thread exitThread(monitorExitKey); // Non-blocking thread to monitor exit input
 
-    // Starting scenario in GPS mode
-    Object primaryTarget(1, "Primary Target", {5000, 5000}); // Hypothetical starting point
-    Object follower(2, "Follower", {0, 0});                  // Starting at origin for GPS navigation
+    runScenarioMode(follower, speed, iterations); // Call main scenario function
 
-    // Create a follower instance
-    Tracker tracker(follower);
-    tracker.setTrackingMode("gps"); // Start in GPS mode
-
-    // Check for valid GPS data or input stream
-    if (primaryTarget.getPosition() == std::pair<int, int>({0, 0}))
+    // Log data handling based on exit or completion
+    if (exitRequested)
     {
-        std::cerr << "\033[31mNo valid GPS data or input stream. Scenario Mode halted.\033[0m\n";
-        return;
+        logData += "\nTest mode exited early by user.\n";
+    }
+    else
+    {
+        logData += "\nTest mode completed normally.\n";
     }
 
-    // Set end location/object
-    tracker.setTarget(primaryTarget);
-
-    // Step 1: Reach approximate global position via GPS
-    tracker.startTracking(iterations, speed);
-
-    // Step 2: Switch to Heat Signature Tracking with Simulated Data
-    std::cout << "\n\033[32mSwitching to Heat Signature Tracking Mode\033[0m\n";
-    tracker.setTrackingMode("heat_signature");
-
-    // Assuming we have multiple targets all giving off unique heat signatures...
-    std::vector<Object> targets = generateTargets(); // NOT ADDED YET - helper to generate targets
-
-    for (int i = 0; tracker.isTrackingActive() && i < iterations; ++i)
-    {
-        // Simulate each target's signature based on proximity, or dynamically update per target's state
-        for (const auto &target : targets)
-        {
-            float heatSignature = calculateHeatSignature(follower, target); // Proximity-based heat signature
-            tracker.updateHeatSignature(heatSignature);
-            tracker.update();
-        }
-
-        // Log or output current status, distance, heat signature for diagnostics
-        logDiagnostics(follower, primaryTarget); // Another hypothetical helper for tracking data
-        std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
-    }
+    saveTestLog(logData);  // Save the log for later access
+    exitRequested = false; // Reset for future runs
+    exitThread.join();
 }
+
+/****************************************
+ *
+ *
+ * LOG RELATED FUNTIONS (VIEW, LOAD, SAVE, ETC.)
+ *
+ *
+ *****************************************/
 
 void viewAndRerunPreviousSimulations()
 {
@@ -491,23 +453,78 @@ void saveSimulationHistoryToFile()
     outFile.close();
 }
 
-void simulateManualConfig(const SimulationData &simData)
+// Function to save log data to a file
+void saveTestLog(const std::string &logData)
 {
-    // Use the simData to run the simulation
-    Object target(1, "Target", simData.targetPos);
-    Object follower(2, "Follower", simData.followerPos);
-
-    Tracker tracker(follower);
-    tracker.setTrackingMode(simData.mode);
-    tracker.setTarget(target);
-
-    int stepCount = 0;
-    while (tracker.isTrackingActive() && (simData.iterations == 0 || stepCount < simData.iterations))
+    std::ofstream logFile("test_logs.txt", std::ios::app);
+    if (logFile.is_open())
     {
-        tracker.update();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500 / simData.speed)); // Adjust based on speed
-        stepCount++;
+        logFile << logData;
+        logFile << "---------------------------------------------\n";
+        logFile.close();
+    }
+    else
+    {
+        std::cerr << "Error: Unable to open test logs file.\n";
+    }
+}
+
+void saveSimulationHistory()
+{
+    std::ofstream outFile("simulation_history.txt");
+    if (!outFile)
+    {
+        std::cerr << "Error: Unable to open file for saving history.\n";
+        return;
     }
 
-    std::cout << "\n\nTest simulation finished.\n\n";
+    for (const auto &sim : simulationHistory)
+    {
+        outFile << sim.targetPos.first << " " << sim.targetPos.second << " "
+                << sim.followerPos.first << " " << sim.followerPos.second << " "
+                << sim.speed << " " << sim.mode << " " << sim.iterations << "\n";
+    }
+    outFile.close();
+}
+
+void logSimulationResult(const std::string &mode, const std::string &details, const std::string &logDetails)
+{
+    std::ofstream file("simulation_history.txt", std::ios::app);
+    if (file.is_open())
+    {
+        auto now = std::chrono::system_clock::now();
+        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+        std::tm localTime;
+        localtime_s(&localTime, &currentTime); // Use localtime_s instead of localtime
+
+        file << "Simulation Mode: " << mode << "\n";
+        file << "Time: " << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S") << "\n";
+        file << logDetails << "\n"; // Log a concise version for the history
+        file << "---------------------------------------------\n";
+        file.close();
+    }
+    else
+    {
+        std::cerr << "Unable to open file for writing.\n";
+    }
+}
+
+void loadSimulationHistory()
+{
+    std::ifstream inFile("simulation_history.txt");
+    if (!inFile)
+    {
+        std::cerr << "No saved simulation history found.\n";
+        return;
+    }
+
+    SimulationData simData;
+    while (inFile >> simData.targetPos.first >> simData.targetPos.second >>
+           simData.followerPos.first >> simData.followerPos.second >>
+           simData.speed >> simData.mode >> simData.iterations)
+    {
+        simulationHistory.push_back(simData);
+    }
+    inFile.close();
 }
