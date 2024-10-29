@@ -24,10 +24,15 @@ void showMainMenu()
         switch (choice)
         {
         case 1:
-            runScenarioMode();
+        {
+            Object follower(2, "Follower", {0, 0});
+            int speed = 100;
+            int iterations = 100;
+            runScenarioMainMode(follower, speed, iterations); // Ensure this function is defined and accessible
             break;
+        }
         case 2:
-            showTestMenu(); // Go to Test Menu
+            showTestMenu();
             break;
         case 3:
             viewAndRerunPreviousSimulations();
@@ -44,7 +49,6 @@ void showMainMenu()
     }
 }
 
-// Test Menu with options for running test mode and viewing logs
 void showTestMenu()
 {
     int choice = 0;
@@ -75,7 +79,6 @@ void showTestMenu()
     }
 }
 
-// Function to view test logs for test results and diagnostics
 void viewTestLogs()
 {
     std::ifstream logFile("test_logs.txt");

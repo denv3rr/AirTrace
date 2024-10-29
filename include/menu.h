@@ -1,6 +1,8 @@
 #ifndef MENU_H
 #define MENU_H
 
+#include "Object.h"
+
 // Displays the main menu and handles user choices
 void showMainMenu();
 

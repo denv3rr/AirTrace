@@ -3,14 +3,6 @@
 #include "simulation.h"
 #include "Tracker.h"
 #include "inputValidation.h"
-#include <iostream>
-#include <cstdlib>
-#include <ctime>
-#include <cmath>   // For sqrt, pow
-#include <iomanip> // For output formatting
-#include <thread>
-#include <chrono>
-#include <fstream> // For file operations
 
 // Global vector to store simulation history
 std::vector<SimulationData> simulationHistory;
@@ -30,12 +22,12 @@ std::atomic<bool> exitRequested(false);
 void monitorExitKey()
 {
     std::string input;
-    while (!exitRequested)
-    {
+    while (!exitRequested.load())
+    { // Use load() for atomic
         std::cin >> input;
         if (input == "x")
         {
-            exitRequested = true;
+            exitRequested.store(true); // Use store() for atomic
             std::cout << "\033[31m\nExiting to test menu...\033[0m\n";
         }
     }
