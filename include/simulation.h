@@ -25,6 +25,7 @@ void simulateHeatSeeking(int speed, int iterations);
 void simulateManualConfig(const SimulationData &simData);
 void runGPSMode();
 void runTestMode();
+void runScenarioMode();
 void viewAndRerunPreviousSimulations();
 void deletePreviousSimulation();
 void saveSimulationHistoryToFile();

@@ -11,6 +11,7 @@
 #include <thread>
 #include <chrono>
 #include <fstream> // For file operations
+#include <conio.h> // Win
 
 // Global vector to store simulation history
 std::vector<SimulationData> simulationHistory;
@@ -342,6 +343,57 @@ void runTestMode()
         simulationHistory.push_back(simData); // Store the current simulation config
 
         simulateManualConfig(simData); // Call simulate with manual configuration
+    }
+}
+
+void runScenarioMode()
+{
+    int speed = 100;
+    int iterations = 0;
+
+    std::cout << "\n\033[32mStarting Scenario Mode in GPS Mode\033[0m\n";
+
+    // Starting scenario in GPS mode
+    Object primaryTarget(1, "Primary Target", {5000, 5000}); // Hypothetical starting point
+    Object follower(2, "Follower", {0, 0});                  // Starting at origin for GPS navigation
+
+    // Create a follower instance
+    Tracker tracker(follower);
+    tracker.setTrackingMode("gps"); // Start in GPS mode
+
+    // Check for valid GPS data or input stream
+    if (primaryTarget.getPosition() == std::pair<int, int>({0, 0}))
+    {
+        std::cerr << "\033[31mNo valid GPS data or input stream. Scenario Mode halted.\033[0m\n";
+        return;
+    }
+
+    // Set end location/object
+    tracker.setTarget(primaryTarget);
+
+    // Step 1: Reach approximate global position via GPS
+    tracker.startTracking(iterations, speed);
+
+    // Step 2: Switch to Heat Signature Tracking with Simulated Data
+    std::cout << "\n\033[32mSwitching to Heat Signature Tracking Mode\033[0m\n";
+    tracker.setTrackingMode("heat_signature");
+
+    // Assuming we have multiple targets all giving off unique heat signatures...
+    std::vector<Object> targets = generateTargets(); // NOT ADDED YET - helper to generate targets
+
+    for (int i = 0; tracker.isTrackingActive() && i < iterations; ++i)
+    {
+        // Simulate each target's signature based on proximity, or dynamically update per target's state
+        for (const auto &target : targets)
+        {
+            float heatSignature = calculateHeatSignature(follower, target); // Proximity-based heat signature
+            tracker.updateHeatSignature(heatSignature);
+            tracker.update();
+        }
+
+        // Log or output current status, distance, heat signature for diagnostics
+        logDiagnostics(follower, primaryTarget); // Another hypothetical helper for tracking data
+        std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
     }
 }
 
