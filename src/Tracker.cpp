@@ -2,6 +2,11 @@
 #include "HeatSignatureAlgorithm.h"
 #include <iostream>
 #include <utility>
+#include <cmath>
+
+// Set these values manually if needed for testing etc
+constexpr int MODE_SWITCH_THRESHOLD = 1; // Heat threshold for mode switch
+constexpr int MODE_SWITCH_DELAY = 3;     // Delay in iterations before switching modes
 
 Tracker::Tracker(Object &follower) : follower(follower), target(nullptr), active(true), heatSignatureData(0.0f) {}
 
@@ -74,17 +79,27 @@ void Tracker::update()
     // Heat signature tracking logic
     else if (trackingMode == "heat_signature")
     {
-        // Dynamically calculate heat signature and update
         double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
                                     std::pow(targetPos.second - followerPos.second, 2));
         float heatSignature = 100.0f / (1.0f + static_cast<float>(distance));
         updateHeatSignature(heatSignature);
 
-        if (heatSignature < 1) // Threshold to switch modes
+        std::cout << "\033[36m[Diagnostic] Heat Signature: " << heatSignature << ", Distance: " << distance << "\033[0m\n";
+
+        // Check if mode should switch based on heat level, with delay counter
+        if (heatSignature < MODE_SWITCH_THRESHOLD)
         {
-            std::cerr << "Heat sensor failure detected. Switching to GPS.\n";
-            setTrackingMode("gps");
-            return;
+            if (++modeSwitchCounter >= MODE_SWITCH_DELAY)
+            {
+                std::cerr << "\033[31m[Alert] Heat signature too low. Switching to GPS mode.\033[0m\n";
+                setTrackingMode("gps");
+                modeSwitchCounter = 0;
+                return;
+            }
+        }
+        else
+        {
+            modeSwitchCounter = 0; // Reset if signature rises again
         }
 
         auto newPosition = pathCalculator->calculatePath(follower, *target);

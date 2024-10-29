@@ -19,6 +19,9 @@
 
 class Tracker
 {
+
+    int modeSwitchCounter; // Track switch delays
+
 public:
     Tracker(Object &follower);
     void setTrackingMode(const std::string &mode);
