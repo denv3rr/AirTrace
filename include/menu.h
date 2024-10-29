@@ -1,13 +1,16 @@
 #ifndef MENU_H
 #define MENU_H
 
-// Function to display the main menu and handle user interaction
+// Displays the main menu and handles user choices
 void showMainMenu();
 
-// Function to handle the test mode
-void runTestMode();
+// Displays the test menu with options specific to test mode
+void showTestMenu();
 
-// Forward declaration in menu.h
-void runTestMode();
+// Displays the test logs
+void viewTestLogs();
+
+// Runs the main scenario mode (declaration only for modular call in main menu)
+void runScenarioMainMode();
 
 #endif // MENU_H

@@ -3,19 +3,20 @@
 #include "simulation.h"
 #include "scenario.h"
 #include <iostream>
+#include <fstream>
 
 void showMainMenu()
 {
     int choice = 0;
 
-    while (choice != 5) // Adding a new option for deleting simulations
+    while (choice != 5)
     {
         std::cout << "\n\033[32mAirTrace\033[0m\n\n";
         std::cout << "Main Menu\n\n";
-        std::cout << "1. Real Input Mode\n";
-        std::cout << "2. Test Mode (Manual Configuration)\n";
+        std::cout << "1. Scenario Mode\n";
+        std::cout << "2. Test Mode\n";
         std::cout << "3. View and Rerun Previous Simulations\n";
-        std::cout << "4. Delete a Previous Simulation\n"; // New option
+        std::cout << "4. Delete a Previous Simulation\n";
         std::cout << "5. Exit\n\n";
 
         choice = getValidatedIntInput("Select an option: ", 1, 5);
@@ -23,16 +24,16 @@ void showMainMenu()
         switch (choice)
         {
         case 1:
-            runRealInputScenario();
+            runScenarioMode();
             break;
         case 2:
-            runTestMode();
+            showTestMenu(); // Go to Test Menu
             break;
         case 3:
             viewAndRerunPreviousSimulations();
             break;
         case 4:
-            deletePreviousSimulation(); // Call to delete a simulation
+            deletePreviousSimulation();
             break;
         case 5:
             std::cout << "Exiting the system.\n";
@@ -41,4 +42,53 @@ void showMainMenu()
             std::cout << "\033[31mInvalid choice. Please try again.\033[0m\n";
         }
     }
+}
+
+// Test Menu with options for running test mode and viewing logs
+void showTestMenu()
+{
+    int choice = 0;
+
+    while (choice != 3)
+    {
+        std::cout << "\nTest Menu\n";
+        std::cout << "1. Run Test Scenario Mode\n";
+        std::cout << "2. View Test Logs\n";
+        std::cout << "3. Back to Main Menu\n";
+
+        choice = getValidatedIntInput("Select an option: ", 1, 3);
+
+        switch (choice)
+        {
+        case 1:
+            runTestScenarioMode();
+            break;
+        case 2:
+            viewTestLogs();
+            break;
+        case 3:
+            std::cout << "Returning to Main Menu.\n";
+            break;
+        default:
+            std::cout << "\033[31mInvalid choice. Please try again.\033[0m\n";
+        }
+    }
+}
+
+// Function to view test logs for test results and diagnostics
+void viewTestLogs()
+{
+    std::ifstream logFile("test_logs.txt");
+    if (!logFile)
+    {
+        std::cerr << "No test logs available.\n";
+        return;
+    }
+
+    std::string line;
+    while (std::getline(logFile, line))
+    {
+        std::cout << line << "\n";
+    }
+    logFile.close();
 }
