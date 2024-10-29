@@ -6,7 +6,7 @@
 class HeatSignature : public PathCalculator
 {
 public:
-    std::pair<int, int> calculatePath(const Object &follower, const Object &target) override;
+    std::tuple<int, int, int> calculatePath(const Object &follower, const Object &target) override;
     void setHeatData(float heatLevel);
 
 private:

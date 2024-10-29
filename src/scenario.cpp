@@ -5,37 +5,39 @@
 #include <vector>
 #include <cmath>
 
-// Main Scenario Mode
-void runScenarioMode(Object &follower, int speed, int iterations)
+void runScenarioMode(Object &follower, int gpsTimeout, int heatTimeout)
 {
-    if (follower.getPosition() == std::pair<int, int>({0, 0}))
+    Tracker tracker(follower);
+    tracker.setTrackingMode("gps");
+
+    int gpsAttempts = 0;
+    while (gpsAttempts++ < gpsTimeout && tracker.isTrackingActive())
     {
-        std::cerr << "\033[31mNo valid GPS data or input stream. Scenario Mode halted.\033[0m\n";
-        return;
+        tracker.update();
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    std::vector<Object> targets = generateTargets(); // Hypothetical helper to generate targets
-    Tracker tracker(follower);
-    tracker.setTrackingMode("gps"); // Start in GPS mode
-    tracker.setTarget(targets[0]);
-
-    tracker.startTracking(iterations, speed);
-
-    // Switch to heat signature tracking
-    std::cout << "\n\033[32mSwitching to Heat Signature Tracking Mode\033[0m\n";
-    tracker.setTrackingMode("heat_signature");
-
-    for (int i = 0; tracker.isTrackingActive() && i < iterations; ++i)
+    if (tracker.isTrackingActive())
     {
-        for (const auto &target : targets)
+        tracker.setTrackingMode("heat_signature");
+        int heatAttempts = 0;
+        while (heatAttempts++ < heatTimeout && tracker.isTrackingActive())
         {
-            float heatSignature = calculateHeatSignature(follower, target); // Function to calculate heat
-            tracker.updateHeatSignature(heatSignature);
             tracker.update();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
+    }
+}
 
-        logDiagnostics(follower, targets); // Log diagnostics for review
-        std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
+void runScenarioMainMode(Object &follower, int gpsTimeout, int heatTimeout)
+{
+    if (inputStreamAvailable())
+    {
+        runScenarioMode(follower, gpsTimeout, heatTimeout);
+    }
+    else
+    {
+        std::cerr << "Input stream unavailable. Returning to main menu.\n";
     }
 }
 

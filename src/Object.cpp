@@ -1,14 +1,29 @@
 #include "Object.h"
 
-Object::Object(int id, const std::string &name, std::pair<int, int> position)
-    : id(id), name(name), position(position) {}
+// Constructor initializes ID, name, and 3D position
+Object::Object(int id, const std::string &name, const std::tuple<int, int, int> &position)
+    : id(id), name(name), position3D(position) {}
 
-void Object::moveTo(const std::pair<int, int> &newPosition)
+// Moves object to a new 3D position
+void Object::moveTo(const std::tuple<int, int, int> &newPosition)
 {
-    position = newPosition;
+    position3D = newPosition;
 }
 
-std::pair<int, int> Object::getPosition() const
+// Returns the current 3D position of the object
+std::tuple<int, int, int> Object::getPosition3D() const
 {
-    return position;
+    return position3D;
+}
+
+// Returns the object's ID
+int Object::getId() const
+{
+    return id;
+}
+
+// Returns the object's name
+std::string Object::getName() const
+{
+    return name;
 }

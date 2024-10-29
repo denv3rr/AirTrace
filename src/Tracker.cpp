@@ -57,11 +57,43 @@ void Tracker::update()
     if (!target || !active)
         return;
 
-    auto followerPos = follower.getPosition();
-    auto targetPos = target->getPosition();
+    auto followerPos = follower.getPosition3D();
+    auto targetPos = target->getPosition3D();
+
+    // GPS or other modes fallback
+    if (trackingMode == "gps")
+    {
+        auto newPosition = pathCalculator->calculatePath(follower, *target);
+        follower.moveTo(newPosition);
+    }
+
+    else if (trackingMode == "heat_signature")
+    {
+        double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
+                                    std::pow(targetPos.second - followerPos.second, 2) +
+                                    std::pow(targetPos.third - followerPos.third, 2));
+
+        if (simulateHeat) // Simulate heat in test mode
+        {
+            float simulatedHeat = randomHeatLevel();
+            updateHeatSignature(simulatedHeat);
+        }
+        else
+        {
+            float heatSignature = 100.0f / (1.0f + static_cast<float>(distance));
+            updateHeatSignature(heatSignature);
+        }
+
+        if (heatSignatureData < MODE_SWITCH_THRESHOLD && ++modeSwitchCounter >= MODE_SWITCH_DELAY)
+        {
+            setTrackingMode("gps");
+            modeSwitchCounter = 0;
+            return;
+        }
+    }
 
     // Kalman filter tracking logic
-    if (trackingMode == "kalman")
+    else if (trackingMode == "kalman")
     {
         auto newPosition = pathCalculator->calculatePath(follower, *target);
         follower.moveTo(newPosition);
@@ -74,43 +106,6 @@ void Tracker::update()
             active = false;
         }
         return;
-    }
-
-    // Heat signature tracking logic
-    else if (trackingMode == "heat_signature")
-    {
-        double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
-                                    std::pow(targetPos.second - followerPos.second, 2));
-        float heatSignature = 100.0f / (1.0f + static_cast<float>(distance));
-        updateHeatSignature(heatSignature);
-
-        std::cout << "\033[36m[Diagnostic] Heat Signature: " << heatSignature << ", Distance: " << distance << "\033[0m\n";
-
-        // Check if mode should switch based on heat level, with delay counter
-        if (heatSignature < MODE_SWITCH_THRESHOLD)
-        {
-            if (++modeSwitchCounter >= MODE_SWITCH_DELAY)
-            {
-                std::cerr << "\033[31m[Alert] Heat signature too low. Switching to GPS mode.\033[0m\n";
-                setTrackingMode("gps");
-                modeSwitchCounter = 0;
-                return;
-            }
-        }
-        else
-        {
-            modeSwitchCounter = 0; // Reset if signature rises again
-        }
-
-        auto newPosition = pathCalculator->calculatePath(follower, *target);
-        follower.moveTo(newPosition);
-    }
-
-    // GPS or other modes fallback
-    else if (trackingMode == "gps")
-    {
-        auto newPosition = pathCalculator->calculatePath(follower, *target);
-        follower.moveTo(newPosition);
     }
 
     if (followerPos == targetPos)
@@ -130,4 +125,9 @@ bool Tracker::isTrackingActive() const
 void Tracker::updateHeatSignature(float heatSignatureData)
 {
     this->heatSignatureData = heatSignatureData;
+}
+
+float Tracker::randomHeatLevel()
+{
+    return static_cast<float>(rand() % 100);
 }
