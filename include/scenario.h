@@ -3,8 +3,12 @@
 
 #include "Object.h"
 
+#include <vector>
+#include <string>
+#include <iostream>
+
 // Main function to run the scenario mode with GPS and heat signature
-void runScenarioMode(Object &follower, int speed, int iterations);
+void runScenarioMainMode(Object &follower, int speed, int iterations);
 
 // Helper functions for scenario mode
 std::vector<Object> generateTargets();

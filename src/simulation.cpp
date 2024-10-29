@@ -3,6 +3,17 @@
 #include "simulation.h"
 #include "Tracker.h"
 #include "inputValidation.h"
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <atomic>
+#include <iomanip>
+#include <thread>
+#include <chrono>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 // Global vector to store simulation history
 std::vector<SimulationData> simulationHistory;
@@ -40,6 +51,20 @@ void monitorExitKey()
  *
  *
  *****************************************/
+
+std::vector<Object> generateTargets()
+{
+    std::vector<Object> targets;
+
+    // Example: Generating 5 targets with sample positions
+    for (int i = 0; i < 5; ++i)
+    {
+        Object target(i + 1, "Target_" + std::to_string(i + 1), {rand() % 100, rand() % 100});
+        targets.push_back(target);
+    }
+
+    return targets;
+}
 
 void simulateManualConfig(const SimulationData &simData)
 {

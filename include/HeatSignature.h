@@ -1,9 +1,9 @@
-#ifndef HEATSIGNATUREALGORITHM_H
-#define HEATSIGNATUREALGORITHM_H
+#ifndef HEATSIGNATURE_H
+#define HEATSIGNATURE_H
 
 #include "PathCalculator.h"
 
-class HeatSignatureAlgorithm : public PathCalculator
+class HeatSignature : public PathCalculator
 {
 public:
     std::pair<int, int> calculatePath(const Object &follower, const Object &target) override;
@@ -13,4 +13,4 @@ private:
     float heatLevel;
 };
 
-#endif // HEATSIGNATUREALGORITHM_H
+#endif // HEATSIGNATURE_H

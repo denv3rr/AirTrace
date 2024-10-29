@@ -26,12 +26,13 @@ void simulateHeatSeeking(int speed, int iterations);
 void simulateManualConfig(const SimulationData &simData);
 void runGPSMode();
 void runTestMode();
-void runScenarioMode(Object &follower, int speed, int iterations); // Main scenario function
+void runScenarioMode(Object &follower, int speed, int iterations);
 
 // Specific functions for managing and displaying simulations
 void viewAndRerunPreviousSimulations();
 void deletePreviousSimulation();
 void saveSimulationHistoryToFile();
+void saveTestLog(const std::string &logData);
 
 // Test mode support functions
 void runTestScenarioMode();

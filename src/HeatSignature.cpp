@@ -1,14 +1,14 @@
-#include "HeatSignatureAlgorithm.h"
+#include "HeatSignature.h"
 #include <algorithm>
 
 constexpr float MIN_ADJUSTMENT = 0.05f; // Minimum adjustment factor for a single movement
 
-void HeatSignatureAlgorithm::setHeatData(float heat)
+void HeatSignature::setHeatData(float heat)
 {
-    heatLevel = heat;
+    float heatLevel = static_cast<float>(heat);
 }
 
-std::pair<int, int> HeatSignatureAlgorithm::calculatePath(const Object &follower, const Object &target)
+std::pair<int, int> HeatSignature::calculatePath(const Object &follower, const Object &target)
 {
     auto targetPos = target.getPosition();
     auto followerPos = follower.getPosition();

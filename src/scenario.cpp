@@ -3,6 +3,7 @@
 #include "GPSAlgorithm.h"
 #include <iostream>
 #include <vector>
+#include <cmath>
 
 // Main Scenario Mode
 void runScenarioMode(Object &follower, int speed, int iterations)
@@ -36,4 +37,16 @@ void runScenarioMode(Object &follower, int speed, int iterations)
         logDiagnostics(follower, targets); // Log diagnostics for review
         std::this_thread::sleep_for(std::chrono::milliseconds(500 / speed));
     }
+}
+
+float calculateHeatSignature(const Object &source, const Object &target)
+{
+    // Placeholder calculation based on distance (and other potential properties)
+    float distance = std::sqrt(std::pow(target.getPosition().first - source.getPosition().first, 2) +
+                               std::pow(target.getPosition().second - source.getPosition().second, 2));
+
+    // Placeholder decay function inversely proportional to distance squared
+    float heatSignature = source.getHeatLevel() / (1 + std::pow(distance, 2));
+
+    return heatSignature;
 }

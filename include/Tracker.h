@@ -13,7 +13,7 @@
 #include "PathCalculator.h"
 #include "PredictionAlgorithm.h"
 #include "KalmanFilter.h"
-#include "HeatSignatureAlgorithm.h"
+#include "HeatSignature.h"
 #include "DeadReckoning.h"
 #include "GPSAlgorithm.h"
 

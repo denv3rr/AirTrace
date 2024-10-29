@@ -1,5 +1,5 @@
 #include "Tracker.h"
-#include "HeatSignatureAlgorithm.h"
+#include "HeatSignature.h"
 #include <iostream>
 #include <utility>
 #include <cmath>
@@ -22,7 +22,7 @@ void Tracker::setTrackingMode(const std::string &mode)
     }
     else if (mode == "heat_signature")
     {
-        pathCalculator = std::make_unique<HeatSignatureAlgorithm>();
+        pathCalculator = std::make_unique<HeatSignature>();
     }
     else if (mode == "gps")
     {
