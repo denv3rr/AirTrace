@@ -1,4 +1,7 @@
 #include "HeatSignatureAlgorithm.h"
+#include <algorithm>
+
+constexpr float MIN_ADJUSTMENT = 0.05f; // Minimum adjustment factor for a single movement
 
 void HeatSignatureAlgorithm::setHeatData(float heat)
 {
