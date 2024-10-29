@@ -11,6 +11,6 @@ void showTestMenu();
 void viewTestLogs();
 
 // Runs the main scenario mode (declaration only for modular call in main menu)
-void runScenarioMainMode();
+void runScenarioMainMode(Object &follower, int speed, int iterations);
 
 #endif // MENU_H
