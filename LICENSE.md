@@ -1,6 +1,6 @@
 ## License
 
-Copyright (c) 2024 Denver Clark
+Copyright (c) 2025 Denver Clark
 
 This work is licensed under a [Creative Commons Attribution || Non-Commercial || No-Derivatives || 4.0 International License](https://creativecommons.org/licenses/by-nc-nd/4.0/).  
 
