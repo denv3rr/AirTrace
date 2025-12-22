@@ -7,22 +7,48 @@ project(AirTrace VERSION 1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Define the executable target and source files
-add_executable(AirTrace
-        src/main.cpp
-        src/menu.cpp
-        src/simulation.cpp
-        src/inputValidation.cpp
-        src/scenario.cpp
-        src/Object.cpp
-        src/Tracker.cpp
-        src/PathCalculator.cpp
-        src/PredictionAlgorithm.cpp
-        src/KalmanFilter.cpp
-        src/HeatSignature.cpp
-        src/DeadReckoning.cpp
-        src/GPSAlgorithm.cpp
+# Core library
+add_library(airtrace_core
+        src/core/Object.cpp
+        src/core/Tracker.cpp
+        src/core/PathCalculator.cpp
+        src/core/PredictionAlgorithm.cpp
+        src/core/KalmanFilter.cpp
+        src/core/HeatSignature.cpp
+        src/core/DeadReckoning.cpp
+        src/core/GPSAlgorithm.cpp
+        src/core/simulation_utils.cpp
+        src/core/state.cpp
+        src/core/motion_models.cpp
+        src/core/sensors.cpp
+        src/core/mode_manager.cpp
+        src/core/sim_config.cpp
 )
 
-# Include directories for headers
-target_include_directories(AirTrace PUBLIC include)
+target_include_directories(airtrace_core PUBLIC include)
+
+# CLI application
+add_executable(AirTrace
+        src/ui/main.cpp
+        src/ui/menu.cpp
+        src/ui/tui.cpp
+        src/ui/simulation.cpp
+        src/ui/inputValidation.cpp
+        src/ui/scenario.cpp
+)
+
+target_include_directories(AirTrace PRIVATE include)
+target_link_libraries(AirTrace PRIVATE airtrace_core)
+
+# Examples
+add_executable(AirTraceExample
+        examples/cli_demo.cpp
+)
+target_include_directories(AirTraceExample PRIVATE include)
+target_link_libraries(AirTraceExample PRIVATE airtrace_core)
+
+add_executable(AirTraceSimExample
+        examples/sim_demo.cpp
+)
+target_include_directories(AirTraceSimExample PRIVATE include)
+target_link_libraries(AirTraceSimExample PRIVATE airtrace_core)

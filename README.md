@@ -12,6 +12,7 @@
   
   ![GitHub top language](https://img.shields.io/github/languages/top/denv3rr/AirTrace)
   ![CMake Min Version Required](https://img.shields.io/badge/cmake_min_vers_req-3.10-green)
+  ![C++ Standard](https://img.shields.io/badge/c%2B%2B-17-blue)
   ![GitHub Created At](https://img.shields.io/github/created-at/denv3rr/AirTrace)
   
   ![GitHub repo size](https://img.shields.io/github/repo-size/denv3rr/AirTrace)
@@ -85,88 +86,66 @@ This is (*currently*) a **console application** being built to research movement
 
 <div align="left">
 
+**Quick commands (cross-platform):**
+
+- macOS/Linux: `./scripts/build.sh` or `./scripts/run.sh`
+- Windows PowerShell: `.\scripts\build.ps1` or `.\scripts\run.ps1`
+
+**TUI controls:**
+
+- Use Up/Down to move, Space or Enter to select, Esc to go back/exit.
+
+**Commands (CMake + Ninja example):**
+
+| Purpose | Command |
+| --- | --- |
+| Configure | `cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++` |
+| Build app + examples | `cmake --build build --target AirTrace AirTraceExample AirTraceSimExample` |
+| Run main TUI | `./build/AirTrace` (Windows: `.\build\AirTrace.exe`) |
+| Run CLI demo | `./build/AirTraceExample` (Windows: `.\build\AirTraceExample.exe`) |
+| Run 3D sim demo | `./build/AirTraceSimExample` (Windows: `.\build\AirTraceSimExample.exe`) |
+
+**Flags (sim demo):**
+
+| Flag | Description | Example |
+| --- | --- | --- |
+| `CONFIG_PATH` (arg 1) | Path to the sim config file | `./build/AirTraceSimExample configs/sim_default.cfg` |
+
+**Testing:**
+
+| Purpose | Command |
+| --- | --- |
+| Build only | `cmake --build build` |
+| Build sim example | `cmake --build build --target AirTraceSimExample` |
+
 1. **Clone source code or download the `.zip`**
 
     - Clone: `git clone https://github.com/denv3rr/AirTrace`
+    - `cd AirTrace`
     - `.zip`: https://github.com/denv3rr/AirTrace/archive/refs/heads/main.zip
-   
-2. **Build and run** (as of 10/23/2024)
-   
-    - **To build using CMake:**
-  
-        - Make sure you have CMake (3.10+): https://cmake.org/cmake/download
-        - Navigate to `AirTrace\build`
-        - Run cmake: `cmake ..`
-        - Build: `cmake --build .`
-        - The project is built. 
-  
-     - **To run from the `Debug` folder:**
-  
-        - `cd` from `AirTrace\build` to: `AirTrace\build\Debug`
-        - Run the `AirTrace.exe` file that you built.
 
-        -  ````
-            > .\AirTrace.exe
-           
-            AirTrace
+2. **Build and run (current)**
 
-            Main Menu: Select Mode
-            
-            1. Real Input Mode
-            2. Test Mode (Manual Configuration)
-            3. View and Rerun Previous Simulations
-            4. Delete a Previous Simulation
-            5. Exit
-            
-            Select an option:
-          
-            ````
-          - Select option `2`.
-          - ````
-            --------------------------------------------
+    - **Configure (Ninja + GCC example):**
 
+        - Make sure you have CMake (3.10+) and a compiler on PATH.
+        - Configure: `cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++`
 
-            Testing and Debugging Menu
-            
-            NOTE: YOU ARE IN 'TEST MODE'
-            The 'scenario mode' is being designed for dynamic switching
-            between these modes automatically based on external input.
-            
-            1. Prediction
-            2. Kalman Filter
-            3. Heat Signature
-            4. GPS
-            5. Dead Reckoning
-            
-            Select a tracking mode:
-            
-            ````
-          - Selection `3` output example:
-          - ````
-            Select a tracking mode: 3
+    - **Build app + examples:**
 
-            --------------------------------------------
+        - `cmake --build build --target AirTrace AirTraceExample AirTraceSimExample`
 
-            Follower updated to position: (60, 33)
-            
-            [Iteration 0]
-            --------------------------------------------
-            Target Position: (43, 90)
-            Follower Position: (60, 33)
-            Distance to Target: 59.48 units
-            Heat Signature: 1.65 units
-            --------------------------------------------
-            Follower updated to position: (60, 33)
+    - **Run the main TUI:**
 
-            [Iteration 1]
-            --------------------------------------------
-            ...
-            ...
-            <Updates here>
-            ...
-            ...
-            
-            ````
+        - `./build/AirTrace` (Windows: `.\build\AirTrace.exe`)
+
+    - **Run the config-driven 3D sim demo:**
+
+        - `./build/AirTraceSimExample configs/sim_default.cfg`
+
+    - **Config file location:**
+
+        - `configs/sim_default.cfg`
 </div>
 </details>
 <br></br>
@@ -225,7 +204,9 @@ Feel free to fork this repo and create a pull request with any changes.
 - **Seperet** || [Seperet](https://seperet.com) ![Website](https://img.shields.io/website?url=https%3A%2F%2Fseperet.com)  
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="300">
 <br></br>
-  
+
+- **Tracker Component Library** || [US Naval Research Laboratory TrackerComponentLibrary](https://github.com/USNavalResearchLaboratory/TrackerComponentLibrary)
+
 - **Kalman Filter** || [An Introduction to the Kalman Filter - MIT](http://www.mit.edu/~jwilson/kalman.pdf)
 - **Understanding Kalman Filters** || [An Introduction to the Kalman Filter - University of North Carolina](https://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf)
 - **Tutorial: The Kalman Filter** || [Tutorial: The Kalman Filter - MIT](https://web.mit.edu/kirtley/kirtley/binlustuff/literature/control/Kalman%20filter.pdf)
