@@ -23,6 +23,7 @@ add_library(airtrace_core
         src/core/sensors.cpp
         src/core/mode_manager.cpp
         src/core/sim_config.cpp
+        src/core/logging.cpp
 )
 
 target_include_directories(airtrace_core PUBLIC include)
@@ -52,3 +53,11 @@ add_executable(AirTraceSimExample
 )
 target_include_directories(AirTraceSimExample PRIVATE include)
 target_link_libraries(AirTraceSimExample PRIVATE airtrace_core)
+
+enable_testing()
+add_executable(AirTraceCoreTests
+        tests/core_sanity.cpp
+)
+target_include_directories(AirTraceCoreTests PRIVATE include)
+target_link_libraries(AirTraceCoreTests PRIVATE airtrace_core)
+add_test(NAME AirTraceCoreTests COMMAND AirTraceCoreTests)

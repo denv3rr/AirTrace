@@ -10,6 +10,7 @@
 
 struct SimConfig
 {
+    std::string version = "1.0";
     State9 initialState{};
     double dt = 0.2;
     int steps = 20;
@@ -20,8 +21,8 @@ struct SimConfig
 
     SensorConfig gps{1.0, 2.0, 0.1, 0.03, 5000.0};
     SensorConfig thermal{5.0, 5.0, 0.15, 0.08, 1200.0};
-    SensorConfig deadReckoning{20.0, 0.5, 0.0, 0.0, 0.0};
-    SensorConfig imu{50.0, 0.2, 0.05, 0.0, 0.0};
+    SensorConfig deadReckoning{20.0, 0.5, 0.0, 0.0, 1e6};
+    SensorConfig imu{50.0, 0.2, 0.05, 0.0, 1e6};
     SensorConfig radar{2.0, 1.0, 0.08, 0.02, 2000.0};
 };
 

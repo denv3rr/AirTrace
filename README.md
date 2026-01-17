@@ -9,10 +9,9 @@
   ![GitHub Created At](https://img.shields.io/github/created-at/denv3rr/AirTrace)
   ![GitHub repo size](https://img.shields.io/github/repo-size/denv3rr/AirTrace)
   ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
-  ![Website](https://img.shields.io/website?url=https%3A%2F%2Fseperet.com)
 
   <br><br>
-[About](#a-motion-and-sensor-core-cli) | [Run and Debug](#run-and-debug) | [Issues](#issues) | [Links](#links) | [seperet.com](https://seperet.com)
+[About](#a-motion-and-sensor-core-cli) | [Run and Debug](#run-and-debug) | [Documentation](#documentation) | [Issues](#issues) | [Links](#links) | [seperet.com](https://seperet.com)
     <br></br>
   <a href="https://seperet.com">
     <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
@@ -83,6 +82,12 @@ Focuses:
 
 - macOS/Linux: `./scripts/build.sh` or `./scripts/run.sh`
 - Windows PowerShell: `.\scripts\build.ps1` or `.\scripts\run.ps1`
+- Sim demo (uses config from repo root):
+  - macOS/Linux: `AIRTRACE_TARGET=AirTraceSimExample ./scripts/run.sh`
+  - Windows PowerShell: `$env:AIRTRACE_TARGET="AirTraceSimExample"; .\scripts\run.ps1`
+- Tests:
+  - macOS/Linux: `./scripts/test.sh`
+  - Windows PowerShell: `.\scripts\test.ps1`
 
 **TUI controls:**
 
@@ -147,6 +152,32 @@ Focuses:
 
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
 
+### **Documentation**
+
+<details>
+<summary>Expand</summary>
+<br></br>
+
+<div align="left">
+
+- Core architecture: [`docs/architecture.md`](docs/architecture.md)
+- Data sources: [`docs/data_sources.md`](docs/data_sources.md)
+- Requirements: [`docs/requirements.md`](docs/requirements.md)
+- Verification plan: [`docs/verification_plan.md`](docs/verification_plan.md)
+- Traceability: [`docs/traceability.md`](docs/traceability.md)
+- Hazard log: [`docs/hazard_log.md`](docs/hazard_log.md)
+- Security threat model: [`docs/security_threat_model.md`](docs/security_threat_model.md)
+- Config schema: [`docs/config_schema.md`](docs/config_schema.md)
+- Operational concepts: [`docs/operational_concepts.md`](docs/operational_concepts.md)
+
+</div>
+</details>
+
+<br></br>
+<br></br>
+<br></br>
+
+<img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
 
 ### **Issues**
 
@@ -181,7 +212,7 @@ If you have any problems with anything, **submit an issue** to let me know.
 
 - **Tracker Component Library** || [US Naval Research Laboratory TrackerComponentLibrary](https://github.com/USNavalResearchLaboratory/TrackerComponentLibrary)
 
-- **Kalman Filter** || [An Introduction to the Kalman Filter - MIT](http://www.mit.edu/~jwilson/kalman.pdf)
+- **Kalman Filter** || [An Introduction to the Kalman Filter - MIT](https://www.mit.edu/~jwilson/kalman.pdf)
 - **Understanding Kalman Filters** || [An Introduction to the Kalman Filter - University of North Carolina](https://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf)
 - **Tutorial: The Kalman Filter** || [Tutorial: The Kalman Filter - MIT](https://web.mit.edu/kirtley/kirtley/binlustuff/literature/control/Kalman%20filter.pdf)
 - **Predictive Algorithms in Motion Tracking** || [An Elementary Introduction to Kalman Filtering - University of Texas](https://www.cs.utexas.edu/~mooney/cs343/kalman.pdf)

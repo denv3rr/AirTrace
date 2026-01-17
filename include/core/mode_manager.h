@@ -2,6 +2,7 @@
 #define CORE_MODE_MANAGER_H
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "core/sensors.h"
@@ -22,11 +23,24 @@ struct ModeDecision
     std::string reason;
 };
 
+struct ModeManagerConfig
+{
+    int minHealthyCount = 2;
+    int minDwellSteps = 3;
+};
+
 class ModeManager
 {
 public:
-    ModeDecision decide(const std::vector<SensorBase *> &sensors) const;
+    explicit ModeManager(ModeManagerConfig config = {});
+    ModeDecision decide(const std::vector<SensorBase *> &sensors);
     static std::string modeName(TrackingMode mode);
+
+private:
+    ModeManagerConfig config;
+    TrackingMode currentMode = TrackingMode::Hold;
+    int dwellSteps = 0;
+    std::unordered_map<std::string, int> healthyCounts;
 };
 
 #endif // CORE_MODE_MANAGER_H

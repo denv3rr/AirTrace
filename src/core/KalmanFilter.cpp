@@ -1,4 +1,6 @@
 #include "core/KalmanFilter.h"
+#include "core/logging.h"
+
 #include <cmath>
 
 KalmanFilter::KalmanFilter()
@@ -22,7 +24,7 @@ void KalmanFilter::updateEstimates(std::pair<int, int> measurement)
     double distance = std::sqrt(std::pow(estimate.first - measuredX, 2) + std::pow(estimate.second - measuredY, 2));
     if (distance < 0.1)
     {
-        std::cout << "\nFollower has reached the target.\n";
+        logMessage(LogLevel::Info, "Follower has reached the target.");
         return;
     }
 

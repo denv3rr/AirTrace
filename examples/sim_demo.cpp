@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -10,6 +11,54 @@
 
 namespace
 {
+struct ConfigPathResult
+{
+    std::string path;
+    std::vector<std::string> tried;
+};
+
+ConfigPathResult resolveConfigPath(int argc, char **argv)
+{
+    const std::string defaultPath = "configs/sim_default.cfg";
+    std::string requested = (argc > 1) ? argv[1] : defaultPath;
+    std::vector<std::string> tried;
+
+    auto addCandidate = [&](const std::filesystem::path &candidate)
+    {
+        std::string value = candidate.string();
+        for (const auto &existing : tried)
+        {
+            if (existing == value)
+            {
+                return;
+            }
+        }
+        tried.push_back(value);
+    };
+
+    std::filesystem::path requestedPath(requested);
+    addCandidate(requestedPath);
+    addCandidate(std::filesystem::current_path() / requestedPath);
+
+    std::filesystem::path exePath(argv[0]);
+    std::filesystem::path exeDir = exePath.has_parent_path() ? exePath.parent_path() : std::filesystem::path{};
+    if (!exeDir.empty())
+    {
+        addCandidate(exeDir / requestedPath);
+        addCandidate(exeDir / ".." / requestedPath);
+    }
+
+    for (const auto &candidate : tried)
+    {
+        if (std::filesystem::exists(candidate))
+        {
+            return {candidate, tried};
+        }
+    }
+
+    return {requested, tried};
+}
+
 MotionModelType cycleModel(int step)
 {
     switch (step % 4)
@@ -28,19 +77,23 @@ MotionModelType cycleModel(int step)
 
 int main(int argc, char **argv)
 {
-    std::string configPath = "configs/sim_default.cfg";
-    if (argc > 1)
-    {
-        configPath = argv[1];
-    }
+    ConfigPathResult config = resolveConfigPath(argc, argv);
 
-    ConfigResult loaded = loadSimConfig(configPath);
+    ConfigResult loaded = loadSimConfig(config.path);
     if (!loaded.ok)
     {
         std::cerr << "Config issues:\n";
         for (const auto &issue : loaded.issues)
         {
             std::cerr << "- " << issue.key << ": " << issue.message << "\n";
+        }
+        if (!config.tried.empty())
+        {
+            std::cerr << "Config search paths:\n";
+            for (const auto &candidate : config.tried)
+            {
+                std::cerr << "- " << candidate << "\n";
+            }
         }
         return 1;
     }

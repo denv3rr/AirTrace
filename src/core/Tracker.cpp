@@ -1,8 +1,10 @@
 #include "core/Tracker.h"
 #include "core/HeatSignature.h"
-#include <iostream>
-#include <utility>
+#include "core/logging.h"
+
 #include <cmath>
+#include <sstream>
+#include <utility>
 
 // Set these values manually if needed for testing etc
 constexpr int MODE_SWITCH_THRESHOLD = 1; // Heat threshold for mode switch
@@ -36,7 +38,7 @@ void Tracker::setTrackingMode(const std::string &mode)
     }
     else
     {
-        std::cerr << "Unknown tracking mode: " << mode << "\n";
+        logMessage(LogLevel::Error, "Unknown tracking mode: " + mode);
         active = false;
     }
 }
@@ -113,12 +115,16 @@ void Tracker::update()
                                 std::pow(targetPos.second - followerPos.second, 2));
     if (distance < 0.1)
     {
-        std::cout << "Follower has reached the target at: " << follower.getPosition() << "\n";
+        std::ostringstream message;
+        message << "Follower has reached the target at: " << follower.getPosition();
+        logMessage(LogLevel::Info, message.str());
         active = false;
         return;
     }
 
-    std::cout << "Follower updated to position: " << follower.getPosition() << "\n";
+    std::ostringstream message;
+    message << "Follower updated to position: " << follower.getPosition();
+    logMessage(LogLevel::Info, message.str());
 }
 
 bool Tracker::isTrackingActive() const
