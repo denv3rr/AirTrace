@@ -37,6 +37,15 @@ Includes a core library for motion models and sensor behavior, and a CLI/TUI for
 Focuses:
   state estimation, sensor modeling, and robust fallback behavior
   under degraded inputs.
+  Includes fallback sensor models for GNSS, IMU, radar, thermal, vision,
+  lidar, magnetometer, baro, celestial, and dead reckoning.
+
+Navigation fallback ladder and platform profiles are documented in
+`docs/navigation_fallbacks.md` with government and university sources.
+
+The fallback ladder prefers GNSS and tightly coupled inertial updates,
+then vision/lidar or radar/terrain aids, and only enables celestial
+navigation when higher-priority sources are unavailable or disallowed.
 
 <br></br>
 
@@ -82,6 +91,7 @@ Focuses:
 
 - macOS/Linux: `./scripts/build.sh` or `./scripts/run.sh`
 - Windows PowerShell: `.\scripts\build.ps1` or `.\scripts\run.ps1`
+- Build (quick): `./scripts/build.sh` (macOS/Linux) or `.\scripts\build.ps1` (Windows)
 - Sim demo (uses config from repo root):
   - macOS/Linux: `AIRTRACE_TARGET=AirTraceSimExample ./scripts/run.sh`
   - Windows PowerShell: `$env:AIRTRACE_TARGET="AirTraceSimExample"; .\scripts\run.ps1`
@@ -169,6 +179,9 @@ Focuses:
 - Security threat model: [`docs/security_threat_model.md`](docs/security_threat_model.md)
 - Config schema: [`docs/config_schema.md`](docs/config_schema.md)
 - Operational concepts: [`docs/operational_concepts.md`](docs/operational_concepts.md)
+- Navigation fallbacks: [`docs/navigation_fallbacks.md`](docs/navigation_fallbacks.md)
+- Standards and sources: [`docs/navigation_fallbacks.md`](docs/navigation_fallbacks.md)
+- UI/TUI standards: [`docs/ui_standards.md`](docs/ui_standards.md)
 
 </div>
 </details>

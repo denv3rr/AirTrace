@@ -12,6 +12,11 @@ enum class TrackingMode
     Gps,
     Thermal,
     Radar,
+    Vision,
+    Lidar,
+    Magnetometer,
+    Baro,
+    Celestial,
     DeadReckoning,
     Inertial,
     Hold
@@ -27,6 +32,8 @@ struct ModeManagerConfig
 {
     int minHealthyCount = 2;
     int minDwellSteps = 3;
+    std::vector<std::string> permittedSensors{};
+    bool celestialAllowed = false;
 };
 
 class ModeManager

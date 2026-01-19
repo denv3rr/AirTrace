@@ -2,7 +2,17 @@
 
 namespace
 {
-const std::vector<std::string> kSensorPriority = {"gps", "thermal", "radar", "dead_reckoning", "imu"};
+const std::vector<std::string> kSensorPriority = {
+    "gps",
+    "vision",
+    "lidar",
+    "radar",
+    "thermal",
+    "magnetometer",
+    "baro",
+    "celestial",
+    "dead_reckoning",
+    "imu"};
 
 std::string sensorNameForMode(TrackingMode mode)
 {
@@ -14,6 +24,16 @@ std::string sensorNameForMode(TrackingMode mode)
         return "thermal";
     case TrackingMode::Radar:
         return "radar";
+    case TrackingMode::Vision:
+        return "vision";
+    case TrackingMode::Lidar:
+        return "lidar";
+    case TrackingMode::Magnetometer:
+        return "magnetometer";
+    case TrackingMode::Baro:
+        return "baro";
+    case TrackingMode::Celestial:
+        return "celestial";
     case TrackingMode::DeadReckoning:
         return "dead_reckoning";
     case TrackingMode::Inertial:
@@ -31,6 +51,26 @@ ModeManager::ModeManager(ModeManagerConfig config)
 
 ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
 {
+    auto permitted = [&](const std::string &name) -> bool
+    {
+        if (name == "celestial" && !config.celestialAllowed)
+        {
+            return false;
+        }
+        if (config.permittedSensors.empty())
+        {
+            return true;
+        }
+        for (const auto &allowed : config.permittedSensors)
+        {
+            if (allowed == name)
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+
     auto updateHealthCount = [&](const std::string &name)
     {
         bool healthy = false;
@@ -53,6 +93,10 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
 
     auto eligible = [&](const std::string &name) -> bool
     {
+        if (!permitted(name))
+        {
+            return false;
+        }
         auto it = healthyCounts.find(name);
         if (it == healthyCounts.end())
         {
@@ -71,6 +115,18 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
             if (name == "gps")
             {
                 desiredMode = TrackingMode::Gps;
+                if (eligible("imu"))
+                {
+                    desiredReason = "gps_ins_healthy";
+                }
+            }
+            else if (name == "vision")
+            {
+                desiredMode = TrackingMode::Vision;
+            }
+            else if (name == "lidar")
+            {
+                desiredMode = TrackingMode::Lidar;
             }
             else if (name == "thermal")
             {
@@ -79,6 +135,18 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
             else if (name == "radar")
             {
                 desiredMode = TrackingMode::Radar;
+            }
+            else if (name == "magnetometer")
+            {
+                desiredMode = TrackingMode::Magnetometer;
+            }
+            else if (name == "baro")
+            {
+                desiredMode = TrackingMode::Baro;
+            }
+            else if (name == "celestial")
+            {
+                desiredMode = TrackingMode::Celestial;
             }
             else if (name == "dead_reckoning")
             {
@@ -143,6 +211,16 @@ std::string ModeManager::modeName(TrackingMode mode)
         return "thermal";
     case TrackingMode::Radar:
         return "radar";
+    case TrackingMode::Vision:
+        return "vision";
+    case TrackingMode::Lidar:
+        return "lidar";
+    case TrackingMode::Magnetometer:
+        return "magnetometer";
+    case TrackingMode::Baro:
+        return "baro";
+    case TrackingMode::Celestial:
+        return "celestial";
     case TrackingMode::DeadReckoning:
         return "dead_reckoning";
     case TrackingMode::Inertial:

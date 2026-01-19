@@ -24,6 +24,7 @@ add_library(airtrace_core
         src/core/mode_manager.cpp
         src/core/sim_config.cpp
         src/core/logging.cpp
+        src/core/hash.cpp
 )
 
 target_include_directories(airtrace_core PUBLIC include)

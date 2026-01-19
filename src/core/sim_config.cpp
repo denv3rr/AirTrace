@@ -1,5 +1,7 @@
 #include "core/sim_config.h"
 
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -17,6 +19,28 @@ std::string trim(const std::string &value)
     }
     size_t end = value.find_last_not_of(" \t\r\n");
     return value.substr(start, end - start + 1);
+}
+
+std::string toLower(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+    return value;
+}
+
+std::vector<std::string> splitList(const std::string &value)
+{
+    std::vector<std::string> items;
+    std::stringstream ss(value);
+    std::string part;
+    while (std::getline(ss, part, ','))
+    {
+        std::string trimmed = toLower(trim(part));
+        if (!trimmed.empty())
+        {
+            items.push_back(trimmed);
+        }
+    }
+    return items;
 }
 
 bool toDouble(const std::string &value, double &out)
@@ -50,6 +74,67 @@ bool toUnsigned(const std::string &value, unsigned int &out)
     return true;
 }
 
+bool toBool(const std::string &value, bool &out)
+{
+    std::string lowered = toLower(trim(value));
+    if (lowered == "true" || lowered == "1" || lowered == "yes")
+    {
+        out = true;
+        return true;
+    }
+    if (lowered == "false" || lowered == "0" || lowered == "no")
+    {
+        out = false;
+        return true;
+    }
+    return false;
+}
+
+bool toProfile(const std::string &value, SimConfig::PlatformProfile &out)
+{
+    std::string lowered = toLower(trim(value));
+    if (lowered == "base") out = SimConfig::PlatformProfile::Base;
+    else if (lowered == "air") out = SimConfig::PlatformProfile::Air;
+    else if (lowered == "ground") out = SimConfig::PlatformProfile::Ground;
+    else if (lowered == "maritime") out = SimConfig::PlatformProfile::Maritime;
+    else if (lowered == "space") out = SimConfig::PlatformProfile::Space;
+    else if (lowered == "handheld") out = SimConfig::PlatformProfile::Handheld;
+    else if (lowered == "fixed_site") out = SimConfig::PlatformProfile::FixedSite;
+    else if (lowered == "subsea") out = SimConfig::PlatformProfile::Subsea;
+    else return false;
+    return true;
+}
+
+bool toNetworkAidMode(const std::string &value, SimConfig::NetworkAidMode &out)
+{
+    std::string lowered = toLower(trim(value));
+    if (lowered == "deny") out = SimConfig::NetworkAidMode::Deny;
+    else if (lowered == "allow") out = SimConfig::NetworkAidMode::Allow;
+    else if (lowered == "test_only") out = SimConfig::NetworkAidMode::TestOnly;
+    else return false;
+    return true;
+}
+
+bool toOverrideAuth(const std::string &value, SimConfig::OverrideAuth &out)
+{
+    std::string lowered = toLower(trim(value));
+    if (lowered == "credential") out = SimConfig::OverrideAuth::Credential;
+    else if (lowered == "key") out = SimConfig::OverrideAuth::Key;
+    else if (lowered == "token") out = SimConfig::OverrideAuth::Token;
+    else return false;
+    return true;
+}
+
+bool toDatasetTier(const std::string &value, SimConfig::DatasetTier &out)
+{
+    std::string lowered = toLower(trim(value));
+    if (lowered == "minimal") out = SimConfig::DatasetTier::Minimal;
+    else if (lowered == "standard") out = SimConfig::DatasetTier::Standard;
+    else if (lowered == "extended") out = SimConfig::DatasetTier::Extended;
+    else return false;
+    return true;
+}
+
 void setIssue(ConfigResult &result, const std::string &key, const std::string &message)
 {
     result.ok = false;
@@ -61,6 +146,11 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     double dval = 0.0;
     int ival = 0;
     unsigned int uval = 0;
+    bool bval = false;
+    SimConfig::PlatformProfile profile = SimConfig::PlatformProfile::Base;
+    SimConfig::NetworkAidMode aidMode = SimConfig::NetworkAidMode::Deny;
+    SimConfig::OverrideAuth authMode = SimConfig::OverrideAuth::Credential;
+    SimConfig::DatasetTier tier = SimConfig::DatasetTier::Minimal;
 
     if (key == "config.version")
     {
@@ -115,6 +205,57 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "sensor.radar.dropout" && toDouble(value, dval)) config.radar.dropoutProbability = dval;
     else if (key == "sensor.radar.false_positive" && toDouble(value, dval)) config.radar.falsePositiveProbability = dval;
     else if (key == "sensor.radar.max_range" && toDouble(value, dval)) config.radar.maxRange = dval;
+    else if (key == "sensor.vision.rate_hz" && toDouble(value, dval)) config.vision.rateHz = dval;
+    else if (key == "sensor.vision.noise_std" && toDouble(value, dval)) config.vision.noiseStd = dval;
+    else if (key == "sensor.vision.dropout" && toDouble(value, dval)) config.vision.dropoutProbability = dval;
+    else if (key == "sensor.vision.false_positive" && toDouble(value, dval)) config.vision.falsePositiveProbability = dval;
+    else if (key == "sensor.vision.max_range" && toDouble(value, dval)) config.vision.maxRange = dval;
+    else if (key == "sensor.lidar.rate_hz" && toDouble(value, dval)) config.lidar.rateHz = dval;
+    else if (key == "sensor.lidar.noise_std" && toDouble(value, dval)) config.lidar.noiseStd = dval;
+    else if (key == "sensor.lidar.dropout" && toDouble(value, dval)) config.lidar.dropoutProbability = dval;
+    else if (key == "sensor.lidar.false_positive" && toDouble(value, dval)) config.lidar.falsePositiveProbability = dval;
+    else if (key == "sensor.lidar.max_range" && toDouble(value, dval)) config.lidar.maxRange = dval;
+    else if (key == "sensor.magnetometer.rate_hz" && toDouble(value, dval)) config.magnetometer.rateHz = dval;
+    else if (key == "sensor.magnetometer.noise_std" && toDouble(value, dval)) config.magnetometer.noiseStd = dval;
+    else if (key == "sensor.magnetometer.dropout" && toDouble(value, dval)) config.magnetometer.dropoutProbability = dval;
+    else if (key == "sensor.magnetometer.false_positive" && toDouble(value, dval)) config.magnetometer.falsePositiveProbability = dval;
+    else if (key == "sensor.magnetometer.max_range" && toDouble(value, dval)) config.magnetometer.maxRange = dval;
+    else if (key == "sensor.baro.rate_hz" && toDouble(value, dval)) config.baro.rateHz = dval;
+    else if (key == "sensor.baro.noise_std" && toDouble(value, dval)) config.baro.noiseStd = dval;
+    else if (key == "sensor.baro.dropout" && toDouble(value, dval)) config.baro.dropoutProbability = dval;
+    else if (key == "sensor.baro.false_positive" && toDouble(value, dval)) config.baro.falsePositiveProbability = dval;
+    else if (key == "sensor.baro.max_range" && toDouble(value, dval)) config.baro.maxRange = dval;
+    else if (key == "sensor.celestial.rate_hz" && toDouble(value, dval)) config.celestial.rateHz = dval;
+    else if (key == "sensor.celestial.noise_std" && toDouble(value, dval)) config.celestial.noiseStd = dval;
+    else if (key == "sensor.celestial.dropout" && toDouble(value, dval)) config.celestial.dropoutProbability = dval;
+    else if (key == "sensor.celestial.false_positive" && toDouble(value, dval)) config.celestial.falsePositiveProbability = dval;
+    else if (key == "sensor.celestial.max_range" && toDouble(value, dval)) config.celestial.maxRange = dval;
+    else if (key == "platform.profile" && toProfile(value, profile)) config.platformProfile = profile;
+    else if (key == "platform.permitted_sensors") config.permittedSensors = splitList(value);
+    else if (key == "policy.network_aid.mode" && toNetworkAidMode(value, aidMode)) config.policy.networkAidMode = aidMode;
+    else if (key == "policy.network_aid.override_required" && toBool(value, bval)) config.policy.overrideRequired = bval;
+    else if (key == "policy.network_aid.override_auth" && toOverrideAuth(value, authMode)) config.policy.overrideAuth = authMode;
+    else if (key == "policy.network_aid.override_timeout_seconds" && toInt(value, ival)) config.policy.overrideTimeoutSeconds = ival;
+    else if (key == "policy.roles") config.policy.roles = splitList(value);
+    else if (key == "policy.active_role") config.policy.activeRole = value;
+    else if (key.rfind("policy.role_permissions.", 0) == 0)
+    {
+        std::string role = key.substr(std::string("policy.role_permissions.").size());
+        if (role.empty())
+        {
+            setIssue(result, key, "missing role name");
+        }
+        else
+        {
+            config.policy.rolePermissions[role] = splitList(value);
+        }
+    }
+    else if (key == "dataset.celestial.tier" && toDatasetTier(value, tier)) config.dataset.tier = tier;
+    else if (key == "dataset.celestial.max_size_mb" && toDouble(value, dval)) config.dataset.maxSizeMB = dval;
+    else if (key == "dataset.celestial.catalog_path") config.dataset.celestialCatalogPath = value;
+    else if (key == "dataset.celestial.ephemeris_path") config.dataset.celestialEphemerisPath = value;
+    else if (key == "dataset.celestial.catalog_hash") config.dataset.celestialCatalogHash = value;
+    else if (key == "dataset.celestial.ephemeris_hash") config.dataset.celestialEphemerisHash = value;
     else
     {
         setIssue(result, key, "unknown or invalid value");
@@ -193,6 +334,67 @@ void validateConfig(ConfigResult &result)
     validateSensor(config.deadReckoning, "dead_reckoning", true);
     validateSensor(config.imu, "imu", true);
     validateSensor(config.radar, "radar", true);
+    validateSensor(config.vision, "vision", true);
+    validateSensor(config.lidar, "lidar", true);
+    validateSensor(config.magnetometer, "magnetometer", false);
+    validateSensor(config.baro, "baro", true);
+    validateSensor(config.celestial, "celestial", false);
+
+    if (config.policy.overrideTimeoutSeconds < 0)
+    {
+        setIssue(result, "policy.network_aid.override_timeout_seconds", "must be >= 0");
+    }
+
+    if (config.policy.roles.empty())
+    {
+        setIssue(result, "policy.roles", "must include at least one role");
+    }
+
+    bool activeFound = false;
+    for (const auto &role : config.policy.roles)
+    {
+        if (role == config.policy.activeRole)
+        {
+            activeFound = true;
+            break;
+        }
+    }
+    if (!activeFound)
+    {
+        setIssue(result, "policy.active_role", "role not defined");
+    }
+
+    for (const auto &entry : config.policy.rolePermissions)
+    {
+        const std::string &role = entry.first;
+        bool found = false;
+        for (const auto &defined : config.policy.roles)
+        {
+            if (defined == role)
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            setIssue(result, "policy.role_permissions." + role, "role not defined");
+        }
+    }
+
+    if (config.dataset.maxSizeMB < 0.0)
+    {
+        setIssue(result, "dataset.celestial.max_size_mb", "must be >= 0");
+    }
+
+    if (!config.dataset.celestialCatalogPath.empty() && config.dataset.celestialCatalogHash.empty())
+    {
+        setIssue(result, "dataset.celestial.catalog_hash", "required when catalog_path is set");
+    }
+    if (!config.dataset.celestialEphemerisPath.empty() && config.dataset.celestialEphemerisHash.empty())
+    {
+        setIssue(result, "dataset.celestial.ephemeris_hash", "required when ephemeris_path is set");
+    }
 }
 } // namespace
 
@@ -238,6 +440,39 @@ ConfigResult loadSimConfig(const std::string &path)
     {
         setIssue(result, "config.version", "missing required key");
     }
+
+    if (result.config.permittedSensors.empty())
+    {
+        switch (result.config.platformProfile)
+        {
+        case SimConfig::PlatformProfile::Air:
+            result.config.permittedSensors = {"gps", "imu", "baro", "magnetometer", "radar", "thermal", "vision", "lidar", "celestial", "dead_reckoning"};
+            break;
+        case SimConfig::PlatformProfile::Ground:
+            result.config.permittedSensors = {"gps", "imu", "vision", "lidar", "radar", "thermal", "magnetometer", "baro", "celestial", "dead_reckoning"};
+            break;
+        case SimConfig::PlatformProfile::Maritime:
+            result.config.permittedSensors = {"gps", "imu", "radar", "magnetometer", "baro", "vision", "celestial", "dead_reckoning"};
+            break;
+        case SimConfig::PlatformProfile::Space:
+            result.config.permittedSensors = {"gps", "imu", "celestial", "dead_reckoning"};
+            break;
+        case SimConfig::PlatformProfile::Handheld:
+            result.config.permittedSensors = {"gps", "imu", "magnetometer", "baro", "vision", "celestial", "dead_reckoning"};
+            break;
+        case SimConfig::PlatformProfile::FixedSite:
+            result.config.permittedSensors = {"gps", "imu", "celestial"};
+            break;
+        case SimConfig::PlatformProfile::Subsea:
+            result.config.permittedSensors = {"imu", "baro", "magnetometer", "dead_reckoning"};
+            break;
+        case SimConfig::PlatformProfile::Base:
+        default:
+            result.config.permittedSensors = {"gps", "imu", "thermal", "radar", "dead_reckoning"};
+            break;
+        }
+    }
+
     validateConfig(result);
 
     return result;

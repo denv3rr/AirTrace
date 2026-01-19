@@ -1,0 +1,3 @@
+[submodule "TrackerComponentLibrary"]
+	path = TrackerComponentLibrary
+	url = git@github.com:USNavalResearchLaboratory/TrackerComponentLibrary.git

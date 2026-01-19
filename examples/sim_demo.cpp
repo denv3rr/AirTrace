@@ -1,8 +1,10 @@
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <random>
 #include <vector>
 
+#include "core/hash.h"
 #include "core/mode_manager.h"
 #include "core/motion_models.h"
 #include "core/sensors.h"
@@ -15,6 +17,12 @@ struct ConfigPathResult
 {
     std::string path;
     std::vector<std::string> tried;
+};
+
+struct DatasetCheckResult
+{
+    bool ok = true;
+    std::string message;
 };
 
 ConfigPathResult resolveConfigPath(int argc, char **argv)
@@ -73,6 +81,100 @@ MotionModelType cycleModel(int step)
         return MotionModelType::RandomManeuver;
     }
 }
+
+std::vector<unsigned char> readFileBytes(const std::string &path, std::string &error)
+{
+    std::ifstream file(path, std::ios::binary);
+    if (!file)
+    {
+        error = "unable to open";
+        return {};
+    }
+    std::vector<unsigned char> data((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    return data;
+}
+
+bool hasPermission(const SimConfig::PolicyConfig &policy, const std::string &permission)
+{
+    auto it = policy.rolePermissions.find(policy.activeRole);
+    if (it == policy.rolePermissions.end())
+    {
+        return false;
+    }
+    for (const auto &entry : it->second)
+    {
+        if (entry == permission)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+DatasetCheckResult validateCelestialDataset(const SimConfig &cfg)
+{
+    DatasetCheckResult result;
+    if (!cfg.dataset.celestialAvailable())
+    {
+        result.ok = false;
+        result.message = "celestial dataset config incomplete";
+        return result;
+    }
+
+    if (cfg.dataset.tier != SimConfig::DatasetTier::Minimal && !hasPermission(cfg.policy, "dataset_tier"))
+    {
+        result.ok = false;
+        result.message = "dataset tier override not permitted";
+        return result;
+    }
+
+    const std::string catalogPath = cfg.dataset.celestialCatalogPath;
+    const std::string ephPath = cfg.dataset.celestialEphemerisPath;
+    std::string error;
+
+    std::vector<unsigned char> catalog = readFileBytes(catalogPath, error);
+    if (catalog.empty())
+    {
+        result.ok = false;
+        result.message = "catalog " + error;
+        return result;
+    }
+    std::vector<unsigned char> ephemeris = readFileBytes(ephPath, error);
+    if (ephemeris.empty())
+    {
+        result.ok = false;
+        result.message = "ephemeris " + error;
+        return result;
+    }
+
+    if (cfg.dataset.maxSizeMB > 0.0)
+    {
+        double totalSizeMB = (static_cast<double>(catalog.size()) + static_cast<double>(ephemeris.size())) / (1024.0 * 1024.0);
+        if (totalSizeMB > cfg.dataset.maxSizeMB)
+        {
+            result.ok = false;
+            result.message = "dataset size exceeds limit";
+            return result;
+        }
+    }
+
+    std::string catalogHash = sha256Hex(catalog);
+    if (!hashEquals(cfg.dataset.celestialCatalogHash, catalogHash))
+    {
+        result.ok = false;
+        result.message = "catalog hash mismatch";
+        return result;
+    }
+    std::string ephemerisHash = sha256Hex(ephemeris);
+    if (!hashEquals(cfg.dataset.celestialEphemerisHash, ephemerisHash))
+    {
+        result.ok = false;
+        result.message = "ephemeris hash mismatch";
+        return result;
+    }
+
+    return result;
+}
 } // namespace
 
 int main(int argc, char **argv)
@@ -102,6 +204,18 @@ int main(int argc, char **argv)
     std::mt19937 rng(cfg.seed);
     State9 state = cfg.initialState;
 
+    bool celestialAllowed = false;
+    if (cfg.dataset.celestialAvailable())
+    {
+        DatasetCheckResult datasetCheck = validateCelestialDataset(cfg);
+        if (!datasetCheck.ok)
+        {
+            std::cerr << "Celestial dataset invalid: " << datasetCheck.message << "\n";
+            return 1;
+        }
+        celestialAllowed = true;
+    }
+
     MotionBounds bounds = cfg.bounds;
     ManeuverParams maneuvers = cfg.maneuvers;
 
@@ -110,15 +224,32 @@ int main(int argc, char **argv)
     SensorConfig drCfg = cfg.deadReckoning;
     SensorConfig imuCfg = cfg.imu;
     SensorConfig radarCfg = cfg.radar;
+    SensorConfig visionCfg = cfg.vision;
+    SensorConfig lidarCfg = cfg.lidar;
+    SensorConfig magnetometerCfg = cfg.magnetometer;
+    SensorConfig baroCfg = cfg.baro;
+    SensorConfig celestialCfg = cfg.celestial;
 
     GpsSensor gps(gpsCfg);
     ThermalSensor thermal(thermalCfg);
     DeadReckoningSensor deadReckoning(drCfg);
     ImuSensor imu(imuCfg);
     RadarSensor radar(radarCfg);
-    std::vector<SensorBase *> sensors{&gps, &thermal, &radar, &deadReckoning, &imu};
+    VisionSensor vision(visionCfg);
+    LidarSensor lidar(lidarCfg);
+    MagnetometerSensor magnetometer(magnetometerCfg);
+    BarometerSensor baro(baroCfg);
+    CelestialSensor celestial(celestialCfg);
+    std::vector<SensorBase *> sensors{&gps, &thermal, &radar, &deadReckoning, &imu, &vision, &lidar, &magnetometer, &baro};
+    if (celestialAllowed)
+    {
+        sensors.push_back(&celestial);
+    }
 
-    ModeManager modeManager;
+    ModeManagerConfig modeConfig;
+    modeConfig.permittedSensors = cfg.permittedSensors;
+    modeConfig.celestialAllowed = celestialAllowed;
+    ModeManager modeManager(modeConfig);
 
     double dt = cfg.dt;
     for (int i = 0; i < cfg.steps; ++i)
@@ -131,6 +262,15 @@ int main(int argc, char **argv)
         Measurement radarMeas = radar.sample(state, dt, rng);
         Measurement drMeas = deadReckoning.sample(state, dt, rng);
         Measurement imuMeas = imu.sample(state, dt, rng);
+        Measurement visionMeas = vision.sample(state, dt, rng);
+        Measurement lidarMeas = lidar.sample(state, dt, rng);
+        Measurement magMeas = magnetometer.sample(state, dt, rng);
+        Measurement baroMeas = baro.sample(state, dt, rng);
+        Measurement celestialMeas;
+        if (celestialAllowed)
+        {
+            celestialMeas = celestial.sample(state, dt, rng);
+        }
 
         ModeDecision decision = modeManager.decide(sensors);
         Projection2D xy = projectXY(state);
@@ -161,6 +301,26 @@ int main(int argc, char **argv)
         if (drMeas.valid && drMeas.position)
         {
             std::cout << " | dr=(" << drMeas.position->x << ", " << drMeas.position->y << ", " << drMeas.position->z << ")";
+        }
+        if (visionMeas.valid && visionMeas.position)
+        {
+            std::cout << " | vision=(" << visionMeas.position->x << ", " << visionMeas.position->y << ", " << visionMeas.position->z << ")";
+        }
+        if (lidarMeas.valid && lidarMeas.range)
+        {
+            std::cout << " | lidar_range=" << *lidarMeas.range;
+        }
+        if (magMeas.valid && magMeas.heading)
+        {
+            std::cout << " | mag_heading_rad=" << *magMeas.heading;
+        }
+        if (baroMeas.valid && baroMeas.altitude)
+        {
+            std::cout << " | baro_alt=" << *baroMeas.altitude;
+        }
+        if (celestialAllowed && celestialMeas.valid && celestialMeas.position)
+        {
+            std::cout << " | celestial=(" << celestialMeas.position->x << ", " << celestialMeas.position->y << ", " << celestialMeas.position->z << ")";
         }
         if (!decision.reason.empty())
         {

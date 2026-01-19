@@ -9,10 +9,13 @@
 
 struct Measurement
 {
+    // Units: position/altitude in meters, velocity in m/s, range in meters, bearing/heading in radians.
     std::optional<Vec3> position;
     std::optional<Vec3> velocity;
     std::optional<double> range;
     std::optional<double> bearing;
+    std::optional<double> altitude;
+    std::optional<double> heading;
     bool valid = false;
     std::string note;
 };
@@ -107,6 +110,60 @@ public:
 
 protected:
     Measurement generateMeasurement(const State9 &state, std::mt19937 &rng) override;
+};
+
+class VisionSensor : public SensorBase
+{
+public:
+    explicit VisionSensor(const SensorConfig &config);
+
+protected:
+    Measurement generateMeasurement(const State9 &state, std::mt19937 &rng) override;
+};
+
+class LidarSensor : public SensorBase
+{
+public:
+    explicit LidarSensor(const SensorConfig &config);
+
+protected:
+    Measurement generateMeasurement(const State9 &state, std::mt19937 &rng) override;
+};
+
+class MagnetometerSensor : public SensorBase
+{
+public:
+    explicit MagnetometerSensor(const SensorConfig &config);
+
+protected:
+    Measurement generateMeasurement(const State9 &state, std::mt19937 &rng) override;
+
+private:
+    double bias;
+};
+
+class BarometerSensor : public SensorBase
+{
+public:
+    explicit BarometerSensor(const SensorConfig &config);
+
+protected:
+    Measurement generateMeasurement(const State9 &state, std::mt19937 &rng) override;
+
+private:
+    double drift;
+};
+
+class CelestialSensor : public SensorBase
+{
+public:
+    explicit CelestialSensor(const SensorConfig &config);
+
+protected:
+    Measurement generateMeasurement(const State9 &state, std::mt19937 &rng) override;
+
+private:
+    Vec3 bias;
 };
 
 #endif // CORE_SENSORS_H

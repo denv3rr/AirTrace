@@ -5,8 +5,6 @@
 #include "ui/inputValidation.h"
 #include "ui/tui.h"
 #include <iostream>
-#include <cstdlib>
-#include <ctime>
 #include <cmath>
 #include <atomic>
 #include <iomanip>
@@ -15,12 +13,139 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <random>
 
 // Global vector to store simulation history
 std::vector<SimulationData> simulationHistory;
 
 // Atomic variable to allow exit during test mode
 std::atomic<bool> exitRequested(false);
+
+namespace
+{
+struct UiContext
+{
+    SimConfig config{};
+    bool configLoaded = false;
+    unsigned int seed = 42;
+    std::mt19937 rng{seed};
+    UiStatus status{};
+};
+
+UiContext uiContext{};
+
+std::string profileName(SimConfig::PlatformProfile profile)
+{
+    switch (profile)
+    {
+    case SimConfig::PlatformProfile::Air:
+        return "air";
+    case SimConfig::PlatformProfile::Ground:
+        return "ground";
+    case SimConfig::PlatformProfile::Maritime:
+        return "maritime";
+    case SimConfig::PlatformProfile::Space:
+        return "space";
+    case SimConfig::PlatformProfile::Handheld:
+        return "handheld";
+    case SimConfig::PlatformProfile::FixedSite:
+        return "fixed_site";
+    case SimConfig::PlatformProfile::Subsea:
+        return "subsea";
+    case SimConfig::PlatformProfile::Base:
+    default:
+        return "base";
+    }
+}
+
+std::string networkAidModeName(SimConfig::NetworkAidMode mode)
+{
+    switch (mode)
+    {
+    case SimConfig::NetworkAidMode::Allow:
+        return "allow";
+    case SimConfig::NetworkAidMode::TestOnly:
+        return "test_only";
+    case SimConfig::NetworkAidMode::Deny:
+    default:
+        return "deny";
+    }
+}
+
+std::string buildAuthStatus(const SimConfig &config)
+{
+    std::ostringstream out;
+    out << "net=" << networkAidModeName(config.policy.networkAidMode)
+        << " role=" << config.policy.activeRole;
+    if (config.policy.overrideRequired)
+    {
+        out << " override=required";
+    }
+    else
+    {
+        out << " override=none";
+    }
+    return out.str();
+}
+
+void updateStatusFromConfig(const SimConfig &config)
+{
+    uiContext.status.platformProfile = profileName(config.platformProfile);
+    uiContext.status.authStatus = buildAuthStatus(config);
+    uiContext.status.seed = config.seed;
+    uiContext.status.deterministic = true;
+    if (uiContext.status.activeSource.empty())
+    {
+        uiContext.status.activeSource = "none";
+    }
+}
+} // namespace
+
+bool initializeUiContext(const std::string &configPath)
+{
+    ConfigResult loaded = loadSimConfig(configPath);
+    if (!loaded.ok)
+    {
+        uiContext.configLoaded = false;
+        uiContext.status.platformProfile = "base";
+        uiContext.status.authStatus = "config_invalid";
+        uiContext.status.seed = uiContext.seed;
+        uiContext.status.deterministic = true;
+        if (uiContext.status.activeSource.empty())
+        {
+            uiContext.status.activeSource = "none";
+        }
+        return false;
+    }
+
+    uiContext.config = loaded.config;
+    uiContext.configLoaded = true;
+    uiContext.seed = loaded.config.seed;
+    uiContext.rng.seed(uiContext.seed);
+    updateStatusFromConfig(loaded.config);
+    return true;
+}
+
+const UiStatus &getUiStatus()
+{
+    return uiContext.status;
+}
+
+void setUiActiveSource(const std::string &source)
+{
+    uiContext.status.activeSource = source;
+}
+
+void resetUiRng()
+{
+    uiContext.rng.seed(uiContext.seed);
+}
+
+int uiRandomInt(int minValue, int maxValue)
+{
+    std::uniform_int_distribution<int> dist(minValue, maxValue);
+    return dist(uiContext.rng);
+}
 
 /****************************************
  *
@@ -36,11 +161,15 @@ void monitorExitKey()
     std::string input;
     while (!exitRequested.load())
     { // Use load() for atomic
-        std::cin >> input;
-        if (input == "x")
+        if (!std::getline(std::cin, input))
+        {
+            exitRequested.store(true);
+            return;
+        }
+        if (input == "x" || input == "X")
         {
             exitRequested.store(true); // Use store() for atomic
-            std::cout << "\033[31m\nExiting to test menu...\033[0m\n";
+            std::cout << "\nExiting to test menu...\n";
         }
     }
 }
@@ -55,6 +184,8 @@ void monitorExitKey()
 
 void simulateManualConfig(const SimulationData &simData)
 {
+    resetUiRng();
+    setUiActiveSource(simData.mode);
     // Use the simData to run the simulation
     Object target(1, "Target", simData.targetPos);
     Object follower(2, "Follower", simData.followerPos);
@@ -76,8 +207,10 @@ void simulateManualConfig(const SimulationData &simData)
 
 void simulateDeadReckoning(int speed, int iterations)
 {
-    Object target(1, "Target", {std::rand() % 100, std::rand() % 100});
-    Object follower(2, "Follower", {std::rand() % 100, std::rand() % 100});
+    resetUiRng();
+    setUiActiveSource("dead_reckoning");
+    Object target(1, "Target", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
+    Object follower(2, "Follower", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
 
     Tracker tracker(follower);
     tracker.setTrackingMode("dead_reckoning");
@@ -96,11 +229,11 @@ void simulateDeadReckoning(int speed, int iterations)
         double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
                                     std::pow(targetPos.second - followerPos.second, 2));
 
-        std::cout << "\033[33m[Iteration " << stepCount << "] Dead Reckoning Mode\033[0m\n";
+        std::cout << "[Iteration " << stepCount << "] Dead Reckoning Mode\n";
         std::cout << "--------------------------------------------\n";
-        std::cout << "\033[32mTarget Position: (" << targetPos.first << ", " << targetPos.second << ")\033[0m\n";
-        std::cout << "\033[34mFollower Position: (" << followerPos.first << ", " << followerPos.second << ")\033[0m\n";
-        std::cout << "\033[31mDistance to Target: " << distance << " units\033[0m\n";
+        std::cout << "Target Position: (" << targetPos.first << ", " << targetPos.second << ")\n";
+        std::cout << "Follower Position: (" << followerPos.first << ", " << followerPos.second << ")\n";
+        std::cout << "Distance to Target: " << distance << " units\n";
         std::cout << "--------------------------------------------\n";
 
         simulationLog += "Iteration: " + std::to_string(stepCount) + ", Distance: " + std::to_string(distance) + "\n";
@@ -108,7 +241,7 @@ void simulateDeadReckoning(int speed, int iterations)
 
         if (distance < 0.1)
         {
-            std::cout << "\n\033[32mFollower has reached the target.\033[0m\n";
+            std::cout << "\nFollower has reached the target.\n";
             break;
         }
 
@@ -116,17 +249,17 @@ void simulateDeadReckoning(int speed, int iterations)
         stepCount++;
     }
 
-    std::cout << "\n\033[32mDead Reckoning simulation finished.\033[0m\n";
+    std::cout << "\nDead Reckoning simulation finished.\n";
     logSimulationResult("Dead Reckoning", simulationLog, condensedLog);
 }
 
 void simulateHeatSeeking(int speed, int iterations)
 {
-    std::srand(static_cast<unsigned int>(std::time(0))); // Seed for random movements
-
+    resetUiRng();
+    setUiActiveSource("heat_signature");
     // Initialize random positions for target and follower
-    Object target(1, "Target", {std::rand() % 100, std::rand() % 100});
-    Object follower(2, "Follower", {std::rand() % 100, std::rand() % 100});
+    Object target(1, "Target", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
+    Object follower(2, "Follower", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
 
     Tracker tracker(follower);
     tracker.setTrackingMode("heat_signature");
@@ -140,8 +273,8 @@ void simulateHeatSeeking(int speed, int iterations)
     while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {
         // Random movement for the target simulating real-world data
-        int randomX = (std::rand() % 3) - 1; // -1, 0, or 1
-        int randomY = (std::rand() % 3) - 1;
+        int randomX = uiRandomInt(-1, 1); // -1, 0, or 1
+        int randomY = uiRandomInt(-1, 1);
         target.moveTo({target.getPosition().first + randomX, target.getPosition().second + randomY});
 
         // Calculate distance between target and follower
@@ -158,13 +291,13 @@ void simulateHeatSeeking(int speed, int iterations)
         tracker.update();
 
         // Detailed output for the user
-        std::cout << "\n\033[33m[Iteration " << stepCount << "]\033[0m\n";
+        std::cout << "\n[Iteration " << stepCount << "]\n";
         std::cout << "--------------------------------------------\n";
         std::cout << std::fixed << std::setprecision(2); // Two decimal places for numbers
-        std::cout << "\033[32mTarget Position: (" << targetPos.first << ", " << targetPos.second << ")\033[0m\n";
-        std::cout << "\033[34mFollower Position: (" << followerPos.first << ", " << followerPos.second << ")\033[0m\n";
-        std::cout << "\033[31mDistance to Target: " << distance << " units\033[0m\n";
-        std::cout << "\033[36mHeat Signature: " << heatSignature << " units\033[0m\n";
+        std::cout << "Target Position: (" << targetPos.first << ", " << targetPos.second << ")\n";
+        std::cout << "Follower Position: (" << followerPos.first << ", " << followerPos.second << ")\n";
+        std::cout << "Distance to Target: " << distance << " units\n";
+        std::cout << "Heat Signature: " << heatSignature << " units\n";
         std::cout << "--------------------------------------------\n";
 
         // Logging compact information for the text file
@@ -174,7 +307,7 @@ void simulateHeatSeeking(int speed, int iterations)
         // If distance is extremely small, stop the simulation (the follower "reaches" the target)
         if (distance < 0.1)
         {
-            std::cout << "\n\033[32mFollower has hit the target and stopped.\033[0m\n";
+            std::cout << "\nFollower has hit the target and stopped.\n";
             break;
         }
 
@@ -183,14 +316,16 @@ void simulateHeatSeeking(int speed, int iterations)
         stepCount++;
     }
 
-    std::cout << "\n\033[32mHeat-seeking simulation finished.\033[0m\n\n--------------------------------------------\n\n";
+    std::cout << "\nHeat-seeking simulation finished.\n\n--------------------------------------------\n\n";
     logSimulationResult("Heat Seeking", simulationLog, condensedLog); // Log simulation details
 }
 
 void simulateGPSSeeking(int speed, int iterations)
 {
-    Object target(1, "Target", {std::rand() % 100, std::rand() % 100});
-    Object follower(2, "Follower", {std::rand() % 100, std::rand() % 100});
+    resetUiRng();
+    setUiActiveSource("gps");
+    Object target(1, "Target", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
+    Object follower(2, "Follower", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
 
     Tracker tracker(follower);
     tracker.setTrackingMode("gps");
@@ -202,8 +337,8 @@ void simulateGPSSeeking(int speed, int iterations)
 
     while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {
-        int randomX = (std::rand() % 3) - 1;
-        int randomY = (std::rand() % 3) - 1;
+        int randomX = uiRandomInt(-1, 1);
+        int randomY = uiRandomInt(-1, 1);
         target.moveTo({target.getPosition().first + randomX, target.getPosition().second + randomY});
 
         tracker.update();
@@ -213,11 +348,11 @@ void simulateGPSSeeking(int speed, int iterations)
         double distance = std::sqrt(std::pow(targetPos.first - followerPos.first, 2) +
                                     std::pow(targetPos.second - followerPos.second, 2));
 
-        std::cout << "\033[33m[Iteration " << stepCount << "] GPS Mode\033[0m\n";
+        std::cout << "[Iteration " << stepCount << "] GPS Mode\n";
         std::cout << "--------------------------------------------\n";
-        std::cout << "\033[32mTarget GPS Position: (" << targetPos.first << ", " << targetPos.second << ")\033[0m\n";
-        std::cout << "\033[34mFollower GPS Position: (" << followerPos.first << ", " << followerPos.second << ")\033[0m\n";
-        std::cout << "\033[31mDistance to Target: " << distance << " units\033[0m\n";
+        std::cout << "Target GPS Position: (" << targetPos.first << ", " << targetPos.second << ")\n";
+        std::cout << "Follower GPS Position: (" << followerPos.first << ", " << followerPos.second << ")\n";
+        std::cout << "Distance to Target: " << distance << " units\n";
         std::cout << "--------------------------------------------\n";
 
         simulationLog += "Iteration: " + std::to_string(stepCount) + ", Distance: " + std::to_string(distance) + "\n";
@@ -225,7 +360,7 @@ void simulateGPSSeeking(int speed, int iterations)
 
         if (distance < 0.1)
         {
-            std::cout << "\n\033[32mFollower has reached the target.\033[0m\n";
+            std::cout << "\nFollower has reached the target.\n";
             break;
         }
 
@@ -233,7 +368,7 @@ void simulateGPSSeeking(int speed, int iterations)
         stepCount++;
     }
 
-    std::cout << "\033[32mGPS-based simulation finished.\033[0m\n";
+    std::cout << "GPS-based simulation finished.\n";
     logSimulationResult("GPS", simulationLog, condensedLog); // Use the new modular function
 }
 
@@ -260,9 +395,16 @@ void runTestMode()
     speed = 100;
     iterations = 0;
 
-    // General manual user input for speed and iterations
-    // speed = getValidatedIntInput("Enter movement speed (1-100): ", 1, 100);
-    // iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 10000);
+    if (!tryGetValidatedIntInput("Enter movement speed (1-100): ", 1, 100, speed))
+    {
+        std::cout << "Input unavailable. Returning to menu.\n";
+        return;
+    }
+    if (!tryGetValidatedIntInput("Enter number of iterations (0 for infinite): ", 0, 10000, iterations))
+    {
+        std::cout << "Input unavailable. Returning to menu.\n";
+        return;
+    }
 
     const std::vector<std::string> options = {
         "Prediction",
@@ -295,7 +437,7 @@ void runTestMode()
         trackingMode = "dead_reckoning";
         break;
     default:
-        std::cout << "\033[31mInvalid choice. Defaulting to prediction mode.\033[0m\n";
+        std::cout << "Invalid choice. Defaulting to prediction mode.\n";
         trackingMode = "prediction";
     }
 
@@ -306,10 +448,18 @@ void runTestMode()
     }
     else if (trackingMode == "kalman")
     {
-        int targetX = getValidatedIntInput("Enter initial target X position: ", -100000, 100000);
-        int targetY = getValidatedIntInput("Enter initial target Y position: ", -100000, 100000);
-        int followerX = getValidatedIntInput("Enter initial follower X position: ", -100000, 10000);
-        int followerY = getValidatedIntInput("Enter initial follower Y position: ", -100000, 100000);
+        int targetX = 0;
+        int targetY = 0;
+        int followerX = 0;
+        int followerY = 0;
+        if (!tryGetValidatedIntInput("Enter initial target X position: ", -100000, 100000, targetX) ||
+            !tryGetValidatedIntInput("Enter initial target Y position: ", -100000, 100000, targetY) ||
+            !tryGetValidatedIntInput("Enter initial follower X position: ", -100000, 100000, followerX) ||
+            !tryGetValidatedIntInput("Enter initial follower Y position: ", -100000, 100000, followerY))
+        {
+            std::cout << "Input unavailable. Returning to menu.\n";
+            return;
+        }
 
         Object target(1, "Target", {targetX, targetY});
         Object follower(2, "Follower", {followerX, followerY});
@@ -318,6 +468,7 @@ void runTestMode()
         Tracker tracker(follower);
         tracker.setTrackingMode("kalman");
         tracker.setTarget(target);
+        setUiActiveSource("kalman");
 
         // Run the Kalman filter tracking
         while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
@@ -338,10 +489,18 @@ void runTestMode()
     else
     {
         // Get manual input for target and follower positions for non-heat-seeking modes
-        int targetX = getValidatedIntInput("Enter initial target X position: ", -100000, 100000);
-        int targetY = getValidatedIntInput("Enter initial target Y position: ", -100000, 100000);
-        int followerX = getValidatedIntInput("Enter initial follower X position: ", -100000, 10000);
-        int followerY = getValidatedIntInput("Enter initial follower Y position: ", -100000, 100000);
+        int targetX = 0;
+        int targetY = 0;
+        int followerX = 0;
+        int followerY = 0;
+        if (!tryGetValidatedIntInput("Enter initial target X position: ", -100000, 100000, targetX) ||
+            !tryGetValidatedIntInput("Enter initial target Y position: ", -100000, 100000, targetY) ||
+            !tryGetValidatedIntInput("Enter initial follower X position: ", -100000, 100000, followerX) ||
+            !tryGetValidatedIntInput("Enter initial follower Y position: ", -100000, 100000, followerY))
+        {
+            std::cout << "Input unavailable. Returning to menu.\n";
+            return;
+        }
 
         SimulationData simData = {{targetX, targetY}, {followerX, followerY}, speed, trackingMode, iterations};
         simulationHistory.push_back(simData); // Store the current simulation config
@@ -353,15 +512,15 @@ void runTestMode()
 // Test function for Scenario Mode with exit prompt and logging
 void runTestScenarioMode()
 {
-    std::cout << "\033[32mStarting Test Mode for Scenario. Press 'x' to exit.\033[0m\n";
+    std::cout << "Starting Test Mode for Scenario. Press 'x' to exit.\n";
     Object follower(2, "Follower", {0, 0}); // Initialize follower at origin
-    int speed = 100;
-    int iterations = 100;
+    int gpsTimeoutSeconds = 10;
+    int heatTimeoutSeconds = 10;
     std::string logData;
 
     std::thread exitThread(monitorExitKey); // Non-blocking thread to monitor exit input
 
-    runScenarioMode(follower, speed, iterations); // Call main scenario function
+    runScenarioMode(follower, gpsTimeoutSeconds, heatTimeoutSeconds); // Call main scenario function
 
     // Log data handling based on exit or completion
     if (exitRequested)
@@ -390,11 +549,11 @@ void viewAndRerunPreviousSimulations()
 {
     if (simulationHistory.empty())
     {
-        std::cout << "\033[31mNo previous simulations found.\033[0m\n";
+        std::cout << "No previous simulations found.\n";
         return;
     }
 
-    std::cout << "\n\033[32mPrevious Simulations:\033[0m\n";
+    std::cout << "\nPrevious Simulations:\n";
     for (size_t i = 0; i < simulationHistory.size(); ++i)
     {
         const auto &sim = simulationHistory[i];
@@ -404,7 +563,12 @@ void viewAndRerunPreviousSimulations()
     }
 
     // Ask the user if they want to rerun any previous simulation
-    int choice = getValidatedIntInput("Select a simulation to rerun (0 to go back): ", 0, static_cast<int>(simulationHistory.size()));
+    int choice = 0;
+    if (!tryGetValidatedIntInput("Select a simulation to rerun (0 to go back): ", 0, static_cast<int>(simulationHistory.size()), choice))
+    {
+        std::cout << "Input unavailable. Returning to menu.\n";
+        return;
+    }
 
     if (choice > 0)
     {
@@ -416,11 +580,11 @@ void deletePreviousSimulation()
 {
     if (simulationHistory.empty())
     {
-        std::cout << "\033[31mNo previous simulations found.\033[0m\n";
+        std::cout << "No previous simulations found.\n";
         return;
     }
 
-    std::cout << "\n\033[32mPrevious Simulations:\033[0m\n";
+    std::cout << "\nPrevious Simulations:\n";
     for (size_t i = 0; i < simulationHistory.size(); ++i)
     {
         const auto &sim = simulationHistory[i];
@@ -429,7 +593,12 @@ void deletePreviousSimulation()
                   << ", Mode: " << sim.mode << ", Iterations: " << (sim.iterations == 0 ? "Infinite" : std::to_string(sim.iterations)) << "\n";
     }
 
-    int choice = getValidatedIntInput("Select a simulation to delete (0 to go back): ", 0, static_cast<int>(simulationHistory.size()));
+    int choice = 0;
+    if (!tryGetValidatedIntInput("Select a simulation to delete (0 to go back): ", 0, static_cast<int>(simulationHistory.size()), choice))
+    {
+        std::cout << "Input unavailable. Returning to menu.\n";
+        return;
+    }
 
     if (choice > 0)
     {
@@ -437,11 +606,11 @@ void deletePreviousSimulation()
         simulationHistory.erase(simulationHistory.begin() + (choice - 1));
         saveSimulationHistoryToFile(); // Re-save the updated history after deletion
 
-        std::cout << "\033[32mSimulation deleted successfully.\033[0m\n";
+        std::cout << "Simulation deleted successfully.\n";
     }
     else
     {
-        std::cout << "\033[33mReturning to the menu.\033[0m\n";
+        std::cout << "Returning to the menu.\n";
     }
 }
 

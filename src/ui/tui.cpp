@@ -199,17 +199,23 @@ void renderMenu(const MenuConfig &config, const std::vector<MenuOption> &options
     {
         const auto &option = options[i];
         bool isCurrent = (i == currentIndex);
+        std::string cursor = isCurrent ? "> " : "  ";
         if (isCurrent)
         {
             std::cout << "\x1b[7m";
         }
 
-        std::string prefix = option.enabled ? "[ ] " : "[ ] ";
+        std::string prefix = "[ ] ";
         if (option.checked)
         {
             prefix = "[x] ";
         }
-        std::cout << prefix << option.label << "\x1b[0m\n";
+        std::cout << cursor << prefix << option.label;
+        if (!option.enabled)
+        {
+            std::cout << " (disabled)";
+        }
+        std::cout << "\x1b[0m\n";
     }
     std::cout << "\n";
     std::cout << std::flush;
@@ -226,6 +232,17 @@ MenuResult runMenu(const MenuConfig &config, std::vector<MenuOption> options)
 
     TerminalMode terminalMode;
     size_t currentIndex = 0;
+    if (!options[currentIndex].enabled)
+    {
+        for (size_t i = 0; i < options.size(); ++i)
+        {
+            if (options[i].enabled)
+            {
+                currentIndex = i;
+                break;
+            }
+        }
+    }
 
     auto ensureSingleSelection = [&options](size_t index)
     {
@@ -233,6 +250,30 @@ MenuResult runMenu(const MenuConfig &config, std::vector<MenuOption> options)
         {
             options[i].checked = (i == index);
         }
+    };
+
+    auto advanceSelection = [&](int direction)
+    {
+        if (options.size() == 1)
+        {
+            return;
+        }
+        size_t start = currentIndex;
+        do
+        {
+            if (direction > 0)
+            {
+                currentIndex = (currentIndex + 1) % options.size();
+            }
+            else
+            {
+                currentIndex = (currentIndex == 0) ? options.size() - 1 : currentIndex - 1;
+            }
+            if (options[currentIndex].enabled)
+            {
+                return;
+            }
+        } while (currentIndex != start);
     };
 
     renderMenu(config, options, currentIndex);
@@ -243,19 +284,16 @@ MenuResult runMenu(const MenuConfig &config, std::vector<MenuOption> options)
         switch (key)
         {
         case Key::Up:
-            if (currentIndex == 0)
-            {
-                currentIndex = options.size() - 1;
-            }
-            else
-            {
-                --currentIndex;
-            }
+            advanceSelection(-1);
             break;
         case Key::Down:
-            currentIndex = (currentIndex + 1) % options.size();
+            advanceSelection(1);
             break;
         case Key::Space:
+            if (!options[currentIndex].enabled)
+            {
+                break;
+            }
             if (config.multiSelect)
             {
                 options[currentIndex].checked = !options[currentIndex].checked;
@@ -267,6 +305,10 @@ MenuResult runMenu(const MenuConfig &config, std::vector<MenuOption> options)
             break;
         case Key::Enter:
         {
+            if (!options[currentIndex].enabled)
+            {
+                break;
+            }
             int selectedIndex = -1;
             if (config.multiSelect)
             {

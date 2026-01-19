@@ -1,7 +1,10 @@
 #include "ui/scenario.h"
+
 #include "core/Tracker.h"
 #include "core/GPSAlgorithm.h"
 #include "ui/inputValidation.h"
+#include "ui/simulation.h"
+
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -10,6 +13,7 @@ void runScenarioMode(Object &follower, int gpsTimeout, int heatTimeout)
 {
     Tracker tracker(follower);
     tracker.setTrackingMode("gps");
+    setUiActiveSource("gps");
 
     int gpsAttempts = 0;
     while (gpsAttempts++ < gpsTimeout && tracker.isTrackingActive())
@@ -21,6 +25,7 @@ void runScenarioMode(Object &follower, int gpsTimeout, int heatTimeout)
     if (tracker.isTrackingActive())
     {
         tracker.setTrackingMode("heat_signature");
+        setUiActiveSource("heat_signature");
         int heatAttempts = 0;
         while (heatAttempts++ < heatTimeout && tracker.isTrackingActive())
         {
@@ -38,6 +43,7 @@ void runScenarioMainMode(Object &follower, int gpsTimeout, int heatTimeout)
     }
     else
     {
+        setUiActiveSource("hold");
         std::cerr << "Input stream unavailable. Returning to main menu.\n";
     }
 }

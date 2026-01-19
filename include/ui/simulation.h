@@ -5,7 +5,9 @@
 #include <string>
 #include <vector>
 #include <atomic>
-#include "ui/menu.h"
+
+#include "core/Object.h"
+#include "core/sim_config.h"
 
 struct SimulationData
 {
@@ -17,6 +19,21 @@ struct SimulationData
 };
 
 extern std::vector<SimulationData> simulationHistory;
+
+struct UiStatus
+{
+    std::string platformProfile;
+    std::string activeSource;
+    std::string authStatus;
+    unsigned int seed = 0;
+    bool deterministic = true;
+};
+
+bool initializeUiContext(const std::string &configPath);
+const UiStatus &getUiStatus();
+void setUiActiveSource(const std::string &source);
+void resetUiRng();
+int uiRandomInt(int minValue, int maxValue);
 
 // Core simulation functions
 void saveSimulationHistory();

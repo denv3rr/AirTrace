@@ -32,6 +32,10 @@
 *.app
 
 /build
-/TrackerComponentLibrary
-/docs/plan.md
+docs/plan.md
+simulation_history.txt
+test_logs.txt
 AGENTS.md
+AGENTS*.md
+*.log
+*.tmp

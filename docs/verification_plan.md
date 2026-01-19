@@ -35,3 +35,19 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-029 | REQ-CFG-003 | INSPECTION | Review config schema docs. | Defaults documented and justified. |
 | V-030 | REQ-VER-001 | INSPECTION | Cross-check requirements vs plan. | Every REQ has V mapping. |
 | V-031 | REQ-VER-002 | TEST | Run unit tests. | Boundary coverage present. |
+| V-032 | REQ-SYS-007 | INSPECTION | Review platform profile definitions. | Base profile with inherited overrides present. |
+| V-033 | REQ-SYS-008 | TEST | Force sensor outages and policy constraints. | Highest-permitted source selected. |
+| V-034 | REQ-FUNC-008 | TEST | Simulate GPS-denied with permitted alternatives. | Celestial nav activates only when required. |
+| V-035 | REQ-FUNC-009 | TEST | Load dataset with invalid hash/version. | Rejected with safe-state entry. |
+| V-036 | REQ-SAFE-005 | TEST | Remove policy/dataset config. | Hold mode entered. |
+| V-037 | REQ-SEC-005 | TEST | Configure deny-by-default network aid. | Network aids blocked. |
+| V-038 | REQ-SEC-006 | TEST | Attempt override without credentials. | Override denied and logged. |
+| V-039 | REQ-INT-004 | DEMO | UI shows source/policy status. | Visible and clear to operator. |
+| V-040 | REQ-CFG-004 | TEST | Provide policy/platform keys in config. | Parsed and validated correctly. |
+| V-041 | REQ-SYS-009 | INSPECTION | Review dataset tier definitions. | Tier constraints documented per profile. |
+| V-042 | REQ-FUNC-010 | TEST | Activate profile with limited tier. | Minimal tier selected unless overridden. |
+| V-043 | REQ-SEC-007 | TEST | Attempt override with insufficient role. | Override denied and logged. |
+| V-044 | REQ-CFG-005 | TEST | Provide role/policy configuration. | Parsed and validated correctly. |
+| V-045 | REQ-INT-005 | DEMO | Run test mode twice with same seed. | UI outputs match for deterministic inputs. |
+| V-046 | REQ-FUNC-011 | TEST | Exercise vision/lidar/magnetometer/baro/celestial sensors with deterministic RNG. | Measurements carry expected types and validity flags. |
+| V-047 | REQ-CFG-006 | TEST | Provide new sensor keys in config. | Parsed and validated correctly. |

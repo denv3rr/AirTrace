@@ -1,38 +1,51 @@
 #include "ui/inputValidation.h"
+
 #include <iostream>
 #include <limits>
+#include <sstream>
 
 // Function to validate integer input within a range set as parameters 2 and 3
 int getValidatedIntInput(const std::string &prompt, int min, int max)
 {
-    int input;
+    int input = min;
+    if (!tryGetValidatedIntInput(prompt, min, max, input))
+    {
+        return min;
+    }
+    return input;
+}
 
+bool tryGetValidatedIntInput(const std::string &prompt, int min, int max, int &out)
+{
+    std::string line;
     while (true)
     {
         std::cout << prompt;
-        std::cin >> input;
+        if (!std::getline(std::cin, line))
+        {
+            return false;
+        }
 
-        // Check for invalid input or out of range
-        if (std::cin.fail() || input < min || input > max)
+        std::stringstream ss(line);
+        int input = 0;
+        char trailing = '\0';
+        if (!(ss >> input) || (ss >> trailing) || input < min || input > max)
         {
-            std::cout << "\033[31mInvalid input. Please enter a number between " << min << " and " << max << ".\033[0m\n\n\n";
-            clearInputStream(); // Clear the invalid input
+            std::cout << "Invalid input. Enter a number between " << min << " and " << max << ".\n";
+            continue;
         }
-        else
-        {
-            return input; // Valid input
-        }
+        out = input;
+        return true;
     }
 }
 
-// Function to clear the input stream in case of invalid input
 void clearInputStream()
 {
-    std::cin.clear();                                                   // Clear the error flag
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard invalid input
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 bool inputStreamAvailable()
 {
-    return std::cin.good();
+    return std::cin.good() && !std::cin.eof();
 }

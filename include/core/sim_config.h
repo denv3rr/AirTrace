@@ -2,6 +2,7 @@
 #define CORE_SIM_CONFIG_H
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "core/motion_models.h"
@@ -16,6 +17,71 @@ struct SimConfig
     int steps = 20;
     unsigned int seed = 42;
 
+    enum class PlatformProfile
+    {
+        Base,
+        Air,
+        Ground,
+        Maritime,
+        Space,
+        Handheld,
+        FixedSite,
+        Subsea
+    };
+
+    enum class NetworkAidMode
+    {
+        Deny,
+        Allow,
+        TestOnly
+    };
+
+    enum class OverrideAuth
+    {
+        Credential,
+        Key,
+        Token
+    };
+
+    enum class DatasetTier
+    {
+        Minimal,
+        Standard,
+        Extended
+    };
+
+    struct PolicyConfig
+    {
+        NetworkAidMode networkAidMode = NetworkAidMode::Deny;
+        bool overrideRequired = true;
+        OverrideAuth overrideAuth = OverrideAuth::Credential;
+        int overrideTimeoutSeconds = 0;
+        std::vector<std::string> roles = {"operator"};
+        std::unordered_map<std::string, std::vector<std::string>> rolePermissions{};
+        std::string activeRole = "operator";
+    };
+
+    struct DatasetConfig
+    {
+        DatasetTier tier = DatasetTier::Minimal;
+        double maxSizeMB = 0.0;
+        std::string celestialCatalogPath;
+        std::string celestialEphemerisPath;
+        std::string celestialCatalogHash;
+        std::string celestialEphemerisHash;
+
+        bool celestialAvailable() const
+        {
+            return !celestialCatalogPath.empty() && !celestialEphemerisPath.empty() &&
+                   !celestialCatalogHash.empty() && !celestialEphemerisHash.empty();
+        }
+    };
+
+    PlatformProfile platformProfile = PlatformProfile::Base;
+    std::vector<std::string> permittedSensors{};
+    PolicyConfig policy{};
+    DatasetConfig dataset{};
+
     MotionBounds bounds{{-1000.0, -1000.0, 0.0}, {1000.0, 1000.0, 1000.0}, 250.0, 20.0, 12.0};
     ManeuverParams maneuvers{3.0, 0.35};
 
@@ -24,6 +90,11 @@ struct SimConfig
     SensorConfig deadReckoning{20.0, 0.5, 0.0, 0.0, 1e6};
     SensorConfig imu{50.0, 0.2, 0.05, 0.0, 1e6};
     SensorConfig radar{2.0, 1.0, 0.08, 0.02, 2000.0};
+    SensorConfig vision{10.0, 1.5, 0.1, 0.03, 1500.0};
+    SensorConfig lidar{5.0, 0.5, 0.05, 0.02, 1000.0};
+    SensorConfig magnetometer{20.0, 0.05, 0.02, 0.0, 1e6};
+    SensorConfig baro{2.0, 0.3, 0.02, 0.0, 20000.0};
+    SensorConfig celestial{0.2, 0.8, 0.15, 0.01, 1e7};
 };
 
 struct ConfigIssue
