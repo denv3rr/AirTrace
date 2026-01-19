@@ -51,3 +51,4 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-045 | REQ-INT-005 | DEMO | Run test mode twice with same seed. | UI outputs match for deterministic inputs. |
 | V-046 | REQ-FUNC-011 | TEST | Exercise vision/lidar/magnetometer/baro/celestial sensors with deterministic RNG. | Measurements carry expected types and validity flags. |
 | V-047 | REQ-CFG-006 | TEST | Provide new sensor keys in config. | Parsed and validated correctly. |
+| V-048 | REQ-DOC-001 | INSPECTION | Review README for submodule instructions and de-duplicated build/run guidance. | Quick start includes clone/pull with submodules and duplication is limited to the quick-start summary. |

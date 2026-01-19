@@ -51,3 +51,4 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-CFG-006 | docs/config_schema.md | src/core/sim_config.cpp | V-047 |
 | REQ-VER-001 | docs/verification_plan.md | docs/verification_plan.md | V-030 |
 | REQ-VER-002 | docs/verification_plan.md | tests/core_sanity.cpp | V-031 |
+| REQ-DOC-001 | docs/requirements.md | README.md | V-048 |

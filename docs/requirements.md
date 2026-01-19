@@ -64,3 +64,6 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).
 - REQ-VER-002: Core algorithms shall have unit tests covering boundary conditions.
+
+## Documentation Requirements (DOC)
+- REQ-DOC-001: The README shall include submodule-aware clone/pull instructions and non-duplicative build/run guidance, with a quick-start summary that may repeat the core steps.
