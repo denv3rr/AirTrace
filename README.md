@@ -183,7 +183,7 @@ navigation when higher-priority sources are unavailable or disallowed.
 
 ### **Links**
 
-<a href="/AirTrace/sources_menu.md">**Sources Menu**</a>
+<a href="/sources_menu.md">**Sources Menu**</a>
 
 </div>
 </details>
