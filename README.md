@@ -2,18 +2,18 @@
   <div>
 
   ### **AirTrace**
-  
+
+  ![Platforms](https://img.shields.io/badge/platforms-windows%20%7C%20linux%20%7C%20macos-black)
   ![GitHub top language](https://img.shields.io/github/languages/top/denv3rr/AirTrace)
   ![C++ Standard](https://img.shields.io/badge/c%2B%2B-17+-blue)
   ![CMake Min Version Required](https://img.shields.io/badge/cmake_min_vers_req-3.10+-green)
   ![Build System](https://img.shields.io/badge/build-cmake%2Fninja-blue)
-  ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20%7C%20macos-lightgrey)
   ![GitHub Created At](https://img.shields.io/github/created-at/denv3rr/AirTrace)
   ![GitHub repo size](https://img.shields.io/github/repo-size/denv3rr/AirTrace)
   ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
 
   <br><br>
-[About](#a-motion-and-sensor-core-cli) | [Run and Debug](#run-and-debug) | [Documentation](#documentation) | [Links](#links) | [seperet.com](https://seperet.com)
+[About](#motion-and-sensor-core) | [Run and Debug](#run-and-debug) | [Documentation](#documentation) | [Sources](#sources) | [seperet.com](https://seperet.com)
     <br></br>
   <a href="https://seperet.com">
     <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
@@ -54,12 +54,7 @@ navigation when higher-priority sources are unavailable or disallowed.
 
 <br></br>
 
-<br></br>
-  
-**Built with:**
-
 ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) ![CMake](https://img.shields.io/badge/CMake-%23008FBA.svg?style=for-the-badge&logo=cmake&logoColor=white)
-<br></br>
 
 <!--
 **Features:**
@@ -80,8 +75,6 @@ navigation when higher-priority sources are unavailable or disallowed.
 
 </div>
 
-<br></br>
-<br></br>
 <br></br>
 
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
@@ -140,8 +133,6 @@ navigation when higher-priority sources are unavailable or disallowed.
 </div>
 </details>
 <br></br>
-<br></br>
-<br></br>
 
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
 
@@ -170,20 +161,10 @@ navigation when higher-priority sources are unavailable or disallowed.
 </details>
 
 <br></br>
-<br></br>
-<br></br>
 
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
 
-</details>
-<br></br>
-<br></br>
-<br></br>
-<img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
-
-### **Links**
-
-<a href="/sources_menu.md">**Sources Menu**</a>
+<h3><a href="/sources_menu.md">Sources</a></h3>
 
 </div>
 </details>
@@ -194,5 +175,4 @@ navigation when higher-priority sources are unavailable or disallowed.
     <img width="300" src="https://github.com/denv3rr/denv3rr/blob/main/IMG_4225.gif" />
   </a>
 </div>
-<br></br>
 <br></br>
