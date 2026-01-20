@@ -401,89 +401,89 @@ Russia / USSR
 
 ### Core Human Factors / Human Engineering Standards (DoD + Systems)
 - **MIL-STD-1472F (Human Engineering) (PDF)**  
-  https://www.denix.osd.mil/soh/denix-files/sites/21/2016/03/02_MIL-STD-1472F-Human-Engineering.pdf :contentReference[oaicite:0]{index=0}
+  https://www.denix.osd.mil/soh/denix-files/sites/21/2016/03/02_MIL-STD-1472F-Human-Engineering.pdf
 
 - **MIL-STD-1472 status + latest doc trail (DLA QuickSearch)**  
-  https://quicksearch.dla.mil/qsdocdetails.aspx?ident_number=36903 :contentReference[oaicite:1]{index=1}
+  https://quicksearch.dla.mil/qsdocdetails.aspx?ident_number=36903
 
 - **DoD Human Systems Integration (HSI) Guidebook (PDF)**  
-  https://www.cto.mil/wp-content/uploads/2024/07/HSI-Guidebook-C1-2024.pdf :contentReference[oaicite:2]{index=2}
+  https://www.cto.mil/wp-content/uploads/2024/07/HSI-Guidebook-C1-2024.pdf
 
 - **Human Systems Integration in Acquisition (PDF)**  
-  https://ww3.safaq.hq.af.mil/Portals/63/documents/organizations/ADA519020.pdf?ver=2016-07-28-121600-617 :contentReference[oaicite:3]{index=3}
+  https://ww3.safaq.hq.af.mil/Portals/63/documents/organizations/ADA519020.pdf?ver=2016-07-28-121600-617
 
 - **DAU HSI Activities Update (PDF)**  
-  https://www.dau.edu/sites/default/files/Migrated/CopDocuments/HSI_Update_DIST_A_V2.pdf :contentReference[oaicite:4]{index=4}
+  https://www.dau.edu/sites/default/files/Migrated/CopDocuments/HSI_Update_DIST_A_V2.pdf
 
 
 ### Aviation / Flight Deck Display & Control Guidance (very transferable to weapon/C2 displays)
 - **FAA AC 25-11B — Electronic Flight Displays (PDF)**  
-  https://www.faa.gov/documentlibrary/media/advisory_circular/ac_25-11b.pdf :contentReference[oaicite:5]{index=5}
+  https://www.faa.gov/documentlibrary/media/advisory_circular/ac_25-11b.pdf
 
 - **FAA AC 00-74 — Avionics Human Factors Considerations (PDF)**  
-  https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_00-74.pdf :contentReference[oaicite:6]{index=6}
+  https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_00-74.pdf
 
 - **FAA — Human Factors Design Guidelines for Multifunction Displays (MFD) (PDF)**  
-  https://www.faa.gov/sites/faa.gov/files/data_research/research/med_humanfacs/oamtechreports/0117.pdf :contentReference[oaicite:7]{index=7}  
-  *(Alt mirror, DOT repository)* https://rosap.ntl.bts.gov/view/dot/58119/dot_58119_DS1.pdf :contentReference[oaicite:8]{index=8}
+  https://www.faa.gov/sites/faa.gov/files/data_research/research/med_humanfacs/oamtechreports/0117.pdf  
+  *(Alt mirror, DOT repository)* https://rosap.ntl.bts.gov/view/dot/58119/dot_58119_DS1.pdf
 
 - **Volpe (DOT) — Flight Deck Displays & Controls Human Factors (PDF)**  
-  https://www.volpe.dot.gov/sites/volpe.dot.gov/files/docs/Human_Factors_Considerations_in_the_Design_and_Evaluation_of_Flight_Deck_Displays_and_Controls_V2.pdf :contentReference[oaicite:9]{index=9}
+  https://www.volpe.dot.gov/sites/volpe.dot.gov/files/docs/Human_Factors_Considerations_in_the_Design_and_Evaluation_of_Flight_Deck_Displays_and_Controls_V2.pdf
 
 - **NASA NTRS — Application of SAE ARP4754A (systems process context) (PDF)**  
-  https://ntrs.nasa.gov/api/citations/20160001634/downloads/20160001634.pdf :contentReference[oaicite:10]{index=10}  
-  *(SAE ARP4754A landing page)* https://www.sae.org/standards/arp4754a-guidelines-development-civil-aircraft-systems :contentReference[oaicite:11]{index=11}
+  https://ntrs.nasa.gov/api/citations/20160001634/downloads/20160001634.pdf
+  *(SAE ARP4754A landing page)* https://www.sae.org/standards/arp4754a-guidelines-development-civil-aircraft-systems
 
 
 ### NASA Human-Centered Design / Human Integration (good for “operator-in-the-loop” weapon tracking interfaces)
 - **NASA Human Integration Design Handbook (HIDH) Rev 1 (PDF)**  
-  https://www.nasa.gov/wp-content/uploads/2015/03/human_integration_design_handbook_revision_1.pdf :contentReference[oaicite:12]{index=12}
+  https://www.nasa.gov/wp-content/uploads/2015/03/human_integration_design_handbook_revision_1.pdf
 
 - **NASA HSI Practitioner’s Guide (PDF)**  
-  https://ntrs.nasa.gov/api/citations/20150022283/downloads/20150022283.pdf :contentReference[oaicite:13]{index=13}
+  https://ntrs.nasa.gov/api/citations/20150022283/downloads/20150022283.pdf
 
 - **NASA HSI Handbook v2.0 (PDF)**  
-  https://ntrs.nasa.gov/api/citations/20210010952/downloads/HSI%20Handbook%20v2.0%20092121_FINAL%20COPY.pdf :contentReference[oaicite:14]{index=14}
+  https://ntrs.nasa.gov/api/citations/20210010952/downloads/HSI%20Handbook%20v2.0%20092121_FINAL%20COPY.pdf
 
 - **NASA Human Factors Handbook (NASA-HDBK-8709.25) (PDF)**  
-  https://standards.nasa.gov/sites/default/files/standards/NASA/Baseline/4/NASA-HDBK-870925-14.pdf :contentReference[oaicite:15]{index=15}
+  https://standards.nasa.gov/sites/default/files/standards/NASA/Baseline/4/NASA-HDBK-870925-14.pdf
 
 - **NASA NTRS — Handbook of Human Engineering Design Data (Reduced Gravity) (PDF)**  
-  https://ntrs.nasa.gov/api/citations/19720004399/downloads/19720004399.pdf :contentReference[oaicite:16]{index=16}
+  https://ntrs.nasa.gov/api/citations/19720004399/downloads/19720004399.pdf
 
 
 ### Military Symbology (crucial for tactical displays, overlays, track objects, IFF-style UI)
 - **MIL-STD-2525D — Department of Defense Interface Standard (Joint Military Symbology) (PDF)**  
-  https://www.jcs.mil/portals/36/documents/doctrine/other_pubs/ms_2525d.pdf :contentReference[oaicite:17]{index=17}
+  https://www.jcs.mil/portals/36/documents/doctrine/other_pubs/ms_2525d.pdf
 
 - **DLA QuickSearch — MIL-STD-2525 metadata / current status**  
-  https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=114934 :contentReference[oaicite:18]{index=18}
+  https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=114934
 
 - **ADP 1-02 — Terms and Military Symbols (PDF)**  
-  https://irp.fas.org/doddir/army/adp1_02.pdf :contentReference[oaicite:19]{index=19}
+  https://irp.fas.org/doddir/army/adp1_02.pdf
 
 - **Marine Corps student references (points to MIL-STD-2525D as standard symbology reference) (PDF)**  
-  https://www.trngcmd.marines.mil/Portals/207/Docs/TBS/Operational%20Terms%20and%20Graphics%20WOBC.pdf :contentReference[oaicite:20]{index=20}
+  https://www.trngcmd.marines.mil/Portals/207/Docs/TBS/Operational%20Terms%20and%20Graphics%20WOBC.pdf
 
 - **NATO APP-6 (legacy, land-based symbols) (PDF)**  
-  https://www.orbat85.nl/documents/APP-6%20NATO%20Symbols%201986.pdf :contentReference[oaicite:21]{index=21}  
-  *(APP-6A example PDF)* https://www.mpsotc.gr/dat/05CB6DCD/file.pdf :contentReference[oaicite:22]{index=22}
+  https://www.orbat85.nl/documents/APP-6%20NATO%20Symbols%201986.pdf 
+  *(APP-6A example PDF)* https://www.mpsotc.gr/dat/05CB6DCD/file.pdf
 
 
 ### Naval / NAVAIR Human Systems + Interface Research (operators, consoles, training, sustainment)
 - **NAVAIR Human System Technology Roadmap (living doc) (PDF)**  
-  https://www.navair.navy.mil/nawctsd/sites/g/files/jejdrs596/files/2019-06/AIR-4.6%20Tech%20Roadmap_Rev27_%2015%20Nov%202018.pdf :contentReference[oaicite:23]{index=23}
+  https://www.navair.navy.mil/nawctsd/sites/g/files/jejdrs596/files/2019-06/AIR-4.6%20Tech%20Roadmap_Rev27_%2015%20Nov%202018.pdf
 
 - **NAWCTSD Research Compendium (abridged) (PDF)**  
-  https://www.navair.navy.mil/nawctsd/sites/g/files/jejdrs596/files/document/%5Bfilename%5D/Research%20Compendium%202024%20NEW%20ABRIDGED%20VERSION%20Standard%20Quality%20508-Compliant.pdf :contentReference[oaicite:24]{index=24}
+  https://www.navair.navy.mil/nawctsd/sites/g/files/jejdrs596/files/document/%5Bfilename%5D/Research%20Compendium%202024%20NEW%20ABRIDGED%20VERSION%20Standard%20Quality%20508-Compliant.pdf
 
 
 ### Human-Centered Design Process Standards (for UI architecture / requirements flow-down)
 - **ISO 9241-210:2019 — Human-centred design for interactive systems (ISO landing page)**  
-  https://www.iso.org/standard/77520.html :contentReference[oaicite:25]{index=25}
+  https://www.iso.org/standard/77520.html
 
 - **NIST Human-Centered Design (HCD) explainer + linkage to ISO 9241-210**  
-  https://www.nist.gov/itl/iad/visualization-and-usability-group/human-factors-human-centered-design :contentReference[oaicite:26]{index=26}
+  https://www.nist.gov/itl/iad/visualization-and-usability-group/human-factors-human-centered-design
 
 ---
 
@@ -506,7 +506,7 @@ Informs:
 
 ---
 
-## Vault 7 / Vault 8 (CIA Cyber Capabilities — Primary Sources)
+## Vault 7 / Vault 8
 
 ### WikiLeaks Official Vault 7 Index & Releases
 
