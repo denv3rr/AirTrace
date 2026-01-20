@@ -13,7 +13,7 @@
   ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
 
   <br><br>
-[About](#motion-and-sensor-core) | [Run and Debug](#run-and-debug) | [Documentation](#documentation) | [Sources](#sources) | [seperet.com](https://seperet.com)
+[About](#motion-and-sensor-core) | [Run and Debug](#run-and-debug) | [Documentation](#documentation) | [seperet.com](https://seperet.com)
     <br></br>
   <a href="https://seperet.com">
     <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
@@ -30,13 +30,13 @@
 
 ### Motion and Sensor Core
 
-automates:
+Includes a core library for motion models and sensor behavior, and a command line interface for running tests/scenarios.
+
+Automates:
 
   - multi‑sensor input
   - mode switching
   - sensor failure/error handling
-
-Includes a core library for motion models and sensor behavior, and a command line interface for running tests/scenarios.
 
 Focuses:
 
@@ -46,11 +46,13 @@ Focuses:
   lidar, magnetometer, baro, celestial, and dead reckoning.
 
 Navigation fallback ladder and platform profiles are documented in
-`docs/navigation_fallbacks.md` with government and university sources.
+`docs/navigation_fallbacks.md` (<a href="https://github.com/denv3rr/AirTrace/docs/navigation_fallbacks.md">here</a>).
 
 The fallback ladder prefers GNSS and tightly coupled inertial updates,
 then vision/lidar or radar/terrain aids, and only enables celestial
 navigation when higher-priority sources are unavailable or disallowed.
+
+<a href="https://github.com/denv3rr/AirTrace/sources_menu.md">Sources</a>
 
 <br></br>
 
