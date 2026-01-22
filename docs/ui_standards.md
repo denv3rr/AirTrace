@@ -23,6 +23,8 @@ university sources with unclassified guidance.
 ## Implementation Notes
 - Menus must show platform profile, active source, and authorization
   status so operators can reason about the system state quickly.
+- When fused modes are active, display contributing sensors and their
+  confidence or weights.
 - Inputs must be validated with bounds and handled safely on EOF or
   stream failure.
 - All overrides must be logged and shown in UI where relevant.

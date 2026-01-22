@@ -20,6 +20,25 @@
 - The navigation ladder prefers higher-permitted sources before lower-permitted ones.
 - Celestial navigation is only permitted when higher-priority sources are unavailable or disallowed.
 
+## Multi-Modal Switching and Fusion
+- Fused modes combine a primary source with one or more aiding sources (GNSS+INS, VIO/LIO, radar/terrain, magnetometer+baro).
+- Eligibility is based on health, data freshness, confidence, and authorization policy.
+- Mode transitions require state alignment checks to avoid discontinuities.
+- Operator status displays the active mode and contributing sources with confidence.
+- Disagreement beyond thresholds triggers downgrade to a safer mode or hold.
+
+## Concurrent Pipeline Operation
+- Compatible sensor pipelines may run concurrently when budgets permit.
+- Primary tracking pipelines are protected from interruption by auxiliary snapshots.
+- Snapshot results are tagged and contribute as auxiliary inputs only.
+- If resource pressure risks safety constraints, auxiliary pipelines are paused.
+
+## Historical Context and Edge-Case Handling
+- Mode decisions consider recent health, confidence, and disagreement trends.
+- Timing jitter and stale data trigger safe degraded modes or hold.
+- Cross-sensor residual checks gate fused mode eligibility.
+- See docs/edge_case_catalog.md for scenario coverage.
+
 ## Platform Profiles
 - Base profile defines common sensors, policy defaults, and data contracts.
 - Child profiles extend the base: air, ground, maritime, space, handheld, fixed_site, subsea.

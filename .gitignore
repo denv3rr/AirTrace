@@ -32,10 +32,15 @@
 *.app
 
 /build
-docs/plan.md
 simulation_history.txt
 test_logs.txt
-AGENTS.md
-AGENTS*.md
 *.log
 *.tmp
+
+# Agent scratch/local files
+.codex/
+.codex-cache/
+AGENTS.local.md
+AGENTS.md
+AGENTS*.md
+docs/plan.md

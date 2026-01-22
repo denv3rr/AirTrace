@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "core/multi_modal_types.h"
 #include "core/motion_models.h"
 #include "core/sensors.h"
 #include "core/state.h"
@@ -77,10 +78,34 @@ struct SimConfig
         }
     };
 
+    struct ModeConfig
+    {
+        std::vector<std::string> ladderOrder{};
+        int minHealthyCount = 2;
+        int minDwellSteps = 3;
+        int maxStaleCount = 0;
+        int maxLowConfidenceCount = 0;
+        int lockoutSteps = 0;
+        int historyWindow = 0;
+    };
+
+    struct FusionConfig
+    {
+        double maxDataAgeSeconds = 1.0;
+        double disagreementThreshold = 50.0;
+        double minConfidence = 0.0;
+        int maxDisagreementCount = 0;
+        double maxResidualAgeSeconds = 0.5;
+        std::unordered_map<std::string, double> sourceWeights{};
+    };
+
     PlatformProfile platformProfile = PlatformProfile::Base;
     std::vector<std::string> permittedSensors{};
     PolicyConfig policy{};
     DatasetConfig dataset{};
+    ModeConfig mode{};
+    FusionConfig fusion{};
+    SchedulerConfig scheduler{};
 
     MotionBounds bounds{{-1000.0, -1000.0, 0.0}, {1000.0, 1000.0, 1000.0}, 250.0, 20.0, 12.0};
     ManeuverParams maneuvers{3.0, 0.35};

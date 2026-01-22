@@ -16,6 +16,11 @@ std::string buildHelp(const std::string &baseHelp)
     out << baseHelp << "\n"
         << "Status: profile=" << status.platformProfile
         << " source=" << status.activeSource
+        << " contributors=" << (status.contributors.empty() ? "none" : status.contributors)
+        << " conf=" << status.modeConfidence
+        << " conc=" << (status.concurrencyStatus.empty() ? "none" : status.concurrencyStatus)
+        << " decision=" << (status.decisionReason.empty() ? "none" : status.decisionReason)
+        << " denial=" << (status.denialReason.empty() ? "none" : status.denialReason)
         << " auth=" << status.authStatus
         << " seed=" << status.seed
         << " det=" << (status.deterministic ? "on" : "off");
@@ -115,7 +120,8 @@ void viewTestLogs()
     std::ifstream logFile("test_logs.txt");
     if (!logFile)
     {
-        std::cerr << "No test logs available.\n";
+        setUiDenialReason("test_logs_missing");
+        std::cerr << "No test logs available. Recovery: run Test Mode to generate logs.\n";
         return;
     }
 

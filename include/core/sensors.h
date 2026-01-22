@@ -25,6 +25,11 @@ struct SensorStatus
     bool available = true;
     bool healthy = true;
     int missedUpdates = 0;
+    double timeSinceLastValid = 0.0;
+    double confidence = 1.0;
+    bool hasMeasurement = false;
+    Measurement lastMeasurement{};
+    double lastMeasurementTime = 0.0;
     std::string lastError;
 };
 

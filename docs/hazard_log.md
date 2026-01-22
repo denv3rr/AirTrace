@@ -20,3 +20,11 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-014 | Oversized datasets exceed platform storage limits. | Marginal | Occasional | Dataset tiering and profile-based constraints. | V-041, V-042 |
 | HZ-015 | Magnetometer interference yields incorrect heading. | Marginal | Occasional | Speed gating, bias modeling, and cross-check with inertial sources. | V-046 |
 | HZ-016 | Barometric drift yields incorrect altitude. | Marginal | Occasional | Drift modeling and range checks with safe-state fallback. | V-046 |
+| HZ-017 | Multi-sensor disagreement produces divergent state updates. | Critical | Occasional | Cross-check thresholds, reject outliers, degrade to safer mode. | V-054 |
+| HZ-018 | Fused mode switches without proper alignment cause discontinuity. | Critical | Occasional | State handoff rules, alignment checks, and dwell constraints. | V-051 |
+| HZ-019 | Unauthorized sensor source contaminates fused solution. | Critical | Remote | Authorization gates and source allowlists for fusion. | V-055 |
+| HZ-020 | Concurrent pipelines starve timing for safety-critical updates. | Critical | Occasional | Deterministic scheduler with budgets and safe-state fallback. | V-059 |
+| HZ-021 | Snapshot sensor interrupts long-scan pipeline causing stale output. | Marginal | Occasional | Preserve scan continuity and tag auxiliary snapshots. | V-058 |
+| HZ-022 | Timing jitter or stale data leads to unsafe mode selection. | Critical | Occasional | Freshness thresholds, jitter detection, safe-state downgrade. | V-062 |
+| HZ-023 | Cross-sensor residual conflicts drive fused divergence. | Critical | Occasional | Residual checks and forced downgrade. | V-061 |
+| HZ-024 | Sensor lockout misapplied causes prolonged loss of capability. | Marginal | Remote | Lockout bounds, recovery hysteresis, and operator prompt. | V-063, V-064 |

@@ -44,7 +44,8 @@ void runScenarioMainMode(Object &follower, int gpsTimeout, int heatTimeout)
     else
     {
         setUiActiveSource("hold");
-        std::cerr << "Input stream unavailable. Returning to main menu.\n";
+        setUiDenialReason("input_unavailable");
+        std::cerr << "Input stream unavailable. Recovery: restart input or rerun scenario.\n";
     }
 }
 

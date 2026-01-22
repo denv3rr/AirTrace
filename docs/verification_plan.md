@@ -52,3 +52,20 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-046 | REQ-FUNC-011 | TEST | Exercise vision/lidar/magnetometer/baro/celestial sensors with deterministic RNG. | Measurements carry expected types and validity flags. |
 | V-047 | REQ-CFG-006 | TEST | Provide new sensor keys in config. | Parsed and validated correctly. |
 | V-048 | REQ-DOC-001 | INSPECTION | Review README for submodule instructions and de-duplicated build/run guidance. | Quick start includes clone/pull with submodules and duplication is limited to the quick-start summary. |
+| V-049 | REQ-SYS-010 | ANALYSIS | Review fused mode catalog and source lineage definitions. | Fused modes and lineage are documented. |
+| V-050 | REQ-FUNC-012 | TEST | Inject stale or unauthorized sensor inputs. | Eligibility rejects stale/unauthorized sources. |
+| V-051 | REQ-FUNC-013 | TEST | Simulate each fused mode with required sensors present. | Mode activates only when required sources are healthy. |
+| V-052 | REQ-FUNC-014 | DEMO | Inspect operator UI during fused mode. | Contributors and confidence are visible. |
+| V-053 | REQ-FUNC-015 | TEST | Switch platform profiles with custom ladder ordering. | Ordering follows platform and policy. |
+| V-054 | REQ-SAFE-006 | TEST | Inject conflicting sensor measurements beyond thresholds. | System degrades to safer mode or hold. |
+| V-055 | REQ-SEC-008 | TEST | Attempt to fuse an unauthorized source. | Source is rejected and logged. |
+| V-056 | REQ-SYS-011 | TEST | Run concurrent pipelines (e.g., IR snapshot + lidar scan + GNSS+INS). | No interruptions or dropped primary scans; outputs deterministic. |
+| V-057 | REQ-FUNC-016 | TEST | Stress concurrent scheduling with bounded resources. | Arbitration remains deterministic and within limits. |
+| V-058 | REQ-FUNC-017 | TEST | Trigger auxiliary snapshot sensors during active scan. | Scan continuity preserved and auxiliary results tagged. |
+| V-059 | REQ-SAFE-007 | TEST | Induce load spikes across concurrent pipelines. | Safe-state constraints remain satisfied. |
+| V-060 | REQ-FUNC-018 | TEST | Replay historical sensor trends with jitter and drift. | Mode selection reflects trend-aware gating. |
+| V-061 | REQ-FUNC-019 | TEST | Inject cross-sensor residuals beyond thresholds. | Fused modes are rejected or downgraded. |
+| V-062 | REQ-SAFE-008 | TEST | Simulate stale data and timing jitter. | System enters hold or safe degraded modes. |
+| V-063 | REQ-FUNC-020 | TEST | Exceed stale/low-confidence counts. | Sensor is locked out for configured steps. |
+| V-064 | REQ-SAFE-009 | TEST | Attempt mode re-entry with locked contributor. | Mode remains blocked until lockout expires. |
+| V-065 | REQ-FUNC-021 | TEST | Provide residuals with mismatched timestamps. | Residual checks are skipped outside the window. |

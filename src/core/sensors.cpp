@@ -45,6 +45,7 @@ SensorBase::SensorBase(std::string name, SensorConfig config)
 Measurement SensorBase::sample(const State9 &state, double dt, std::mt19937 &rng)
 {
     Measurement measurement;
+    status.timeSinceLastValid += dt;
     timeAccumulator += dt;
 
     double period = (config.rateHz > 0.0) ? (1.0 / config.rateHz) : dt;
@@ -68,6 +69,9 @@ Measurement SensorBase::sample(const State9 &state, double dt, std::mt19937 &rng
     }
 
     recordSuccess();
+    status.hasMeasurement = true;
+    status.lastMeasurement = measurement;
+    status.lastMeasurementTime = state.time;
     return measurement;
 }
 
@@ -85,6 +89,9 @@ void SensorBase::recordFailure(const std::string &reason)
 {
     status.missedUpdates += 1;
     status.healthy = false;
+    status.confidence = 0.0;
+    status.hasMeasurement = false;
+    status.lastMeasurementTime = 0.0;
     status.lastError = reason;
 }
 
@@ -92,6 +99,8 @@ void SensorBase::recordSuccess()
 {
     status.missedUpdates = 0;
     status.healthy = true;
+    status.confidence = 1.0;
+    status.timeSinceLastValid = 0.0;
     status.lastError.clear();
 }
 

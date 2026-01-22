@@ -67,6 +67,10 @@ implemented in the core.
 This ladder is intended for the core mode manager. Actual usage is gated
 by policy and platform profile.
 
+Multi-modal switching prefers fused modes when primary and aiding sensors
+are healthy and authorized. If fused sources disagree beyond configured
+thresholds, the system downgrades to a safer mode or hold.
+
 1) GNSS (multi-constellation when available).
    - Primary source when permitted and healthy.
 

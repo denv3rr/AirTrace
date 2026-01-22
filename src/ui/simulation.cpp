@@ -94,6 +94,11 @@ void updateStatusFromConfig(const SimConfig &config)
     uiContext.status.authStatus = buildAuthStatus(config);
     uiContext.status.seed = config.seed;
     uiContext.status.deterministic = true;
+    uiContext.status.contributors = "";
+    uiContext.status.modeConfidence = 0.0;
+    uiContext.status.concurrencyStatus = "none";
+    uiContext.status.decisionReason = "";
+    uiContext.status.denialReason = "";
     if (uiContext.status.activeSource.empty())
     {
         uiContext.status.activeSource = "none";
@@ -109,6 +114,7 @@ bool initializeUiContext(const std::string &configPath)
         uiContext.configLoaded = false;
         uiContext.status.platformProfile = "base";
         uiContext.status.authStatus = "config_invalid";
+        uiContext.status.denialReason = "config_invalid";
         uiContext.status.seed = uiContext.seed;
         uiContext.status.deterministic = true;
         if (uiContext.status.activeSource.empty())
@@ -134,6 +140,52 @@ const UiStatus &getUiStatus()
 void setUiActiveSource(const std::string &source)
 {
     uiContext.status.activeSource = source;
+    if (uiContext.status.contributors.empty())
+    {
+        uiContext.status.contributors = source;
+    }
+    if (uiContext.status.modeConfidence <= 0.0)
+    {
+        uiContext.status.modeConfidence = 1.0;
+    }
+}
+
+void setUiContributors(const std::vector<std::string> &contributors)
+{
+    std::ostringstream out;
+    for (size_t idx = 0; idx < contributors.size(); ++idx)
+    {
+        out << contributors[idx];
+        if (idx + 1 < contributors.size())
+        {
+            out << ",";
+        }
+    }
+    uiContext.status.contributors = out.str();
+}
+
+void setUiModeConfidence(double confidence)
+{
+    uiContext.status.modeConfidence = confidence;
+}
+
+void setUiConcurrencyStatus(const std::string &status)
+{
+    uiContext.status.concurrencyStatus = status;
+}
+
+void setUiDecisionReason(const std::string &reason)
+{
+    uiContext.status.decisionReason = reason;
+    if (!reason.empty())
+    {
+        uiContext.status.denialReason.clear();
+    }
+}
+
+void setUiDenialReason(const std::string &reason)
+{
+    uiContext.status.denialReason = reason;
 }
 
 void resetUiRng()
@@ -186,6 +238,7 @@ void simulateManualConfig(const SimulationData &simData)
 {
     resetUiRng();
     setUiActiveSource(simData.mode);
+    setUiDecisionReason("manual_mode");
     // Use the simData to run the simulation
     Object target(1, "Target", simData.targetPos);
     Object follower(2, "Follower", simData.followerPos);
@@ -209,6 +262,7 @@ void simulateDeadReckoning(int speed, int iterations)
 {
     resetUiRng();
     setUiActiveSource("dead_reckoning");
+    setUiDecisionReason("dead_reckoning_active");
     Object target(1, "Target", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
     Object follower(2, "Follower", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
 
@@ -257,6 +311,7 @@ void simulateHeatSeeking(int speed, int iterations)
 {
     resetUiRng();
     setUiActiveSource("heat_signature");
+    setUiDecisionReason("heat_signature_active");
     // Initialize random positions for target and follower
     Object target(1, "Target", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
     Object follower(2, "Follower", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
@@ -324,6 +379,7 @@ void simulateGPSSeeking(int speed, int iterations)
 {
     resetUiRng();
     setUiActiveSource("gps");
+    setUiDecisionReason("gps_active");
     Object target(1, "Target", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
     Object follower(2, "Follower", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
 
@@ -397,11 +453,15 @@ void runTestMode()
 
     if (!tryGetValidatedIntInput("Enter movement speed (1-100): ", 1, 100, speed))
     {
+        setUiDenialReason("input_unavailable");
+        std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
         return;
     }
     if (!tryGetValidatedIntInput("Enter number of iterations (0 for infinite): ", 0, 10000, iterations))
     {
+        setUiDenialReason("input_unavailable");
+        std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
         return;
     }
@@ -416,6 +476,8 @@ void runTestMode()
     int modeChoice = tui::selectSingle("Testing and Debugging Menu", options, help);
     if (modeChoice < 0)
     {
+        setUiDenialReason("selection_cancelled");
+        std::cout << "Recovery: re-open the menu to select a test mode.\n";
         return;
     }
 
@@ -457,6 +519,8 @@ void runTestMode()
             !tryGetValidatedIntInput("Enter initial follower X position: ", -100000, 100000, followerX) ||
             !tryGetValidatedIntInput("Enter initial follower Y position: ", -100000, 100000, followerY))
         {
+            setUiDenialReason("input_unavailable");
+            std::cout << "Recovery: verify input stream and try again.\n";
             std::cout << "Input unavailable. Returning to menu.\n";
             return;
         }
@@ -498,6 +562,8 @@ void runTestMode()
             !tryGetValidatedIntInput("Enter initial follower X position: ", -100000, 100000, followerX) ||
             !tryGetValidatedIntInput("Enter initial follower Y position: ", -100000, 100000, followerY))
         {
+            setUiDenialReason("input_unavailable");
+            std::cout << "Recovery: verify input stream and try again.\n";
             std::cout << "Input unavailable. Returning to menu.\n";
             return;
         }
@@ -520,6 +586,7 @@ void runTestScenarioMode()
 
     std::thread exitThread(monitorExitKey); // Non-blocking thread to monitor exit input
 
+    setUiDecisionReason("scenario_active");
     runScenarioMode(follower, gpsTimeoutSeconds, heatTimeoutSeconds); // Call main scenario function
 
     // Log data handling based on exit or completion
@@ -566,6 +633,8 @@ void viewAndRerunPreviousSimulations()
     int choice = 0;
     if (!tryGetValidatedIntInput("Select a simulation to rerun (0 to go back): ", 0, static_cast<int>(simulationHistory.size()), choice))
     {
+        setUiDenialReason("input_unavailable");
+        std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
         return;
     }
@@ -596,6 +665,8 @@ void deletePreviousSimulation()
     int choice = 0;
     if (!tryGetValidatedIntInput("Select a simulation to delete (0 to go back): ", 0, static_cast<int>(simulationHistory.size()), choice))
     {
+        setUiDenialReason("input_unavailable");
+        std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
         return;
     }

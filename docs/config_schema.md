@@ -17,6 +17,30 @@ Schema version: 1.0
 - platform.permitted_sensors (list): optional; default profile-based list.
   - Format: comma-separated sensor names (example: gps,imu,radar).
 
+## Mode Switching and Fusion
+- mode.ladder_order (list): optional; default profile-based ordering.
+  - Format: comma-separated mode names (example: gps_ins,gps,vio,lio,radar_inertial,vision,lidar,radar,thermal,mag_baro,magnetometer,baro,celestial,dead_reckoning,imu).
+- mode.min_healthy_count (count): optional; default 2; range [1, 1000].
+- mode.min_dwell_steps (count): optional; default 3; range [0, 100000].
+- mode.max_stale_count (count): optional; default 0; range [0, 100000].
+- mode.max_low_confidence_count (count): optional; default 0; range [0, 100000].
+- mode.lockout_steps (count): optional; default 0; range [0, 100000].
+- mode.history_window (count): optional; default 0; range [0, 100000].
+- fusion.max_data_age_seconds (seconds): optional; default 1.0; range (0, 60].
+- fusion.disagreement_threshold (meters): optional; default 50.0; range (0, 1e6].
+- fusion.min_confidence (0-1): optional; default 0.0; range [0, 1].
+- fusion.max_disagreement_count (count): optional; default 0; range [0, 100000].
+- fusion.max_residual_age_seconds (seconds): optional; default 0.5; range (0, 60].
+- fusion.source_weights (map): optional; default empty (auto-weighting).
+  - Format: fusion.source_weights.<sensor>=weight (0-1).
+
+## Concurrency and Scheduling
+- scheduler.primary_budget_ms (milliseconds): optional; default 5; range [0, 1000].
+- scheduler.aux_budget_ms (milliseconds): optional; default 2; range [0, 1000].
+- scheduler.max_aux_pipelines (count): optional; default 2; range [0, 64].
+- scheduler.aux_min_service_interval (seconds): optional; default 1.0; range [0, 60].
+- scheduler.allow_snapshot_overlap (bool): optional; default true.
+
 ## Policy
 - policy.network_aid.mode (string): optional; default "deny".
   - Allowed: deny, allow, test_only.

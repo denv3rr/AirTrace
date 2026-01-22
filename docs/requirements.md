@@ -12,6 +12,8 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SYS-007: The system shall define platform profiles (air, ground, maritime, space, handheld, fixed_site, subsea) that inherit from a common base and override capabilities.
 - REQ-SYS-008: The system shall maintain a navigation fallback ladder that selects the highest-permitted source based on health, confidence, and policy.
 - REQ-SYS-009: The system shall support dataset tiers to limit onboard data volume by platform profile and role.
+- REQ-SYS-010: The system shall support multi-modal switching with fused modes that combine primary and aiding sensors while preserving source lineage.
+- REQ-SYS-011: The system shall support concurrent execution of compatible sensor pipelines without interrupting ongoing modes.
 
 ## Functional Requirements (FUNC)
 - REQ-FUNC-001: The core shall ingest sensor measurements using a common state and measurement contract.
@@ -25,6 +27,16 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-FUNC-009: The system shall accept celestial datasets as versioned artifacts with integrity verification.
 - REQ-FUNC-010: The system shall select the minimal dataset tier required for the active platform profile unless explicitly overridden by policy.
 - REQ-FUNC-011: The system shall provide fallback sensor modules for vision, lidar, magnetometer, barometer, and celestial sources with explicit measurement types and validity flags.
+- REQ-FUNC-012: The system shall compute source eligibility using health, data freshness, confidence, and policy authorization.
+- REQ-FUNC-013: The system shall provide fused navigation modes for GNSS+INS, vision/lidar-aided inertial, radar/terrain-aided inertial, and magnetometer+baro stabilization when permitted.
+- REQ-FUNC-014: The system shall publish active mode contributors with weights or confidence for operator visibility and audit.
+- REQ-FUNC-015: The fallback ladder ordering shall be configurable per platform profile and mission policy.
+- REQ-FUNC-016: The system shall schedule concurrent sensor pipelines with deterministic arbitration and bounded resource usage.
+- REQ-FUNC-017: The system shall preserve per-sensor scan continuity when auxiliary snapshot sensors run concurrently.
+- REQ-FUNC-018: The system shall evaluate historical sensor context (recent health, confidence, and disagreement trends) when selecting modes.
+- REQ-FUNC-019: The system shall enforce strict consistency checks for fused modes using cross-sensor residual thresholds.
+- REQ-FUNC-020: The system shall apply lockout rules for sensors that repeatedly violate freshness or confidence thresholds.
+- REQ-FUNC-021: The system shall require time-aligned measurements within a configured window for cross-sensor residual checks.
 
 ## Performance Requirements (PERF)
 - REQ-PERF-001: The core update loop shall process a single state update in deterministic time for a fixed input.
@@ -36,6 +48,10 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SAFE-003: The system shall prevent mode thrashing using guard conditions and minimum dwell times.
 - REQ-SAFE-004: The system shall enforce limits on turn rate, speed, and acceleration per config.
 - REQ-SAFE-005: The system shall enter hold mode when authorization policy or required datasets are missing or invalid.
+- REQ-SAFE-006: The system shall detect multi-sensor disagreement beyond configured thresholds and degrade to a safer mode or hold.
+- REQ-SAFE-007: The system shall prevent concurrency-induced resource starvation or timing jitter from violating safe-state constraints.
+- REQ-SAFE-008: The system shall enter hold or safe degraded modes when timing jitter or stale data exceeds configured limits.
+- REQ-SAFE-009: The system shall prevent re-entry into a mode when contributors remain in lockout.
 
 ## Security Requirements (SEC)
 - REQ-SEC-001: All external inputs shall be validated and sanitized before use.
@@ -45,6 +61,7 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SEC-005: Network-aid usage shall be deny-by-default unless explicitly permitted by configuration.
 - REQ-SEC-006: Overrides of deny-by-default policies shall require credential or key-based confirmation and be logged.
 - REQ-SEC-007: Authorization policies shall enforce role-based access with least-privilege defaults.
+- REQ-SEC-008: Multi-sensor fusion shall reject untrusted or unauthorized sources from contributing to fused modes.
 
 ## Interface Requirements (INT)
 - REQ-INT-001: All public interfaces shall declare units, valid ranges, and error behavior.

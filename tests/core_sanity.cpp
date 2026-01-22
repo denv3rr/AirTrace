@@ -1,6 +1,7 @@
 #include "core/mode_manager.h"
 #include "core/sensors.h"
 #include "core/sim_config.h"
+#include "core/mode_scheduler.h"
 #include "core/state.h"
 #include "core/hash.h"
 
@@ -31,6 +32,22 @@ public:
         {
             recordFailure("forced");
         }
+    }
+
+    void setStatus(bool healthy, double ageSeconds, double confidence)
+    {
+        status.healthy = healthy;
+        status.timeSinceLastValid = ageSeconds;
+        status.confidence = confidence;
+    }
+
+    void setPositionMeasurement(const Vec3 &position)
+    {
+        Measurement measurement;
+        measurement.position = position;
+        measurement.valid = true;
+        status.hasMeasurement = true;
+        status.lastMeasurement = measurement;
     }
 
 protected:
@@ -93,7 +110,7 @@ int main()
     assert(!invalidResult.ok);
     std::filesystem::remove(invalidDt);
 
-    std::filesystem::path policyConfig = writeConfigFile(
+    std::filesystem::path policyConfigPath = writeConfigFile(
         "airtrace_policy.cfg",
         "config.version=1.0\n"
         "platform.profile=handheld\n"
@@ -110,9 +127,9 @@ int main()
         "dataset.celestial.catalog_hash=abc\n"
         "dataset.celestial.ephemeris_path=data/eph\n"
         "dataset.celestial.ephemeris_hash=def\n");
-    ConfigResult policyResult = loadSimConfig(policyConfig.string());
+    ConfigResult policyResult = loadSimConfig(policyConfigPath.string());
     assert(policyResult.ok);
-    std::filesystem::remove(policyConfig);
+    std::filesystem::remove(policyConfigPath);
 
     std::filesystem::path sensorConfig = writeConfigFile(
         "airtrace_sensor_config.cfg",
@@ -222,6 +239,10 @@ int main()
     gps.setHealthy(true);
     decision = manager.decide(sensors);
     assert(decision.mode == TrackingMode::Gps);
+    ModeDecisionDetail detail = manager.getLastDecisionDetail();
+    assert(detail.selectedMode == "gps");
+    assert(detail.contributors.size() == 1);
+    assert(detail.contributors[0] == "gps");
 
     thermal.setHealthy(true);
     decision = manager.decide(sensors);
@@ -286,6 +307,217 @@ int main()
     visionSensor.setHealthy(false);
     decision = ladderManager.decide(ladderSensors);
     assert(decision.mode == TrackingMode::Lidar);
+
+    ModeManagerConfig gatingConfig;
+    gatingConfig.minHealthyCount = 1;
+    gatingConfig.maxDataAgeSeconds = 0.5;
+    gatingConfig.minConfidence = 0.6;
+    gatingConfig.maxStaleCount = 2;
+    gatingConfig.maxLowConfidenceCount = 2;
+    gatingConfig.lockoutSteps = 2;
+    gatingConfig.permittedSensors = {"gps"};
+    ModeManager gatingManager(gatingConfig);
+    TestSensor gatingGps("gps");
+    std::vector<SensorBase *> gatingSensors{&gatingGps};
+
+    gatingGps.setStatus(true, 1.0, 0.9);
+    decision = gatingManager.decide(gatingSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    gatingGps.setStatus(true, 0.1, 0.2);
+    decision = gatingManager.decide(gatingSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    gatingGps.setStatus(true, 0.1, 0.9);
+    decision = gatingManager.decide(gatingSensors);
+    assert(decision.mode == TrackingMode::Gps);
+
+    gatingGps.setStatus(true, 1.0, 0.9);
+    decision = gatingManager.decide(gatingSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    gatingGps.setStatus(true, 1.0, 0.9);
+    decision = gatingManager.decide(gatingSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    gatingGps.setStatus(true, 0.1, 0.9);
+    decision = gatingManager.decide(gatingSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    gatingGps.setStatus(true, 0.1, 0.9);
+    decision = gatingManager.decide(gatingSensors);
+    assert(decision.mode == TrackingMode::Gps);
+
+    ModeManagerConfig datasetConfig;
+    datasetConfig.minHealthyCount = 1;
+    datasetConfig.celestialAllowed = true;
+    datasetConfig.celestialDatasetAvailable = false;
+    datasetConfig.permittedSensors = {"celestial"};
+    ModeManager datasetManager(datasetConfig);
+    TestSensor datasetCelestial("celestial");
+    std::vector<SensorBase *> datasetSensors{&datasetCelestial};
+    datasetCelestial.setHealthy(true);
+    decision = datasetManager.decide(datasetSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    ModeManagerConfig residualConfig;
+    residualConfig.minHealthyCount = 1;
+    residualConfig.disagreementThreshold = 5.0;
+    residualConfig.maxDisagreementCount = 1;
+    residualConfig.lockoutSteps = 2;
+    residualConfig.permittedSensors = {"gps", "imu"};
+    residualConfig.ladderOrder = {"gps_ins"};
+    ModeManager residualManager(residualConfig);
+    TestSensor residualGps("gps");
+    TestSensor residualImu("imu");
+    std::vector<SensorBase *> residualSensors{&residualGps, &residualImu};
+    residualGps.setHealthy(true);
+    residualImu.setHealthy(true);
+    residualGps.setPositionMeasurement({0.0, 0.0, 0.0});
+    residualImu.setPositionMeasurement({100.0, 0.0, 0.0});
+    decision = residualManager.decide(residualSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    residualGps.setPositionMeasurement({0.0, 0.0, 0.0});
+    residualImu.setPositionMeasurement({0.0, 0.0, 0.0});
+    decision = residualManager.decide(residualSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    residualGps.setPositionMeasurement({0.0, 0.0, 0.0});
+    residualImu.setPositionMeasurement({0.0, 0.0, 0.0});
+    decision = residualManager.decide(residualSensors);
+    assert(decision.mode == TrackingMode::GpsIns);
+
+    ModeManagerConfig historyConfig;
+    historyConfig.minHealthyCount = 1;
+    historyConfig.minConfidence = 0.5;
+    historyConfig.maxLowConfidenceCount = 2;
+    historyConfig.lockoutSteps = 2;
+    historyConfig.historyWindow = 3;
+    historyConfig.permittedSensors = {"gps"};
+    historyConfig.ladderOrder = {"gps"};
+    ModeManager historyManager(historyConfig);
+    TestSensor historyGps("gps");
+    std::vector<SensorBase *> historySensors{&historyGps};
+
+    historyGps.setStatus(true, 0.1, 0.2);
+    decision = historyManager.decide(historySensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    historyGps.setStatus(true, 0.1, 0.2);
+    decision = historyManager.decide(historySensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    historyGps.setStatus(true, 0.1, 0.9);
+    decision = historyManager.decide(historySensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    historyGps.setStatus(true, 0.1, 0.9);
+    decision = historyManager.decide(historySensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    historyGps.setStatus(true, 0.1, 0.9);
+    decision = historyManager.decide(historySensors);
+    assert(decision.mode == TrackingMode::Gps);
+
+    ModeManagerConfig jitterConfig;
+    jitterConfig.minHealthyCount = 1;
+    jitterConfig.maxDataAgeSeconds = 0.2;
+    jitterConfig.maxStaleCount = 2;
+    jitterConfig.lockoutSteps = 2;
+    jitterConfig.historyWindow = 3;
+    jitterConfig.permittedSensors = {"gps"};
+    jitterConfig.ladderOrder = {"gps"};
+    ModeManager jitterManager(jitterConfig);
+    TestSensor jitterGps("gps");
+    std::vector<SensorBase *> jitterSensors{&jitterGps};
+
+    jitterGps.setStatus(true, 0.3, 0.9);
+    decision = jitterManager.decide(jitterSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    jitterGps.setStatus(true, 0.25, 0.9);
+    decision = jitterManager.decide(jitterSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    jitterGps.setStatus(true, 0.1, 0.9);
+    decision = jitterManager.decide(jitterSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    jitterGps.setStatus(true, 0.1, 0.9);
+    decision = jitterManager.decide(jitterSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    jitterGps.setStatus(true, 0.1, 0.9);
+    decision = jitterManager.decide(jitterSensors);
+    assert(decision.mode == TrackingMode::Gps);
+
+    ModeManagerConfig multipathConfig;
+    multipathConfig.minHealthyCount = 1;
+    multipathConfig.disagreementThreshold = 5.0;
+    multipathConfig.maxDisagreementCount = 1;
+    multipathConfig.lockoutSteps = 2;
+    multipathConfig.permittedSensors = {"lidar", "imu"};
+    multipathConfig.ladderOrder = {"lio"};
+    ModeManager multipathManager(multipathConfig);
+    TestSensor multipathLidar("lidar");
+    TestSensor multipathImu("imu");
+    std::vector<SensorBase *> multipathSensors{&multipathLidar, &multipathImu};
+    multipathLidar.setHealthy(true);
+    multipathImu.setHealthy(true);
+
+    multipathLidar.setPositionMeasurement({0.0, 0.0, 0.0});
+    multipathImu.setPositionMeasurement({100.0, 0.0, 0.0});
+    decision = multipathManager.decide(multipathSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    multipathLidar.setPositionMeasurement({0.0, 0.0, 0.0});
+    multipathImu.setPositionMeasurement({0.0, 0.0, 0.0});
+    decision = multipathManager.decide(multipathSensors);
+    assert(decision.mode == TrackingMode::Hold);
+
+    multipathLidar.setPositionMeasurement({0.0, 0.0, 0.0});
+    multipathImu.setPositionMeasurement({0.0, 0.0, 0.0});
+    decision = multipathManager.decide(multipathSensors);
+    assert(decision.mode == TrackingMode::Lio);
+
+    ModeManagerConfig saturationConfig;
+    saturationConfig.minHealthyCount = 1;
+    saturationConfig.minConfidence = 0.5;
+    saturationConfig.permittedSensors = {"thermal", "radar"};
+    saturationConfig.ladderOrder = {"thermal", "radar"};
+    ModeManager saturationManager(saturationConfig);
+    TestSensor saturationThermal("thermal");
+    TestSensor saturationRadar("radar");
+    std::vector<SensorBase *> saturationSensors{&saturationThermal, &saturationRadar};
+    saturationThermal.setStatus(true, 0.1, 0.1);
+    saturationRadar.setStatus(true, 0.1, 0.9);
+    decision = saturationManager.decide(saturationSensors);
+    assert(decision.mode == TrackingMode::Radar);
+
+    SchedulerConfig schedulerConfig;
+    schedulerConfig.primaryBudgetMs = 5.0;
+    schedulerConfig.auxBudgetMs = 2.0;
+    schedulerConfig.maxAuxPipelines = 1;
+    schedulerConfig.auxMinServiceIntervalSeconds = 1.0;
+    schedulerConfig.allowSnapshotOverlap = true;
+
+    ModeScheduler scheduler(schedulerConfig);
+    std::vector<PipelineRequest> requests = {
+        {"primary_scan", ModeType::Primary, true, false, 1.0, 0.0},
+        {"ir_snapshot", ModeType::AuxSnapshot, true, true, 1.5, 0.0},
+        {"lidar_snapshot", ModeType::AuxSnapshot, true, true, 1.5, 0.0}};
+
+    ScheduleResult scheduled = scheduler.schedule(requests, 10.0);
+    assert(scheduled.scheduled.size() == 2);
+    assert(scheduled.scheduled[0] == "primary_scan");
+    assert(scheduled.scheduled[1] == "ir_snapshot");
+
+    schedulerConfig.allowSnapshotOverlap = false;
+    ModeScheduler noOverlapScheduler(schedulerConfig);
+    ScheduleResult noOverlap = noOverlapScheduler.schedule(requests, 10.0);
+    assert(noOverlap.scheduled.size() == 1);
+    assert(noOverlap.scheduled[0] == "primary_scan");
 
     return 0;
 }

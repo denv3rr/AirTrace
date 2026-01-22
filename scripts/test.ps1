@@ -38,7 +38,7 @@ if ($env:CMAKE_GENERATOR) {
 }
 
 cmake @cmakeArgs
-cmake --build $BuildDir --target AirTraceCoreTests
+cmake --build $BuildDir --target AirTraceCoreTests AirTraceEdgeCaseTests
 
 Push-Location $BuildDir
 try {

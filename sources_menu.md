@@ -7,6 +7,30 @@
 - Check for duplicate links.
 - Use one URL per bullet for easy citation import.
 
+## Section Index
+- A. Project and Local References: [link](#a-project-and-local-references)
+- B. Government and DoD Sources (Programs, Doctrine, Portals): [link](#b-government-and-dod-sources-programs-doctrine-portals)
+- C. DARPA and Advanced Prototype Ecosystem: [link](#c-darpa-and-advanced-prototype-ecosystem)
+- D. FFRDC and Lab Publications: [link](#d-ffrdc-and-lab-publications)
+- E. University and Open Repositories (Navigation, GNC, Tracking): [link](#e-university-and-open-repositories-navigation-gnc-tracking)
+- F. Navigation, Inertial, and Filtering References: [link](#f-navigation-inertial-and-filtering-references)
+- G. Magnetics, Gravity, and Precision Sensors: [link](#g-magnetics-gravity-and-precision-sensors)
+- H. Defense Contractor Official Pages: [link](#h-defense-contractor-official-pages)
+- I. Electronic Warfare and SIGINT References: [link](#i-electronic-warfare-and-sigint-references)
+- J. Journal Portals: [link](#j-journal-portals)
+- K. JSTOR Search Links: [link](#k-jstor-search-links)
+- L. Seed Queries (Use in Any Database): [link](#l-seed-queries-use-in-any-database)
+- M. Platforms, Archives, and Interfaces: [link](#m-platforms-archives-and-interfaces)
+- N. Frontier Programs and Experimental Hubs: [link](#n-frontier-programs-and-experimental-hubs)
+- O. Display, HMI, and Human Factors: [link](#o-display-hmi-and-human-factors)
+- Security / SIGINT / Vault 7 / NSA: [link](#security--sigint--vault-7--nsa)
+- Vault 7 / Vault 8: [link](#vault-7--vault-8)
+- CIA Reading Room — Cyber / SIGINT / Security: [link](#cia-reading-room--cyber--sigint--security)
+- NSA — Technical / Cryptologic / Defensive Publications: [link](#nsa--technical--cryptologic--defensive-publications)
+- SIGINT Foundations & Spectrum Operations: [link](#sigint-foundations--spectrum-operations)
+- NIST — Security, Cryptography, Trusted Systems: [link](#nist--security-cryptography-trusted-systems)
+- Military / Intelligence Cyber Doctrine & Policy: [link](#military--intelligence-cyber-doctrine--policy)
+
 ## A. Project and Local References
 - Tracker Component Library: https://github.com/USNavalResearchLaboratory/TrackerComponentLibrary
 - Seperet: https://seperet.com

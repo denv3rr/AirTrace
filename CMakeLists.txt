@@ -22,6 +22,7 @@ add_library(airtrace_core
         src/core/motion_models.cpp
         src/core/sensors.cpp
         src/core/mode_manager.cpp
+        src/core/mode_scheduler.cpp
         src/core/sim_config.cpp
         src/core/logging.cpp
         src/core/hash.cpp
@@ -62,3 +63,10 @@ add_executable(AirTraceCoreTests
 target_include_directories(AirTraceCoreTests PRIVATE include)
 target_link_libraries(AirTraceCoreTests PRIVATE airtrace_core)
 add_test(NAME AirTraceCoreTests COMMAND AirTraceCoreTests)
+
+add_executable(AirTraceEdgeCaseTests
+        tests/edge_case_integration.cpp
+)
+target_include_directories(AirTraceEdgeCaseTests PRIVATE include)
+target_link_libraries(AirTraceEdgeCaseTests PRIVATE airtrace_core)
+add_test(NAME AirTraceEdgeCaseTests COMMAND AirTraceEdgeCaseTests)

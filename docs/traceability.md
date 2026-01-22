@@ -13,6 +13,8 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-SYS-007 | docs/operational_concepts.md | TBD | V-032 |
 | REQ-SYS-008 | docs/navigation_fallbacks.md | src/core/mode_manager.cpp | V-033 |
 | REQ-SYS-009 | docs/operational_concepts.md | src/core/sim_config.cpp | V-041 |
+| REQ-SYS-010 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-049 |
+| REQ-SYS-011 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-056 |
 | REQ-FUNC-001 | docs/architecture.md | src/core/sensors.cpp | V-007 |
 | REQ-FUNC-002 | docs/operational_concepts.md | src/core/mode_manager.cpp | V-008 |
 | REQ-FUNC-003 | docs/config_schema.md | src/core/sim_config.cpp | V-009 |
@@ -24,6 +26,16 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-FUNC-009 | docs/security_threat_model.md | src/core/hash.cpp | V-035 |
 | REQ-FUNC-010 | docs/navigation_fallbacks.md | src/core/sim_config.cpp | V-042 |
 | REQ-FUNC-011 | docs/navigation_fallbacks.md | src/core/sensors.cpp | V-046 |
+| REQ-FUNC-012 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-050 |
+| REQ-FUNC-013 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-051 |
+| REQ-FUNC-014 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-052 |
+| REQ-FUNC-015 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-053 |
+| REQ-FUNC-016 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-057 |
+| REQ-FUNC-017 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-058 |
+| REQ-FUNC-018 | docs/edge_case_catalog.md | TBD | V-060 |
+| REQ-FUNC-019 | docs/edge_case_catalog.md | TBD | V-061 |
+| REQ-FUNC-020 | docs/edge_case_catalog.md | TBD | V-063 |
+| REQ-FUNC-021 | docs/edge_case_catalog.md | TBD | V-065 |
 | REQ-PERF-001 | docs/architecture.md | TBD | V-014 |
 | REQ-PERF-002 | docs/config_schema.md | src/core/sensors.cpp | V-015 |
 | REQ-SAFE-001 | docs/hazard_log.md | TBD | V-016 |
@@ -31,6 +43,10 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-SAFE-003 | docs/hazard_log.md | src/core/mode_manager.cpp | V-018 |
 | REQ-SAFE-004 | docs/hazard_log.md | src/core/motion_models.cpp | V-019 |
 | REQ-SAFE-005 | docs/hazard_log.md | TBD | V-036 |
+| REQ-SAFE-006 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-054 |
+| REQ-SAFE-007 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-059 |
+| REQ-SAFE-008 | docs/edge_case_catalog.md | TBD | V-062 |
+| REQ-SAFE-009 | docs/edge_case_catalog.md | TBD | V-064 |
 | REQ-SEC-001 | docs/security_threat_model.md | src/core/sim_config.cpp | V-020 |
 | REQ-SEC-002 | docs/security_threat_model.md | TBD | V-021 |
 | REQ-SEC-003 | docs/security_threat_model.md | TBD | V-022 |
@@ -38,6 +54,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-SEC-005 | docs/security_threat_model.md | TBD | V-037 |
 | REQ-SEC-006 | docs/security_threat_model.md | TBD | V-038 |
 | REQ-SEC-007 | docs/security_threat_model.md | TBD | V-043 |
+| REQ-SEC-008 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-055 |
 | REQ-INT-001 | docs/architecture.md | include/core/*.h | V-024 |
 | REQ-INT-002 | docs/ui_standards.md | src/ui/*.cpp | V-025 |
 | REQ-INT-003 | docs/ui_standards.md | src/ui/*.cpp | V-026 |

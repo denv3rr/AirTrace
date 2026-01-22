@@ -29,7 +29,7 @@ case "$BUILD_DIR" in
 esac
 
 cmake -S "$ROOT_DIR" -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" $GENERATOR_ARGS
-cmake --build "$BUILD_DIR" --target AirTraceCoreTests
+cmake --build "$BUILD_DIR" --target AirTraceCoreTests AirTraceEdgeCaseTests
 
 cd "$BUILD_DIR"
 ctest --output-on-failure

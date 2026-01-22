@@ -6,6 +6,7 @@
 
 #include "core/hash.h"
 #include "core/mode_manager.h"
+#include "core/mode_scheduler.h"
 #include "core/motion_models.h"
 #include "core/sensors.h"
 #include "core/sim_config.h"
@@ -205,6 +206,7 @@ int main(int argc, char **argv)
     State9 state = cfg.initialState;
 
     bool celestialAllowed = false;
+    bool celestialDatasetAvailable = false;
     if (cfg.dataset.celestialAvailable())
     {
         DatasetCheckResult datasetCheck = validateCelestialDataset(cfg);
@@ -214,6 +216,7 @@ int main(int argc, char **argv)
             return 1;
         }
         celestialAllowed = true;
+        celestialDatasetAvailable = true;
     }
 
     MotionBounds bounds = cfg.bounds;
@@ -249,7 +252,22 @@ int main(int argc, char **argv)
     ModeManagerConfig modeConfig;
     modeConfig.permittedSensors = cfg.permittedSensors;
     modeConfig.celestialAllowed = celestialAllowed;
+    modeConfig.celestialDatasetAvailable = celestialDatasetAvailable;
+    modeConfig.maxDataAgeSeconds = cfg.fusion.maxDataAgeSeconds;
+    modeConfig.minConfidence = cfg.fusion.minConfidence;
+    modeConfig.minHealthyCount = cfg.mode.minHealthyCount;
+    modeConfig.minDwellSteps = cfg.mode.minDwellSteps;
+    modeConfig.maxStaleCount = cfg.mode.maxStaleCount;
+    modeConfig.maxLowConfidenceCount = cfg.mode.maxLowConfidenceCount;
+    modeConfig.lockoutSteps = cfg.mode.lockoutSteps;
+    modeConfig.maxDisagreementCount = cfg.fusion.maxDisagreementCount;
+    modeConfig.disagreementThreshold = cfg.fusion.disagreementThreshold;
+    modeConfig.historyWindow = cfg.mode.historyWindow;
+    modeConfig.maxResidualAgeSeconds = cfg.fusion.maxResidualAgeSeconds;
+    modeConfig.ladderOrder = cfg.mode.ladderOrder;
     ModeManager modeManager(modeConfig);
+
+    ModeScheduler scheduler(cfg.scheduler);
 
     double dt = cfg.dt;
     for (int i = 0; i < cfg.steps; ++i)
@@ -272,12 +290,18 @@ int main(int argc, char **argv)
             celestialMeas = celestial.sample(state, dt, rng);
         }
 
-        ModeDecision decision = modeManager.decide(sensors);
+        ModeDecisionDetail detail = modeManager.decideDetailed(sensors);
+        std::vector<PipelineRequest> requests = {
+            {"primary_scan", ModeType::Primary, true, false, cfg.scheduler.primaryBudgetMs, 0.0},
+            {"ir_snapshot", ModeType::AuxSnapshot, true, true, cfg.scheduler.auxBudgetMs, 0.0},
+            {"lidar_snapshot", ModeType::AuxSnapshot, true, true, cfg.scheduler.auxBudgetMs, 0.0}};
+        ScheduleResult schedule = scheduler.schedule(requests, state.time);
         Projection2D xy = projectXY(state);
         Projection2D xz = projectXZ(state);
 
         std::cout << "Step " << i << " | model=" << static_cast<int>(model)
-                  << " | mode=" << ModeManager::modeName(decision.mode)
+                  << " | mode=" << detail.selectedMode
+                  << " | conf=" << detail.confidence
                   << " | pos=(" << state.position.x << ", " << state.position.y << ", " << state.position.z << ")"
                   << " | proj " << xy.plane << "=(" << xy.x << ", " << xy.y << ")"
                   << " | proj " << xz.plane << "=(" << xz.x << ", " << xz.y << ")";
@@ -322,9 +346,33 @@ int main(int argc, char **argv)
         {
             std::cout << " | celestial=(" << celestialMeas.position->x << ", " << celestialMeas.position->y << ", " << celestialMeas.position->z << ")";
         }
-        if (!decision.reason.empty())
+        if (!detail.reason.empty())
         {
-            std::cout << " | decision=" << decision.reason;
+            std::cout << " | decision=" << detail.reason;
+        }
+        if (!detail.contributors.empty())
+        {
+            std::cout << " | contributors=";
+            for (size_t idx = 0; idx < detail.contributors.size(); ++idx)
+            {
+                std::cout << detail.contributors[idx];
+                if (idx + 1 < detail.contributors.size())
+                {
+                    std::cout << ",";
+                }
+            }
+        }
+        if (!schedule.scheduled.empty())
+        {
+            std::cout << " | scheduled=";
+            for (size_t idx = 0; idx < schedule.scheduled.size(); ++idx)
+            {
+                std::cout << schedule.scheduled[idx];
+                if (idx + 1 < schedule.scheduled.size())
+                {
+                    std::cout << ",";
+                }
+            }
         }
         std::cout << "\n";
     }

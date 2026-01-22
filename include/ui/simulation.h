@@ -24,6 +24,11 @@ struct UiStatus
 {
     std::string platformProfile;
     std::string activeSource;
+    std::string contributors;
+    double modeConfidence = 0.0;
+    std::string concurrencyStatus;
+    std::string decisionReason;
+    std::string denialReason;
     std::string authStatus;
     unsigned int seed = 0;
     bool deterministic = true;
@@ -32,6 +37,11 @@ struct UiStatus
 bool initializeUiContext(const std::string &configPath);
 const UiStatus &getUiStatus();
 void setUiActiveSource(const std::string &source);
+void setUiContributors(const std::vector<std::string> &contributors);
+void setUiModeConfidence(double confidence);
+void setUiConcurrencyStatus(const std::string &status);
+void setUiDecisionReason(const std::string &reason);
+void setUiDenialReason(const std::string &reason);
 void resetUiRng();
 int uiRandomInt(int minValue, int maxValue);
 

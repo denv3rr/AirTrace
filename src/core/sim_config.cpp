@@ -256,6 +256,49 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "dataset.celestial.ephemeris_path") config.dataset.celestialEphemerisPath = value;
     else if (key == "dataset.celestial.catalog_hash") config.dataset.celestialCatalogHash = value;
     else if (key == "dataset.celestial.ephemeris_hash") config.dataset.celestialEphemerisHash = value;
+    else if (key == "mode.ladder_order") config.mode.ladderOrder = splitList(value);
+    else if (key == "mode.min_healthy_count" && toInt(value, ival)) config.mode.minHealthyCount = ival;
+    else if (key == "mode.min_dwell_steps" && toInt(value, ival)) config.mode.minDwellSteps = ival;
+    else if (key == "mode.max_stale_count" && toInt(value, ival)) config.mode.maxStaleCount = ival;
+    else if (key == "mode.max_low_confidence_count" && toInt(value, ival)) config.mode.maxLowConfidenceCount = ival;
+    else if (key == "mode.lockout_steps" && toInt(value, ival)) config.mode.lockoutSteps = ival;
+    else if (key == "mode.history_window" && toInt(value, ival)) config.mode.historyWindow = ival;
+    else if (key == "fusion.max_data_age_seconds" && toDouble(value, dval)) config.fusion.maxDataAgeSeconds = dval;
+    else if (key == "fusion.disagreement_threshold" && toDouble(value, dval)) config.fusion.disagreementThreshold = dval;
+    else if (key == "fusion.min_confidence" && toDouble(value, dval)) config.fusion.minConfidence = dval;
+    else if (key == "fusion.max_disagreement_count" && toInt(value, ival)) config.fusion.maxDisagreementCount = ival;
+    else if (key == "fusion.max_residual_age_seconds" && toDouble(value, dval)) config.fusion.maxResidualAgeSeconds = dval;
+    else if (key == "scheduler.primary_budget_ms" && toDouble(value, dval)) config.scheduler.primaryBudgetMs = dval;
+    else if (key == "scheduler.aux_budget_ms" && toDouble(value, dval)) config.scheduler.auxBudgetMs = dval;
+    else if (key == "scheduler.max_aux_pipelines" && toInt(value, ival))
+    {
+        if (ival < 0)
+        {
+            setIssue(result, key, "must be >= 0");
+        }
+        else
+        {
+            config.scheduler.maxAuxPipelines = static_cast<std::size_t>(ival);
+        }
+    }
+    else if (key == "scheduler.aux_min_service_interval" && toDouble(value, dval)) config.scheduler.auxMinServiceIntervalSeconds = dval;
+    else if (key == "scheduler.allow_snapshot_overlap" && toBool(value, bval)) config.scheduler.allowSnapshotOverlap = bval;
+    else if (key.rfind("fusion.source_weights.", 0) == 0)
+    {
+        std::string sensor = toLower(trim(key.substr(std::string("fusion.source_weights.").size())));
+        if (sensor.empty())
+        {
+            setIssue(result, key, "missing sensor name");
+        }
+        else if (toDouble(value, dval))
+        {
+            config.fusion.sourceWeights[sensor] = dval;
+        }
+        else
+        {
+            setIssue(result, key, "invalid weight");
+        }
+    }
     else
     {
         setIssue(result, key, "unknown or invalid value");
@@ -344,6 +387,33 @@ void validateConfig(ConfigResult &result)
     {
         setIssue(result, "policy.network_aid.override_timeout_seconds", "must be >= 0");
     }
+
+    validateRange(result, "mode.min_healthy_count", static_cast<double>(config.mode.minHealthyCount), 1.0, 1000.0);
+    validateRange(result, "mode.min_dwell_steps", static_cast<double>(config.mode.minDwellSteps), 0.0, 100000.0);
+    validateRange(result, "mode.max_stale_count", static_cast<double>(config.mode.maxStaleCount), 0.0, 100000.0);
+    validateRange(result, "mode.max_low_confidence_count", static_cast<double>(config.mode.maxLowConfidenceCount), 0.0, 100000.0);
+    validateRange(result, "mode.lockout_steps", static_cast<double>(config.mode.lockoutSteps), 0.0, 100000.0);
+    validateRange(result, "mode.history_window", static_cast<double>(config.mode.historyWindow), 0.0, 100000.0);
+
+    validateRange(result, "fusion.max_data_age_seconds", config.fusion.maxDataAgeSeconds, 0.0, 60.0, false, true);
+    validateRange(result, "fusion.disagreement_threshold", config.fusion.disagreementThreshold, 0.0, 1e6, false, true);
+    validateRange(result, "fusion.min_confidence", config.fusion.minConfidence, 0.0, 1.0);
+    validateRange(result, "fusion.max_disagreement_count", static_cast<double>(config.fusion.maxDisagreementCount), 0.0, 100000.0);
+    validateRange(result, "fusion.max_residual_age_seconds", config.fusion.maxResidualAgeSeconds, 0.0, 60.0, false, true);
+
+    for (const auto &entry : config.fusion.sourceWeights)
+    {
+        if (entry.first.empty())
+        {
+            setIssue(result, "fusion.source_weights", "sensor name missing");
+        }
+        validateRange(result, "fusion.source_weights." + entry.first, entry.second, 0.0, 1.0);
+    }
+
+    validateRange(result, "scheduler.primary_budget_ms", config.scheduler.primaryBudgetMs, 0.0, 1000.0);
+    validateRange(result, "scheduler.aux_budget_ms", config.scheduler.auxBudgetMs, 0.0, 1000.0);
+    validateRange(result, "scheduler.max_aux_pipelines", static_cast<double>(config.scheduler.maxAuxPipelines), 0.0, 64.0);
+    validateRange(result, "scheduler.aux_min_service_interval", config.scheduler.auxMinServiceIntervalSeconds, 0.0, 60.0);
 
     if (config.policy.roles.empty())
     {
@@ -471,6 +541,27 @@ ConfigResult loadSimConfig(const std::string &path)
             result.config.permittedSensors = {"gps", "imu", "thermal", "radar", "dead_reckoning"};
             break;
         }
+    }
+
+    if (result.config.mode.ladderOrder.empty())
+    {
+        result.config.mode.ladderOrder = {
+            "gps_ins",
+            "gps",
+            "vio",
+            "lio",
+            "radar_inertial",
+            "vision",
+            "lidar",
+            "radar",
+            "thermal",
+            "mag_baro",
+            "magnetometer",
+            "baro",
+            "celestial",
+            "dead_reckoning",
+            "imu",
+            "hold"};
     }
 
     validateConfig(result);

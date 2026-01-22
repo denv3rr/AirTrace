@@ -36,6 +36,8 @@
 - Elevation of privilege: untrusted plugin execution.
 - Spoofing: unauthorized network-aid injection.
 - Tampering: celestial dataset modification or downgrade.
+- Spoofing: unauthorized sensor contribution into fused modes.
+- Tampering: forced ladder reordering or fusion weight manipulation.
 
 ## Mitigations and Controls
 - Input validation and schema enforcement (REQ-SEC-001, REQ-CFG-001).
@@ -46,6 +48,8 @@
 - Deny-by-default network-aid policy with credentialed overrides (REQ-SEC-005, REQ-SEC-006).
 - Dataset integrity checks for celestial nav inputs (REQ-FUNC-009).
 - Role-based authorization for overrides and policy changes (REQ-SEC-007).
+- Fusion source allowlists and authorization checks before contributing to fused modes (REQ-SEC-008).
+- Ladder ordering and fusion parameters locked to signed configs with audit logging.
 
 ## Required Security Artifacts
 - STIG baseline for target OS.
