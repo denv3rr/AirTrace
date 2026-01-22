@@ -30,6 +30,7 @@ struct MenuResult
 MenuResult runMenu(const MenuConfig &config, std::vector<MenuOption> options);
 int selectSingle(const std::string &title, const std::vector<std::string> &options, const std::string &help);
 std::vector<bool> selectMultiple(const std::string &title, const std::vector<std::string> &options, const std::string &help);
+bool isInteractiveInput();
 } // namespace tui
 
 #endif // TUI_H

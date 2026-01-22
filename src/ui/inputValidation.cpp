@@ -1,4 +1,5 @@
 #include "ui/inputValidation.h"
+#include "ui/input_harness.h"
 
 #include <iostream>
 #include <limits>
@@ -17,6 +18,13 @@ int getValidatedIntInput(const std::string &prompt, int min, int max)
 
 bool tryGetValidatedIntInput(const std::string &prompt, int min, int max, int &out)
 {
+    if (ui::InputHarness *harness = ui::getInputHarness())
+    {
+        if (harness->isEnabled())
+        {
+            return harness->nextInt(prompt, min, max, out);
+        }
+    }
     std::string line;
     while (true)
     {
@@ -47,5 +55,12 @@ void clearInputStream()
 
 bool inputStreamAvailable()
 {
+    if (ui::InputHarness *harness = ui::getInputHarness())
+    {
+        if (harness->isEnabled())
+        {
+            return true;
+        }
+    }
     return std::cin.good() && !std::cin.eof();
 }

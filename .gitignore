@@ -41,6 +41,19 @@ test_logs.txt
 .codex/
 .codex-cache/
 AGENTS.local.md
-AGENTS.md
-AGENTS*.md
-docs/plan.md
+
+# Local harness commands
+configs/harness_commands.txt
+
+# Local environment and secrets
+.env
+.env.*
+*.pem
+*.pfx
+*.p12
+*.key
+*.crt
+*.cer
+*.keystore
+*.kdbx
+*.lic

@@ -100,6 +100,9 @@ struct SimConfig
     };
 
     PlatformProfile platformProfile = PlatformProfile::Base;
+    bool hasParentProfile = false;
+    PlatformProfile parentProfile = PlatformProfile::Base;
+    std::vector<std::string> childModules{};
     std::vector<std::string> permittedSensors{};
     PolicyConfig policy{};
     DatasetConfig dataset{};

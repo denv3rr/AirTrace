@@ -1,0 +1,12 @@
+# Harness command file format (pipe-delimited).
+# Commands are consumed in order. Append new lines to edit mid-run.
+#
+# select|<menu title>|<index>
+# input_int|<prompt>|<value>
+#
+# Example flow:
+select|AirTrace - Main Menu|0
+input_int|Enter GPS timeout seconds (1-120): |10
+input_int|Enter heat timeout seconds (1-120): |10
+select|AirTrace - Main Menu|1
+select|AirTrace - Test Menu|0

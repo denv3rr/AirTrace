@@ -3,6 +3,7 @@
 #include "ui/simulation.h"
 #include "core/Tracker.h"
 #include "ui/inputValidation.h"
+#include "ui/scenario.h"
 #include "ui/tui.h"
 #include <iostream>
 #include <cmath>
@@ -20,6 +21,7 @@ std::vector<SimulationData> simulationHistory;
 
 // Atomic variable to allow exit during test mode
 std::atomic<bool> exitRequested(false);
+std::atomic<bool> exitRequestedByUser(false);
 
 namespace
 {
@@ -72,6 +74,24 @@ std::string networkAidModeName(SimConfig::NetworkAidMode mode)
     }
 }
 
+std::string modulesToString(const std::vector<std::string> &modules)
+{
+    if (modules.empty())
+    {
+        return "none";
+    }
+    std::ostringstream out;
+    for (size_t idx = 0; idx < modules.size(); ++idx)
+    {
+        out << modules[idx];
+        if (idx + 1 < modules.size())
+        {
+            out << ",";
+        }
+    }
+    return out.str();
+}
+
 std::string buildAuthStatus(const SimConfig &config)
 {
     std::ostringstream out;
@@ -91,6 +111,8 @@ std::string buildAuthStatus(const SimConfig &config)
 void updateStatusFromConfig(const SimConfig &config)
 {
     uiContext.status.platformProfile = profileName(config.platformProfile);
+    uiContext.status.parentProfile = config.hasParentProfile ? profileName(config.parentProfile) : "none";
+    uiContext.status.childModules = modulesToString(config.childModules);
     uiContext.status.authStatus = buildAuthStatus(config);
     uiContext.status.seed = config.seed;
     uiContext.status.deterministic = true;
@@ -113,6 +135,8 @@ bool initializeUiContext(const std::string &configPath)
     {
         uiContext.configLoaded = false;
         uiContext.status.platformProfile = "base";
+        uiContext.status.parentProfile = "none";
+        uiContext.status.childModules = "none";
         uiContext.status.authStatus = "config_invalid";
         uiContext.status.denialReason = "config_invalid";
         uiContext.status.seed = uiContext.seed;
@@ -210,9 +234,20 @@ int uiRandomInt(int minValue, int maxValue)
 // Monitor function to check for user input without blocking
 void monitorExitKey()
 {
-    std::string input;
     while (!exitRequested.load())
-    { // Use load() for atomic
+    {
+        if (!inputStreamAvailable())
+        {
+            exitRequested.store(true);
+            return;
+        }
+        if (std::cin.rdbuf()->in_avail() <= 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            continue;
+        }
+
+        std::string input;
         if (!std::getline(std::cin, input))
         {
             exitRequested.store(true);
@@ -220,7 +255,8 @@ void monitorExitKey()
         }
         if (input == "x" || input == "X")
         {
-            exitRequested.store(true); // Use store() for atomic
+            exitRequestedByUser.store(true);
+            exitRequested.store(true);
             std::cout << "\nExiting to test menu...\n";
         }
     }
@@ -480,6 +516,12 @@ void runTestMode()
         std::cout << "Recovery: re-open the menu to select a test mode.\n";
         return;
     }
+    if (modeChoice >= static_cast<int>(options.size()))
+    {
+        setUiDenialReason("menu_selection_invalid");
+        std::cerr << "Menu selection invalid. Returning to menu.\n";
+        return;
+    }
 
     switch (modeChoice + 1)
     {
@@ -499,8 +541,9 @@ void runTestMode()
         trackingMode = "dead_reckoning";
         break;
     default:
-        std::cout << "Invalid choice. Defaulting to prediction mode.\n";
-        trackingMode = "prediction";
+        setUiDenialReason("menu_selection_invalid");
+        std::cerr << "Menu selection invalid. Returning to menu.\n";
+        return;
     }
 
     // If heat signature mode is selected, bypass manual target/follower input
@@ -576,21 +619,37 @@ void runTestMode()
 }
 
 // Test function for Scenario Mode with exit prompt and logging
-void runTestScenarioMode()
+bool runTestScenarioMode()
 {
-    std::cout << "Starting Test Mode for Scenario. Press 'x' to exit.\n";
+    if (!inputStreamAvailable())
+    {
+        setUiDenialReason("input_unavailable");
+        std::cerr << "Input stream unavailable. Exiting.\n";
+        return false;
+    }
+
+    std::cout << "Starting Test Mode for Scenario. Type 'x' then Enter to exit.\n";
     Object follower(2, "Follower", {0, 0}); // Initialize follower at origin
     int gpsTimeoutSeconds = 10;
     int heatTimeoutSeconds = 10;
     std::string logData;
 
+    exitRequested.store(false);
+    exitRequestedByUser.store(false);
     std::thread exitThread(monitorExitKey); // Non-blocking thread to monitor exit input
 
     setUiDecisionReason("scenario_active");
-    runScenarioMode(follower, gpsTimeoutSeconds, heatTimeoutSeconds); // Call main scenario function
+    bool completed = runScenarioMode(follower, gpsTimeoutSeconds, heatTimeoutSeconds, &exitRequested);
 
     // Log data handling based on exit or completion
-    if (exitRequested)
+    bool exitedByUser = exitRequestedByUser.load();
+    if (!completed && !exitedByUser)
+    {
+        setUiDenialReason("input_unavailable");
+        std::cerr << "Scenario test stopped due to input failure. Exiting.\n";
+        logData += "\nTest mode stopped due to input failure.\n";
+    }
+    else if (exitedByUser)
     {
         logData += "\nTest mode exited early by user.\n";
     }
@@ -600,8 +659,11 @@ void runTestScenarioMode()
     }
 
     saveTestLog(logData);  // Save the log for later access
-    exitRequested = false; // Reset for future runs
+    exitRequested.store(true);
     exitThread.join();
+    exitRequested.store(false);
+    exitRequestedByUser.store(false);
+    return completed || exitedByUser;
 }
 
 /****************************************
@@ -690,7 +752,9 @@ void saveSimulationHistoryToFile()
     std::ofstream outFile("simulation_history.txt");
     if (!outFile)
     {
+        setUiDenialReason("history_save_failed");
         std::cerr << "Error: Unable to open file for saving history.\n";
+        std::cerr << "Recovery: verify write permissions and retry.\n";
         return;
     }
 
@@ -715,7 +779,9 @@ void saveTestLog(const std::string &logData)
     }
     else
     {
+        setUiDenialReason("test_log_write_failed");
         std::cerr << "Error: Unable to open test logs file.\n";
+        std::cerr << "Recovery: verify write permissions and retry.\n";
     }
 }
 
@@ -724,7 +790,9 @@ void saveSimulationHistory()
     std::ofstream outFile("simulation_history.txt");
     if (!outFile)
     {
+        setUiDenialReason("history_save_failed");
         std::cerr << "Error: Unable to open file for saving history.\n";
+        std::cerr << "Recovery: verify write permissions and retry.\n";
         return;
     }
 
@@ -756,7 +824,9 @@ void logSimulationResult(const std::string &mode, const std::string &details, co
     }
     else
     {
-        std::cerr << "Unable to open file for writing.\n";
+        setUiDenialReason("history_save_failed");
+        std::cerr << "Error: Unable to open file for writing.\n";
+        std::cerr << "Recovery: verify write permissions and retry.\n";
     }
 }
 

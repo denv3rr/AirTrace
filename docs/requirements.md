@@ -14,6 +14,8 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SYS-009: The system shall support dataset tiers to limit onboard data volume by platform profile and role.
 - REQ-SYS-010: The system shall support multi-modal switching with fused modes that combine primary and aiding sensors while preserving source lineage.
 - REQ-SYS-011: The system shall support concurrent execution of compatible sensor pipelines without interrupting ongoing modes.
+- REQ-SYS-012: Build, run, and test scripts shall validate build type inputs and fail closed on invalid values.
+- REQ-SYS-013: The system shall support platform profile inheritance with deterministic merge rules for permitted sensors and policy defaults.
 
 ## Functional Requirements (FUNC)
 - REQ-FUNC-001: The core shall ingest sensor measurements using a common state and measurement contract.
@@ -69,6 +71,10 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-INT-003: The UI shall provide explicit error prompts and recovery guidance.
 - REQ-INT-004: The UI shall display the active navigation source and its authorization status.
 - REQ-INT-005: The UI shall use deterministic inputs for test and simulation modes using the configured seed.
+- REQ-INT-006: The UI shall fail closed on invalid or unavailable menu selections, log the error, and exit.
+- REQ-INT-007: The UI shall display denial warnings with recovery guidance when safe-state or input failures occur.
+- REQ-INT-008: The test harness shall provide a non-interactive input source for UI flows without altering production input behavior.
+- REQ-INT-009: When the test harness is enabled, UI menu flows shall be permitted without a TTY while preserving production input checks.
 
 ## Configuration Requirements (CFG)
 - REQ-CFG-001: Configuration files shall be versioned and schema-validated.
@@ -77,10 +83,15 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-CFG-004: Configuration shall define platform profile, permitted sensors, and network-aid policy.
 - REQ-CFG-005: Configuration shall define roles, override rules, and dataset tier constraints.
 - REQ-CFG-006: Configuration shall define parameters for vision, lidar, magnetometer, barometer, and celestial sensors.
+- REQ-CFG-007: Configuration shall define platform.profile_parent and platform.child_modules with validation and deterministic defaults.
 
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).
 - REQ-VER-002: Core algorithms shall have unit tests covering boundary conditions.
+- REQ-VER-003: Test scripts shall build all registered test targets before running them.
+- REQ-VER-004: Test harness inputs shall be authenticated by build-time gating and runtime enablement before use.
+- REQ-VER-005: Test scripts shall normalize test summary labels to avoid redundant qualifiers (e.g., omit "real").
+- REQ-VER-006: Integration tests shall cover dropout ladder selection, dataset gating, and UI menu flows.
 
 ## Documentation Requirements (DOC)
 - REQ-DOC-001: The README shall include submodule-aware clone/pull instructions and non-duplicative build/run guidance, with a quick-start summary that may repeat the core steps.

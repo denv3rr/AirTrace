@@ -29,7 +29,7 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-023 | REQ-SEC-004 | INSPECTION | Verify audit log entries. | Mode/config changes recorded. |
 | V-024 | REQ-INT-001 | INSPECTION | Review public headers. | Units/ranges documented. |
 | V-025 | REQ-INT-002 | DEMO | Operate UI with sensor changes. | Mode/health/status visible. |
-| V-026 | REQ-INT-003 | DEMO | Trigger invalid input. | Explicit error and recovery shown. |
+| V-026 | REQ-INT-003 | DEMO | Trigger invalid input or file I/O failure in UI flows. | Explicit error and recovery shown. |
 | V-027 | REQ-CFG-001 | TEST | Load versioned config. | Schema version enforced. |
 | V-028 | REQ-CFG-002 | TEST | Use invalid ranges. | Validation fails with errors. |
 | V-029 | REQ-CFG-003 | INSPECTION | Review config schema docs. | Defaults documented and justified. |
@@ -69,3 +69,14 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-063 | REQ-FUNC-020 | TEST | Exceed stale/low-confidence counts. | Sensor is locked out for configured steps. |
 | V-064 | REQ-SAFE-009 | TEST | Attempt mode re-entry with locked contributor. | Mode remains blocked until lockout expires. |
 | V-065 | REQ-FUNC-021 | TEST | Provide residuals with mismatched timestamps. | Residual checks are skipped outside the window. |
+| V-066 | REQ-INT-006 | TEST | Run UI menu selection mapping tests for scenario/test entries and invalid selections. | Valid indices map to actions; invalid selections trigger InputError. |
+| V-067 | REQ-SYS-012 | TEST | Run build/run/test scripts with invalid BUILD_TYPE. | Scripts exit with an error before generating or building. |
+| V-068 | REQ-VER-003 | TEST | Run test script with new test targets present. | All registered test targets are built before ctest runs. |
+| V-069 | REQ-INT-007 | TEST | Run UI warning banner mapping tests for denial reasons. | Denial reasons map to deterministic recovery guidance. |
+| V-070 | REQ-INT-008 | TEST | Run harness-driven menu flow with scripted inputs. | UI follows the same flow without interactive input. |
+| V-071 | REQ-VER-004 | TEST | Attempt harness activation without build-time flag or runtime enablement. | Harness remains inactive and input is rejected. |
+| V-072 | REQ-VER-005 | TEST | Run test scripts and inspect summary label output. | Output uses "Total Test time" and omits "(real)". |
+| V-073 | REQ-SYS-013 | TEST | Load config with profile_parent and child profile, then verify merged permitted sensors. | Merge order is deterministic and includes parent + child defaults. |
+| V-074 | REQ-CFG-007 | TEST | Provide invalid platform.profile_parent or child module identifiers. | Config validation fails with explicit errors. |
+| V-075 | REQ-INT-009 | TEST | Run menu flows with harness enabled and no TTY. | UI menus operate and exit without input errors. |
+| V-076 | REQ-VER-006 | TEST | Run integration tests for dropout ladder selection and dataset gating. | Modes follow ladder and dataset gating prevents celestial activation when unavailable. |

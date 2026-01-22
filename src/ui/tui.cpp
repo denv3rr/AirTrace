@@ -1,10 +1,12 @@
 #include "ui/tui.h"
+#include "ui/input_harness.h"
 
 #include <iostream>
 #include <algorithm>
 
 #if defined(_WIN32)
 #include <conio.h>
+#include <io.h>
 #include <windows.h>
 #else
 #include <termios.h>
@@ -334,6 +336,18 @@ MenuResult runMenu(const MenuConfig &config, std::vector<MenuOption> options)
 
 int selectSingle(const std::string &title, const std::vector<std::string> &options, const std::string &help)
 {
+    if (ui::InputHarness *harness = ui::getInputHarness())
+    {
+        if (harness->isEnabled())
+        {
+            int selectedIndex = -1;
+            if (!harness->selectSingle(title, options, selectedIndex))
+            {
+                return static_cast<int>(options.size());
+            }
+            return selectedIndex;
+        }
+    }
     std::vector<MenuOption> menuOptions;
     menuOptions.reserve(options.size());
     for (const auto &option : options)
@@ -372,6 +386,22 @@ std::vector<bool> selectMultiple(const std::string &title, const std::vector<std
         selections.clear();
     }
     return selections;
+}
+
+bool isInteractiveInput()
+{
+    if (ui::InputHarness *harness = ui::getInputHarness())
+    {
+        if (harness->isEnabled())
+        {
+            return true;
+        }
+    }
+#if defined(_WIN32)
+    return _isatty(_fileno(stdin)) != 0;
+#else
+    return isatty(STDIN_FILENO) == 1;
+#endif
 }
 } // namespace tui
 

@@ -4,16 +4,16 @@
 #include "core/Object.h"
 
 // Displays the main menu and handles user choices
-void showMainMenu();
+bool showMainMenu();
 
 // Displays the test menu with options specific to test mode
-void showTestMenu();
+bool showTestMenu();
 
 // Displays the test logs
 void viewTestLogs();
 
 // Runs the main scenario mode (declaration only for modular call in main menu)
-void runScenarioMainMode(Object &follower, int gpsTimeoutSeconds, int heatTimeoutSeconds);
+bool runScenarioMainMode(Object &follower, int gpsTimeoutSeconds, int heatTimeoutSeconds);
 
 #endif // MENU_H
 

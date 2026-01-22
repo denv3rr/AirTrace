@@ -4,10 +4,15 @@ int main()
 {
     if (!initializeUiContext("configs/sim_default.cfg"))
     {
-        std::cerr << "Warning: unable to load configs/sim_default.cfg. UI status uses defaults.\n";
+        std::cerr << "Error: unable to load configs/sim_default.cfg. Exiting.\n";
+        return 1;
     }
     loadSimulationHistory();
-    showMainMenu();
+    if (!showMainMenu())
+    {
+        saveSimulationHistory();
+        return 1;
+    }
     saveSimulationHistory();
     return 0;
 }

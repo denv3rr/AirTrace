@@ -1,45 +1,17 @@
-<div>
-  <div>
+# AirTrace
 
-  ![Platforms](https://img.shields.io/badge/platforms-windows%20%7C%20linux%20%7C%20macos-black)
-  ![GitHub top language](https://img.shields.io/github/languages/top/denv3rr/AirTrace)
-  ![C++ Standard](https://img.shields.io/badge/c%2B%2B-17+-blue)
-  ![CMake Min Version Required](https://img.shields.io/badge/cmake_min_vers_req-3.10+-green)
-  ![Build System](https://img.shields.io/badge/build-cmake%2Fninja-blue)
-  ![GitHub Created At](https://img.shields.io/github/created-at/denv3rr/AirTrace)
-  ![GitHub repo size](https://img.shields.io/github/repo-size/denv3rr/AirTrace)
-  ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
-
-  <br>
-  
 [Overview](#overview) | [Safety](#safety-and-fail-closed-behavior) | [Quick Start](#quick-start) | [Build and Run](#build-and-run) | [Config](#configuration-notes) | [Documentation](#documentation) | [Status](#status) | [seperet.com](https://seperet.com)
-  
-</div>
-
-<div align="left">
-<br>
-<div>
-  <a href="https://seperet.com">
-    <img width="100" src="https://github.com/denv3rr/denv3rr/blob/main/IMG_4225.gif" />
-  </a>
-</div>
-
-![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) ![CMake](https://img.shields.io/badge/CMake-%23008FBA.svg?style=for-the-badge&logo=cmake&logoColor=white) ![Ninja](https://img.shields.io/badge/Ninja-%232C2C2C.svg?style=for-the-badge&logo=ninja&logoColor=white)
-
-![PowerShell](https://img.shields.io/badge/PowerShell-%235391FE.svg?style=for-the-badge&logo=powershell&logoColor=white) ![Bash](https://img.shields.io/badge/Bash-%23000000.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
-
-</div>
 
 ## Overview
-AirTrace is a deterministic tracking and navigation simulation core with a TUI for
-running scenarios and evaluating sensor fallback behavior. It emphasizes safe-state
-handling, explicit policy gating, and traceable requirements.
+AirTrace is a deterministic tracking and navigation simulator with a TUI for
+running scenarios and checking sensor fallback behavior. Supported platforms:
+Windows, Linux, and macOS. Build tools: C++17, CMake 3.10+, Ninja optional.
 
-Key capabilities:
+Core behavior:
 - Deterministic simulation with seeded RNG and fixed timesteps.
-- Mode management with fallback ladder logic and safe-state behavior.
+- Mode management with a fallback ladder and safe-state behavior.
 - Sensor modeling for GNSS, IMU, radar, thermal, vision, lidar, magnetometer, baro, and celestial.
-- Platform profiles with policy-controlled sensor permissions and dataset tiers.
+- Platform profiles with controlled sensor permissions and dataset tiers.
 
 ## Safety and Fail-Closed Behavior
 - Invalid configs or missing datasets force hold mode.
@@ -70,6 +42,12 @@ Tests:
 - `./scripts/test.sh` (macOS/Linux)
 - `.\scripts\test.ps1` (Windows)
 
+Test harness (non-interactive, test-only):
+- Build runner: `.\build\AirTraceHarnessRunner.exe` (Windows) or `./build/AirTraceHarnessRunner` (macOS/Linux)
+- Enable: `AIRTRACE_TEST_HARNESS=1`
+- Command file: `AIRTRACE_HARNESS_COMMANDS=configs/harness_commands.txt`
+- Example commands: `docs/harness_commands.example.txt`
+
 TUI controls:
 - Up/Down to move, Space/Enter to select, Esc to go back/exit.
 
@@ -78,10 +56,9 @@ TUI controls:
 - Policy defaults to deny network aids unless explicitly allowed.
 - Dataset tiers constrain celestial data size by platform profile.
 - Mode selection and scheduling use `mode.*`, `fusion.*`, and `scheduler.*` settings.
-- Historical lockout behavior uses `mode.max_stale_count`, `mode.max_low_confidence_count`, and `mode.lockout_steps`.
-- Cross-sensor residual checks use `fusion.disagreement_threshold` and `fusion.max_disagreement_count`.
+- Lockout behavior uses `mode.max_stale_count`, `mode.max_low_confidence_count`, and `mode.lockout_steps`.
+- Residual checks use `fusion.disagreement_threshold`, `fusion.max_disagreement_count`, and `fusion.max_residual_age_seconds`.
 - Trend evaluation windows use `mode.history_window`.
-- Residual alignment windows use `fusion.max_residual_age_seconds`.
 
 ## Documentation
 - Architecture: `docs/architecture.md`
@@ -97,4 +74,6 @@ TUI controls:
 - Multi-modal switching implementation plan: `docs/multi_modal_switching_implementation_plan.md`
 - Edge case catalog: `docs/edge_case_catalog.md`
 - UI/TUI standards: `docs/ui_standards.md`
+- Test harness: `docs/test_harness.md`
+- Harness command example: `docs/harness_commands.example.txt`
 - Sources: `sources_menu.md`

@@ -11,6 +11,13 @@ if (-not $BuildType) {
     $BuildType = "Debug"
 }
 
+$BuildType = $BuildType.Trim()
+$validBuildTypes = @("Debug", "Release", "RelWithDebInfo", "MinSizeRel")
+if ($validBuildTypes -notcontains $BuildType) {
+    Write-Error "Invalid BUILD_TYPE '$BuildType'. Allowed: $($validBuildTypes -join ", ")."
+    exit 1
+}
+
 $RootDir = Resolve-Path (Join-Path $PSScriptRoot "..")
 
 if (-not $env:CMAKE_GENERATOR) {
@@ -32,17 +39,44 @@ if (-not [System.IO.Path]::IsPathRooted($BuildDir)) {
     $BuildDir = Join-Path $RootDir $BuildDir
 }
 
-$cmakeArgs = @("-S", $RootDir, "-B", $BuildDir, "-DCMAKE_BUILD_TYPE=$BuildType")
+$cachePath = Join-Path $BuildDir "CMakeCache.txt"
+$resetBuildType = $false
+if (Test-Path $cachePath) {
+    $cachedLine = Select-String -Path $cachePath -Pattern "^CMAKE_BUILD_TYPE:STRING=" -ErrorAction SilentlyContinue
+    if ($cachedLine) {
+        $cachedValue = $cachedLine.Line.Split("=", 2)[1].Trim()
+        if ($validBuildTypes -notcontains $cachedValue) {
+            $resetBuildType = $true
+        }
+    }
+}
+
+$cmakeArgs = @("-S", $RootDir, "-B", $BuildDir, "-DCMAKE_BUILD_TYPE:STRING=$BuildType")
 if ($env:CMAKE_GENERATOR) {
     $cmakeArgs += @("-G", $env:CMAKE_GENERATOR)
 }
+if ($resetBuildType) {
+    $cmakeArgs += @("-U", "CMAKE_BUILD_TYPE")
+}
 
 cmake @cmakeArgs
-cmake --build $BuildDir --target AirTraceCoreTests AirTraceEdgeCaseTests
+cmake --build $BuildDir --target AirTraceCoreTests AirTraceEdgeCaseTests AirTraceUiTests AirTraceHarnessTests AirTraceIntegrationTests
 
 Push-Location $BuildDir
 try {
-    ctest --output-on-failure
+    $tempOutput = [System.IO.Path]::GetTempFileName()
+    try {
+        cmd /c "ctest -Q --output-on-failure --output-log `"$tempOutput`" > NUL 2>&1"
+        $ctestExit = $LASTEXITCODE
+        Get-Content -Path $tempOutput | ForEach-Object {
+            $_ -replace "Total Test time \(real\)", "Total Test time"
+        }
+        if ($ctestExit -ne 0) {
+            exit $ctestExit
+        }
+    } finally {
+        Remove-Item -Path $tempOutput -ErrorAction SilentlyContinue
+    }
 } finally {
     Pop-Location
 }

@@ -1,4 +1,6 @@
 #include "ui/menu.h"
+#include "ui/alerts.h"
+#include "ui/menu_selection.h"
 #include "ui/simulation.h"
 #include "ui/scenario.h"
 #include "ui/tui.h"
@@ -15,6 +17,8 @@ std::string buildHelp(const std::string &baseHelp)
     std::ostringstream out;
     out << baseHelp << "\n"
         << "Status: profile=" << status.platformProfile
+        << " parent=" << (status.parentProfile.empty() ? "none" : status.parentProfile)
+        << " modules=" << (status.childModules.empty() ? "none" : status.childModules)
         << " source=" << status.activeSource
         << " contributors=" << (status.contributors.empty() ? "none" : status.contributors)
         << " conf=" << status.modeConfidence
@@ -24,11 +28,15 @@ std::string buildHelp(const std::string &baseHelp)
         << " auth=" << status.authStatus
         << " seed=" << status.seed
         << " det=" << (status.deterministic ? "on" : "off");
+    if (!status.denialReason.empty())
+    {
+        out << "\n" << ui::buildDenialBanner(status.denialReason);
+    }
     return out.str();
 }
 } // namespace
 
-void showMainMenu()
+bool showMainMenu()
 {
     const std::vector<std::string> options = {
         "Scenario Mode",
@@ -38,50 +46,70 @@ void showMainMenu()
         "Exit"};
     const std::string helpBase = "Use Up/Down to move, Space or Enter to select, Esc to exit.";
 
+    if (!tui::isInteractiveInput())
+    {
+        setUiDenialReason("menu_input_unavailable");
+        std::cerr << "Menu input unavailable. Exiting.\n";
+        return false;
+    }
+
     while (true)
     {
         int choice = tui::selectSingle("AirTrace - Main Menu", options, buildHelp(helpBase));
-        if (choice < 0 || choice == 4)
+        ui::MainMenuAction action = ui::resolveMainMenuAction(choice, options.size());
+        if (action == ui::MainMenuAction::Cancel || action == ui::MainMenuAction::Exit)
         {
             std::cout << "Exiting the system.\n";
-            return;
+            return true;
+        }
+        if (action == ui::MainMenuAction::InputError)
+        {
+            setUiDenialReason("menu_selection_invalid");
+            std::cerr << "Menu selection failed. Exiting.\n";
+            return false;
         }
 
-        switch (choice + 1)
+        switch (action)
         {
-        case 1:
+        case ui::MainMenuAction::Scenario:
         {
             int gpsTimeoutSeconds = 10;
             int heatTimeoutSeconds = 10;
             if (!tryGetValidatedIntInput("Enter GPS timeout seconds (1-120): ", 1, 120, gpsTimeoutSeconds) ||
                 !tryGetValidatedIntInput("Enter heat timeout seconds (1-120): ", 1, 120, heatTimeoutSeconds))
             {
-                std::cout << "Input unavailable. Returning to menu.\n";
-                break;
+                setUiDenialReason("input_unavailable");
+                std::cerr << "Input unavailable. Exiting.\n";
+                return false;
             }
             Object follower(2, "Follower", {0, 0});
-            runScenarioMainMode(follower, gpsTimeoutSeconds, heatTimeoutSeconds);
+            if (!runScenarioMainMode(follower, gpsTimeoutSeconds, heatTimeoutSeconds))
+            {
+                return false;
+            }
             break;
         }
-        case 2:
-            showTestMenu();
+        case ui::MainMenuAction::TestMenu:
+            if (!showTestMenu())
+            {
+                return false;
+            }
             break;
-        case 3:
+        case ui::MainMenuAction::ViewHistory:
             viewAndRerunPreviousSimulations();
             break;
-        case 4:
+        case ui::MainMenuAction::DeleteHistory:
             deletePreviousSimulation();
             break;
-        case 5:
-            std::cout << "Exiting the system.\n";
-            break;
         default:
-            std::cout << "Invalid choice. Please try again.\n";
+            setUiDenialReason("menu_selection_invalid");
+            std::cerr << "Menu selection failed. Exiting.\n";
+            return false;
         }
     }
 }
 
-void showTestMenu()
+bool showTestMenu()
 {
     const std::vector<std::string> options = {
         "Run Test Scenario Mode",
@@ -89,28 +117,44 @@ void showTestMenu()
         "Back to Main Menu"};
     const std::string helpBase = "Use Up/Down to move, Space or Enter to select, Esc to return.";
 
+    if (!tui::isInteractiveInput())
+    {
+        setUiDenialReason("menu_input_unavailable");
+        std::cerr << "Menu input unavailable. Exiting.\n";
+        return false;
+    }
+
     while (true)
     {
         int choice = tui::selectSingle("AirTrace - Test Menu", options, buildHelp(helpBase));
-        if (choice < 0 || choice == 2)
+        ui::TestMenuAction action = ui::resolveTestMenuAction(choice, options.size());
+        if (action == ui::TestMenuAction::Cancel || action == ui::TestMenuAction::Back)
         {
             std::cout << "Returning to Main Menu.\n";
-            return;
+            return true;
+        }
+        if (action == ui::TestMenuAction::InputError)
+        {
+            setUiDenialReason("menu_selection_invalid");
+            std::cerr << "Menu selection failed. Exiting.\n";
+            return false;
         }
 
-        switch (choice + 1)
+        switch (action)
         {
-        case 1:
-            runTestScenarioMode();
+        case ui::TestMenuAction::RunScenarioTest:
+            if (!runTestScenarioMode())
+            {
+                return false;
+            }
             break;
-        case 2:
+        case ui::TestMenuAction::ViewLogs:
             viewTestLogs();
             break;
-        case 3:
-            std::cout << "Returning to Main Menu.\n";
-            return;
         default:
-            std::cout << "Invalid choice. Please try again.\n";
+            setUiDenialReason("menu_selection_invalid");
+            std::cerr << "Menu selection failed. Exiting.\n";
+            return false;
         }
     }
 }

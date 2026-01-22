@@ -21,8 +21,14 @@ AirTrace is split into a reusable core library and a thin CLI/UI layer.
 
 - `configs`:
   - Simulation configuration files for motion, sensors, and bounds.
+- `scripts`:
+  - Build and test entry points with input validation and fail-closed behavior.
 
 ## Boundaries
 
 - Core code must not depend on UI headers.
 - UI code can depend on core and should keep data handling separate from rendering.
+
+## Configuration and Profiles
+- Config parsing lives in core and enforces profile inheritance rules.
+- UI reads the resolved profile/parent/modules for operator visibility.

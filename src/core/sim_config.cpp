@@ -43,6 +43,41 @@ std::vector<std::string> splitList(const std::string &value)
     return items;
 }
 
+std::vector<std::string> defaultSensorsForProfile(SimConfig::PlatformProfile profile)
+{
+    switch (profile)
+    {
+    case SimConfig::PlatformProfile::Air:
+        return {"gps", "imu", "baro", "magnetometer", "radar", "thermal", "vision", "lidar", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Ground:
+        return {"gps", "imu", "vision", "lidar", "radar", "thermal", "magnetometer", "baro", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Maritime:
+        return {"gps", "imu", "radar", "magnetometer", "baro", "vision", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Space:
+        return {"gps", "imu", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Handheld:
+        return {"gps", "imu", "magnetometer", "baro", "vision", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::FixedSite:
+        return {"gps", "imu", "celestial"};
+    case SimConfig::PlatformProfile::Subsea:
+        return {"imu", "baro", "magnetometer", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Base:
+    default:
+        return {"gps", "imu", "thermal", "radar", "dead_reckoning"};
+    }
+}
+
+void appendUnique(std::vector<std::string> &target, const std::vector<std::string> &source)
+{
+    for (const auto &entry : source)
+    {
+        if (std::find(target.begin(), target.end(), entry) == target.end())
+        {
+            target.push_back(entry);
+        }
+    }
+}
+
 bool toDouble(const std::string &value, double &out)
 {
     char *end = nullptr;
@@ -102,6 +137,22 @@ bool toProfile(const std::string &value, SimConfig::PlatformProfile &out)
     else if (lowered == "fixed_site") out = SimConfig::PlatformProfile::FixedSite;
     else if (lowered == "subsea") out = SimConfig::PlatformProfile::Subsea;
     else return false;
+    return true;
+}
+
+bool isValidModuleName(const std::string &name)
+{
+    if (name.empty())
+    {
+        return false;
+    }
+    for (char ch : name)
+    {
+        if (!(std::islower(static_cast<unsigned char>(ch)) || std::isdigit(static_cast<unsigned char>(ch)) || ch == '_' || ch == '-'))
+        {
+            return false;
+        }
+    }
     return true;
 }
 
@@ -231,7 +282,13 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "sensor.celestial.false_positive" && toDouble(value, dval)) config.celestial.falsePositiveProbability = dval;
     else if (key == "sensor.celestial.max_range" && toDouble(value, dval)) config.celestial.maxRange = dval;
     else if (key == "platform.profile" && toProfile(value, profile)) config.platformProfile = profile;
+    else if (key == "platform.profile_parent" && toProfile(value, profile))
+    {
+        config.parentProfile = profile;
+        config.hasParentProfile = true;
+    }
     else if (key == "platform.permitted_sensors") config.permittedSensors = splitList(value);
+    else if (key == "platform.child_modules") config.childModules = splitList(value);
     else if (key == "policy.network_aid.mode" && toNetworkAidMode(value, aidMode)) config.policy.networkAidMode = aidMode;
     else if (key == "policy.network_aid.override_required" && toBool(value, bval)) config.policy.overrideRequired = bval;
     else if (key == "policy.network_aid.override_auth" && toOverrideAuth(value, authMode)) config.policy.overrideAuth = authMode;
@@ -420,6 +477,30 @@ void validateConfig(ConfigResult &result)
         setIssue(result, "policy.roles", "must include at least one role");
     }
 
+    if (config.hasParentProfile && config.parentProfile == config.platformProfile)
+    {
+        setIssue(result, "platform.profile_parent", "must not match platform.profile");
+    }
+
+    std::unordered_map<std::string, int> moduleCounts;
+    for (const auto &module : config.childModules)
+    {
+        if (!isValidModuleName(module))
+        {
+            setIssue(result, "platform.child_modules", "invalid module identifier");
+            break;
+        }
+        moduleCounts[module]++;
+    }
+    for (const auto &entry : moduleCounts)
+    {
+        if (entry.second > 1)
+        {
+            setIssue(result, "platform.child_modules", "duplicate module identifier");
+            break;
+        }
+    }
+
     bool activeFound = false;
     for (const auto &role : config.policy.roles)
     {
@@ -513,34 +594,17 @@ ConfigResult loadSimConfig(const std::string &path)
 
     if (result.config.permittedSensors.empty())
     {
-        switch (result.config.platformProfile)
+        std::vector<std::string> sensors;
+        if (result.config.hasParentProfile)
         {
-        case SimConfig::PlatformProfile::Air:
-            result.config.permittedSensors = {"gps", "imu", "baro", "magnetometer", "radar", "thermal", "vision", "lidar", "celestial", "dead_reckoning"};
-            break;
-        case SimConfig::PlatformProfile::Ground:
-            result.config.permittedSensors = {"gps", "imu", "vision", "lidar", "radar", "thermal", "magnetometer", "baro", "celestial", "dead_reckoning"};
-            break;
-        case SimConfig::PlatformProfile::Maritime:
-            result.config.permittedSensors = {"gps", "imu", "radar", "magnetometer", "baro", "vision", "celestial", "dead_reckoning"};
-            break;
-        case SimConfig::PlatformProfile::Space:
-            result.config.permittedSensors = {"gps", "imu", "celestial", "dead_reckoning"};
-            break;
-        case SimConfig::PlatformProfile::Handheld:
-            result.config.permittedSensors = {"gps", "imu", "magnetometer", "baro", "vision", "celestial", "dead_reckoning"};
-            break;
-        case SimConfig::PlatformProfile::FixedSite:
-            result.config.permittedSensors = {"gps", "imu", "celestial"};
-            break;
-        case SimConfig::PlatformProfile::Subsea:
-            result.config.permittedSensors = {"imu", "baro", "magnetometer", "dead_reckoning"};
-            break;
-        case SimConfig::PlatformProfile::Base:
-        default:
-            result.config.permittedSensors = {"gps", "imu", "thermal", "radar", "dead_reckoning"};
-            break;
+            sensors = defaultSensorsForProfile(result.config.parentProfile);
+            appendUnique(sensors, defaultSensorsForProfile(result.config.platformProfile));
         }
+        else
+        {
+            sensors = defaultSensorsForProfile(result.config.platformProfile);
+        }
+        result.config.permittedSensors = std::move(sensors);
     }
 
     if (result.config.mode.ladderOrder.empty())

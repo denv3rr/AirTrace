@@ -28,3 +28,7 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-022 | Timing jitter or stale data leads to unsafe mode selection. | Critical | Occasional | Freshness thresholds, jitter detection, safe-state downgrade. | V-062 |
 | HZ-023 | Cross-sensor residual conflicts drive fused divergence. | Critical | Occasional | Residual checks and forced downgrade. | V-061 |
 | HZ-024 | Sensor lockout misapplied causes prolonged loss of capability. | Marginal | Remote | Lockout bounds, recovery hysteresis, and operator prompt. | V-063, V-064 |
+| HZ-025 | GNSS jamming or spoofing yields misleading position. | Critical | Occasional | Source authorization, cross-sensor disagreement checks, fallback ladder. | V-033, V-054 |
+| HZ-026 | Space weather degrades GNSS accuracy or availability. | Marginal | Occasional | Dataset/space-weather awareness and safe-state fallback. | V-062, V-036 |
+| HZ-027 | High-power RF interference saturates receivers. | Critical | Occasional | Signal health gating, confidence thresholds, degrade to safe sources. | V-033, V-054 |
+| HZ-028 | Misconfigured profile inheritance enables unsupported sensors. | Critical | Occasional | Deterministic merge rules, validation, and explicit permitted sensors. | V-073, V-074 |

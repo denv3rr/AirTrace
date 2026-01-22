@@ -15,6 +15,8 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-SYS-009 | docs/operational_concepts.md | src/core/sim_config.cpp | V-041 |
 | REQ-SYS-010 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-049 |
 | REQ-SYS-011 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-056 |
+| REQ-SYS-012 | docs/architecture.md | scripts/build.ps1; scripts/build.sh; scripts/run.ps1; scripts/run.sh; scripts/test.ps1; scripts/test.sh | V-067 |
+| REQ-SYS-013 | docs/platform_profile_inheritance.md | src/core/sim_config.cpp | V-073 |
 | REQ-FUNC-001 | docs/architecture.md | src/core/sensors.cpp | V-007 |
 | REQ-FUNC-002 | docs/operational_concepts.md | src/core/mode_manager.cpp | V-008 |
 | REQ-FUNC-003 | docs/config_schema.md | src/core/sim_config.cpp | V-009 |
@@ -60,12 +62,21 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-INT-003 | docs/ui_standards.md | src/ui/*.cpp | V-026 |
 | REQ-INT-004 | docs/operational_concepts.md | TBD | V-039 |
 | REQ-INT-005 | docs/ui_standards.md | src/ui/simulation.cpp | V-045 |
+| REQ-INT-006 | docs/ui_standards.md | src/ui/menu.cpp; src/ui/menu_selection.cpp | V-066 |
+| REQ-INT-007 | docs/ui_standards.md | src/ui/menu.cpp; src/ui/alerts.cpp | V-069 |
+| REQ-INT-008 | docs/ui_standards.md | src/ui/input_harness.cpp; src/ui/tui.cpp; src/ui/inputValidation.cpp | V-070 |
+| REQ-INT-009 | docs/ui_standards.md | src/ui/tui.cpp | V-075 |
 | REQ-CFG-001 | docs/config_schema.md | src/core/sim_config.cpp | V-027 |
 | REQ-CFG-002 | docs/config_schema.md | src/core/sim_config.cpp | V-028 |
 | REQ-CFG-003 | docs/config_schema.md | docs/config_schema.md | V-029 |
 | REQ-CFG-004 | docs/config_schema.md | src/core/sim_config.cpp | V-040 |
 | REQ-CFG-005 | docs/config_schema.md | src/core/sim_config.cpp | V-044 |
 | REQ-CFG-006 | docs/config_schema.md | src/core/sim_config.cpp | V-047 |
+| REQ-CFG-007 | docs/config_schema.md | src/core/sim_config.cpp | V-074 |
 | REQ-VER-001 | docs/verification_plan.md | docs/verification_plan.md | V-030 |
 | REQ-VER-002 | docs/verification_plan.md | tests/core_sanity.cpp | V-031 |
+| REQ-VER-003 | docs/verification_plan.md | scripts/test.ps1; scripts/test.sh | V-068 |
+| REQ-VER-004 | docs/verification_plan.md | src/ui/input_harness.cpp | V-071 |
+| REQ-VER-005 | docs/verification_plan.md | scripts/test.ps1; scripts/test.sh | V-072 |
+| REQ-VER-006 | docs/verification_plan.md | tests/integration_flows.cpp | V-076 |
 | REQ-DOC-001 | docs/requirements.md | README.md | V-048 |

@@ -23,13 +23,7 @@
 - M. Platforms, Archives, and Interfaces: [link](#m-platforms-archives-and-interfaces)
 - N. Frontier Programs and Experimental Hubs: [link](#n-frontier-programs-and-experimental-hubs)
 - O. Display, HMI, and Human Factors: [link](#o-display-hmi-and-human-factors)
-- Security / SIGINT / Vault 7 / NSA: [link](#security--sigint--vault-7--nsa)
-- Vault 7 / Vault 8: [link](#vault-7--vault-8)
-- CIA Reading Room — Cyber / SIGINT / Security: [link](#cia-reading-room--cyber--sigint--security)
-- NSA — Technical / Cryptologic / Defensive Publications: [link](#nsa--technical--cryptologic--defensive-publications)
-- SIGINT Foundations & Spectrum Operations: [link](#sigint-foundations--spectrum-operations)
-- NIST — Security, Cryptography, Trusted Systems: [link](#nist--security-cryptography-trusted-systems)
-- Military / Intelligence Cyber Doctrine & Policy: [link](#military--intelligence-cyber-doctrine--policy)
+- P. Security, SIGINT, and Cyber References: [link](#p-security-sigint-and-cyber-references)
 
 ## A. Project and Local References
 - Tracker Component Library: https://github.com/USNavalResearchLaboratory/TrackerComponentLibrary
@@ -396,7 +390,7 @@ Russia / USSR
 - https://www.onr.navy.mil/work-with-us/funding-opportunities
 - https://www.arl.army.mil/programs/
 
-### Exotic Navigation / Tracking (GNSS-Denied, Physics-Based)
+### Advanced Navigation / Tracking (GNSS-Denied, Physics-Based)
 - https://www.nist.gov/pml/quantum-sensors
 - https://www.nist.gov/time-and-frequency/atomic-clocks
 - https://grace.jpl.nasa.gov/
@@ -408,13 +402,13 @@ Russia / USSR
 - https://www.lockheedmartin.com/en-us/capabilities/artificial-intelligence.html
 - https://www.northropgrumman.com/what-we-do/digital-transformation/artificial-intelligence/
 
-### Academic Preprint Firehoses (set alerts)
+### Academic Preprint Feeds (set alerts)
 - https://arxiv.org/list/cs.RO/recent
 - https://arxiv.org/list/cs.AI/recent
 - https://arxiv.org/list/eess.SP/recent
 - https://arxiv.org/list/physics.ins-det/recent
 
-### Journals / Proceedings (evergreen)
+### Journals / Proceedings
 - https://arc.aiaa.org/
 - https://ieeexplore.ieee.org/
 - https://digital-library.theiet.org/
@@ -511,7 +505,7 @@ Russia / USSR
 
 ---
 
-## Security / SIGINT / Vault 7 / NSA
+## P. Security, SIGINT, and Cyber References
 
 ### Context
 
@@ -530,7 +524,7 @@ Informs:
 
 ---
 
-## Vault 7 / Vault 8
+### Vault 7 / Vault 8
 
 ### WikiLeaks Official Vault 7 Index & Releases
 
@@ -554,7 +548,7 @@ Informs:
 
 ---
 
-## CIA Reading Room — Cyber / SIGINT / Security
+### CIA Reading Room — Cyber / SIGINT / Security
 
 ### Cyber Operations / Foreign SIGINT / Espionage Tradecraft
 - https://www.cia.gov/readingroom/docs/CIA-RDP96B01172R000300140001-7.pdf
@@ -569,7 +563,7 @@ Informs:
 
 ---
 
-## NSA — Technical / Cryptologic / Defensive Publications
+### NSA — Technical / Cryptologic / Defensive Publications
 
 ### NSA Information Assurance & Cybersecurity
 - https://www.nsa.gov/What-We-Do/Cybersecurity/
@@ -585,7 +579,7 @@ Informs:
 
 ---
 
-## SIGINT Foundations & Spectrum Operations
+### SIGINT Foundations & Spectrum Operations
 
 ### Signals Intelligence / Electronic Surveillance (Academic + Gov)
 - https://irp.fas.org/irp/program/sigint.htm
@@ -600,7 +594,7 @@ Informs:
 
 ---
 
-## NIST — Security, Cryptography, Trusted Systems
+### NIST — Security, Cryptography, Trusted Systems
 
 ### Core Security & Systems Assurance
 - https://www.nist.gov/cyberframework
@@ -615,7 +609,7 @@ Informs:
 
 ---
 
-## Military / Intelligence Cyber Doctrine & Policy
+### Military / Intelligence Cyber Doctrine & Policy
 
 - https://www.cybercom.mil/About/Mission-and-Vision/
 - https://www.cybercom.mil/Media/Fact-Sheets/

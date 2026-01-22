@@ -34,6 +34,8 @@ target_include_directories(airtrace_core PUBLIC include)
 add_executable(AirTrace
         src/ui/main.cpp
         src/ui/menu.cpp
+        src/ui/menu_selection.cpp
+        src/ui/alerts.cpp
         src/ui/tui.cpp
         src/ui/simulation.cpp
         src/ui/inputValidation.cpp
@@ -70,3 +72,52 @@ add_executable(AirTraceEdgeCaseTests
 target_include_directories(AirTraceEdgeCaseTests PRIVATE include)
 target_link_libraries(AirTraceEdgeCaseTests PRIVATE airtrace_core)
 add_test(NAME AirTraceEdgeCaseTests COMMAND AirTraceEdgeCaseTests)
+
+add_executable(AirTraceUiTests
+        tests/ui_ui_tests_main.cpp
+        tests/ui_menu_selection.cpp
+        tests/ui_alerts.cpp
+        src/ui/menu_selection.cpp
+        src/ui/alerts.cpp
+)
+target_include_directories(AirTraceUiTests PRIVATE include)
+add_test(NAME AirTraceUiTests COMMAND AirTraceUiTests)
+
+add_executable(AirTraceHarnessRunner
+        tests/ui_harness_runner.cpp
+        src/ui/input_harness.cpp
+        src/ui/menu.cpp
+        src/ui/menu_selection.cpp
+        src/ui/alerts.cpp
+        src/ui/tui.cpp
+        src/ui/simulation.cpp
+        src/ui/inputValidation.cpp
+        src/ui/scenario.cpp
+)
+target_include_directories(AirTraceHarnessRunner PRIVATE include)
+target_compile_definitions(AirTraceHarnessRunner PRIVATE AIRTRACE_TEST_HARNESS=1)
+target_link_libraries(AirTraceHarnessRunner PRIVATE airtrace_core)
+
+add_executable(AirTraceHarnessTests
+        tests/ui_harness_tests.cpp
+        src/ui/input_harness.cpp
+)
+target_include_directories(AirTraceHarnessTests PRIVATE include)
+target_compile_definitions(AirTraceHarnessTests PRIVATE AIRTRACE_TEST_HARNESS=1)
+add_test(NAME AirTraceHarnessTests COMMAND AirTraceHarnessTests)
+
+add_executable(AirTraceIntegrationTests
+        tests/integration_flows.cpp
+        src/ui/input_harness.cpp
+        src/ui/menu.cpp
+        src/ui/menu_selection.cpp
+        src/ui/alerts.cpp
+        src/ui/tui.cpp
+        src/ui/simulation.cpp
+        src/ui/inputValidation.cpp
+        src/ui/scenario.cpp
+)
+target_include_directories(AirTraceIntegrationTests PRIVATE include)
+target_compile_definitions(AirTraceIntegrationTests PRIVATE AIRTRACE_TEST_HARNESS=1)
+target_link_libraries(AirTraceIntegrationTests PRIVATE airtrace_core)
+add_test(NAME AirTraceIntegrationTests COMMAND AirTraceIntegrationTests)

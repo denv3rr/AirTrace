@@ -23,6 +23,8 @@ extern std::vector<SimulationData> simulationHistory;
 struct UiStatus
 {
     std::string platformProfile;
+    std::string parentProfile;
+    std::string childModules;
     std::string activeSource;
     std::string contributors;
     double modeConfidence = 0.0;
@@ -53,7 +55,6 @@ void simulateHeatSeeking(int speed, int iterations);
 void simulateManualConfig(const SimulationData &simData);
 void runGPSMode();
 void runTestMode();
-void runScenarioMode(Object &follower, int speed, int iterations);
 
 // Specific functions for managing and displaying simulations
 void viewAndRerunPreviousSimulations();
@@ -62,7 +63,7 @@ void saveSimulationHistoryToFile();
 void saveTestLog(const std::string &logData);
 
 // Test mode support functions
-void runTestScenarioMode();
+bool runTestScenarioMode();
 void monitorExitKey(); // Non-blocking monitor for user input during tests
 
 #endif // SIMULATION_H

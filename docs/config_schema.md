@@ -14,8 +14,14 @@ Schema version: 1.0
 ## Platform
 - platform.profile (string): optional; default "base".
   - Allowed: base, air, ground, maritime, space, handheld, fixed_site, subsea.
+- platform.profile_parent (string): optional; default empty (no parent).
+  - Allowed: base, air, ground, maritime, space, handheld, fixed_site, subsea.
+  - When set, permitted sensors inherit from the parent profile before applying the child profile defaults.
 - platform.permitted_sensors (list): optional; default profile-based list.
   - Format: comma-separated sensor names (example: gps,imu,radar).
+- platform.child_modules (list): optional; default empty.
+  - Format: comma-separated module identifiers (example: imu_stack, radar_frontend).
+  - Allowed characters: a-z, 0-9, underscore, hyphen.
 
 ## Mode Switching and Fusion
 - mode.ladder_order (list): optional; default profile-based ordering.

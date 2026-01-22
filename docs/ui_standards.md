@@ -18,19 +18,25 @@ university sources with unclassified guidance.
 3) Explicit error prompts and recovery actions.
 4) Deterministic inputs and repeatable outputs for test modes.
 5) Least-privilege role gating for risky actions and overrides.
-6) Safe defaults and fail-closed behavior on invalid inputs.
+6) Safe defaults and fail-closed behavior on invalid inputs or menu selections.
+7) Denial reasons are surfaced with clear recovery guidance.
+8) Test harness inputs must be explicitly enabled and must not bypass authorization checks.
 
 ## Implementation Notes
 - Menus must show platform profile, active source, and authorization
   status so operators can reason about the system state quickly.
+- If a parent profile or child modules are configured, show them in the
+  main status line for auditability.
 - When fused modes are active, display contributing sensors and their
   confidence or weights.
 - Inputs must be validated with bounds and handled safely on EOF or
-  stream failure.
+  stream failure, including a logged exit when menu selection is unavailable.
+- Denial warnings should be visible in the main menu status area.
+- Harness-driven inputs must follow the same menu flow as operators.
+- When the test harness is enabled, menu flows must be allowed even without a TTY.
 - All overrides must be logged and shown in UI where relevant.
 
-## Contractor-Aligned Patterns (Unclassified)
-Unclassified defense UI guidance tends to emphasize high-contrast text,
-stable layouts, predictable navigation, and explicit acknowledgement for
-high-risk actions. These patterns are consistent with MIL-STD-1472H and
-are adopted as baseline criteria here.
+## Practical Notes
+Guidance for defense-facing UI favors high-contrast text, stable layouts,
+predictable navigation, and explicit acknowledgements for high-risk actions.
+These patterns align with MIL-STD-1472H and are used as baseline criteria.

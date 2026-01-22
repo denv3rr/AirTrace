@@ -15,7 +15,7 @@ REQ-SEC-008.
 
 Out of scope:
 - External plugin interfaces.
-- Real sensor drivers (simulation models only).
+- Sensor drivers (simulation models only).
 
 ## Fused Mode Catalog
 Primary modes:

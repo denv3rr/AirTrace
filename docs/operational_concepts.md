@@ -2,10 +2,10 @@
 
 ## Mission Modes
 - gps: Primary mode using GPS measurements.
-- thermal: Alternate mode using thermal sensor.
-- radar: Alternate mode using radar range/bearing.
-- vision: Alternate mode using EO/IR vision position fixes.
-- lidar: Alternate mode using lidar range/bearing.
+- thermal: Thermal sensor mode.
+- radar: Radar range/bearing mode.
+- vision: EO/IR vision position fixes.
+- lidar: Lidar range/bearing mode.
 - magnetometer: Heading stabilization using magnetic compass inputs.
 - baro: Altitude stabilization using barometric inputs.
 - dead_reckoning: Fallback mode using drift-based estimation.
@@ -22,7 +22,7 @@
 
 ## Multi-Modal Switching and Fusion
 - Fused modes combine a primary source with one or more aiding sources (GNSS+INS, VIO/LIO, radar/terrain, magnetometer+baro).
-- Eligibility is based on health, data freshness, confidence, and authorization policy.
+- Eligibility uses health, data freshness, confidence, and policy gates.
 - Mode transitions require state alignment checks to avoid discontinuities.
 - Operator status displays the active mode and contributing sources with confidence.
 - Disagreement beyond thresholds triggers downgrade to a safer mode or hold.
@@ -43,6 +43,8 @@
 - Base profile defines common sensors, policy defaults, and data contracts.
 - Child profiles extend the base: air, ground, maritime, space, handheld, fixed_site, subsea.
 - Profiles declare capabilities (sensors available, permitted aids, and auth policy).
+- Profiles may inherit from a parent profile with deterministic merge rules for permitted sensors.
+- Child hardware modules are listed explicitly to document platform composition.
 - See docs/navigation_fallbacks.md for ladder ordering and dataset tiers.
 
 ## Dataset Tiers
