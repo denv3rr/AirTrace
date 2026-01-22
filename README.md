@@ -1,8 +1,6 @@
 <div>
   <div>
 
-  ### **AirTrace**
-
   ![Platforms](https://img.shields.io/badge/platforms-windows%20%7C%20linux%20%7C%20macos-black)
   ![GitHub top language](https://img.shields.io/github/languages/top/denv3rr/AirTrace)
   ![C++ Standard](https://img.shields.io/badge/c%2B%2B-17+-blue)
@@ -12,16 +10,14 @@
   ![GitHub repo size](https://img.shields.io/github/repo-size/denv3rr/AirTrace)
   ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
 
-  <br><br>
+  <br>
+  
 [Overview](#overview) | [Safety](#safety-and-fail-closed-behavior) | [Quick Start](#quick-start) | [Build and Run](#build-and-run) | [Config](#configuration-notes) | [Documentation](#documentation) | [Status](#status) | [seperet.com](https://seperet.com)
-    <br></br>
-  <a href="https://seperet.com">
-    <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
-  </a>
+  
 </div>
 
 <div align="left">
-<br></br>
+<br>
 <div>
   <a href="https://seperet.com">
     <img width="100" src="https://github.com/denv3rr/denv3rr/blob/main/IMG_4225.gif" />
@@ -33,8 +29,6 @@
 ![PowerShell](https://img.shields.io/badge/PowerShell-%235391FE.svg?style=for-the-badge&logo=powershell&logoColor=white) ![Bash](https://img.shields.io/badge/Bash-%23000000.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 
 </div>
-
-<br></br>
 
 ## Overview
 AirTrace is a deterministic tracking and navigation simulation core with a TUI for
@@ -104,7 +98,3 @@ TUI controls:
 - Edge case catalog: `docs/edge_case_catalog.md`
 - UI/TUI standards: `docs/ui_standards.md`
 - Sources: `sources_menu.md`
-
-## Status
-The platform is under active remediation to meet the full standards baseline.
-See `docs/plan.md` for sequencing, review gates, and multi-modal switching work.
