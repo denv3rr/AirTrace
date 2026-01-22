@@ -1,4 +1,40 @@
-# AirTrace
+<div>
+  <div>
+
+  ### **AirTrace**
+
+  ![Platforms](https://img.shields.io/badge/platforms-windows%20%7C%20linux%20%7C%20macos-black)
+  ![GitHub top language](https://img.shields.io/github/languages/top/denv3rr/AirTrace)
+  ![C++ Standard](https://img.shields.io/badge/c%2B%2B-17+-blue)
+  ![CMake Min Version Required](https://img.shields.io/badge/cmake_min_vers_req-3.10+-green)
+  ![Build System](https://img.shields.io/badge/build-cmake%2Fninja-blue)
+  ![GitHub Created At](https://img.shields.io/github/created-at/denv3rr/AirTrace)
+  ![GitHub repo size](https://img.shields.io/github/repo-size/denv3rr/AirTrace)
+  ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/denv3rr/AirTrace/main)
+
+  <br><br>
+[Overview](#overview) | [Safety](#safety-and-fail-closed-behavior) | [Quick Start](#quick-start) | [Build and Run](#build-and-run) | [Config](#configuration-notes) | [Documentation](#documentation) | [Status](#status) | [seperet.com](https://seperet.com)
+    <br></br>
+  <a href="https://seperet.com">
+    <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
+  </a>
+</div>
+
+<div align="left">
+<br></br>
+<div>
+  <a href="https://seperet.com">
+    <img width="100" src="https://github.com/denv3rr/denv3rr/blob/main/IMG_4225.gif" />
+  </a>
+</div>
+
+![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) ![CMake](https://img.shields.io/badge/CMake-%23008FBA.svg?style=for-the-badge&logo=cmake&logoColor=white) ![Ninja](https://img.shields.io/badge/Ninja-%232C2C2C.svg?style=for-the-badge&logo=ninja&logoColor=white)
+
+![PowerShell](https://img.shields.io/badge/PowerShell-%235391FE.svg?style=for-the-badge&logo=powershell&logoColor=white) ![Bash](https://img.shields.io/badge/Bash-%23000000.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
+
+</div>
+
+<br></br>
 
 ## Overview
 AirTrace is a deterministic tracking and navigation simulation core with a TUI for
