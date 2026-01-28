@@ -13,6 +13,17 @@
 - celestial: Celestial fix using onboard star/planet references when permitted and required.
 - hold: Safe state with no tracking updates.
 
+## Operational vs Simulation Modes
+- Operational tool runs are the primary mission posture.
+- Simulation and test modes are explicitly identified, gated, and prohibited in operational runs unless authorized by policy.
+- Mixed provenance (sim + operational) is rejected and triggers a safe-state denial.
+
+## Provenance and Gating
+- Every measurement and operator input is tagged with provenance: operational, simulation, test, or unknown.
+- Operational runs accept only operational provenance unless explicitly authorized by policy.
+- Mixed or unknown provenance triggers denial, audit logging, and safe-state transition.
+- Provenance decisions are recorded with reason codes, sources, and run identifiers.
+
 ## Mode Transition Rules
 - Mode changes are controlled by the mode manager using health, confidence, and hysteresis.
 - A minimum dwell time shall be enforced to prevent oscillation.
@@ -62,6 +73,7 @@
 - Monitor mode status, sensor health, and safety indicators.
 - Acknowledge errors and follow recovery prompts.
 - Ensure policy authorization is set for any network-aid usage.
+- Verify audit logging health before and during operational runs.
 - UI/TUI behavior follows docs/ui_standards.md.
 
 ## Multi-Device Operation
@@ -77,3 +89,4 @@
 - Config inputs are untrusted; schema validation is mandatory.
 - Simulation outputs include seed, config version, and build metadata.
 - Celestial datasets are treated as controlled inputs and must pass integrity checks.
+- Audit logs include mode/config changes with timestamps and integrity protections.

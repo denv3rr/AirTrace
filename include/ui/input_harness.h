@@ -34,6 +34,8 @@ class InputHarness
 public:
     explicit InputHarness(std::string) {}
     bool isEnabled() const { return false; }
+    bool nextInt(const std::string &, int, int, int &) { return false; }
+    bool selectSingle(const std::string &, const std::vector<std::string> &, int &) { return false; }
 };
 
 inline InputHarness *getInputHarness()

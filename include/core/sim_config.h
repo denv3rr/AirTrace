@@ -51,6 +51,19 @@ struct SimConfig
         Extended
     };
 
+    enum class ProvenanceMode
+    {
+        Operational,
+        Simulation,
+        Test
+    };
+
+    enum class UnknownProvenanceAction
+    {
+        Deny,
+        Hold
+    };
+
     struct PolicyConfig
     {
         NetworkAidMode networkAidMode = NetworkAidMode::Deny;
@@ -60,6 +73,14 @@ struct SimConfig
         std::vector<std::string> roles = {"operator"};
         std::unordered_map<std::string, std::vector<std::string>> rolePermissions{};
         std::string activeRole = "operator";
+    };
+
+    struct ProvenancePolicy
+    {
+        ProvenanceMode runMode = ProvenanceMode::Operational;
+        std::vector<ProvenanceMode> allowedInputs = {ProvenanceMode::Operational};
+        bool allowMixed = false;
+        UnknownProvenanceAction unknownAction = UnknownProvenanceAction::Deny;
     };
 
     struct DatasetConfig
@@ -105,6 +126,7 @@ struct SimConfig
     std::vector<std::string> childModules{};
     std::vector<std::string> permittedSensors{};
     PolicyConfig policy{};
+    ProvenancePolicy provenance{};
     DatasetConfig dataset{};
     ModeConfig mode{};
     FusionConfig fusion{};

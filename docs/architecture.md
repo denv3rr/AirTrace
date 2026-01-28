@@ -1,34 +1,42 @@
 # Architecture Overview
 
-AirTrace is split into a reusable core library and a thin CLI/UI layer.
+AirTrace is an operational tool with simulation and test harnesses used strictly for verification and training. The system is split into a reusable core library, a controlled tools layer, and a thin CLI/UI layer.
 
 ## Modules
 
 - `core` (library):
-  - Tracking algorithms, models, and shared utilities.
-  - No user interaction or terminal I/O.
+  - Deterministic tracking algorithms, models, and shared utilities.
+  - No file I/O, wall-clock access, or non-seeded randomness.
   - Exported via the `airtrace_core` CMake target.
 
+- `tools` (controlled operations layer):
+  - Config ingestion, audit logging, run provenance, and policy gating.
+  - Orchestrates operational runs and isolates simulation/test tooling.
+  - Owns all external I/O and environment access.
+
 - `ui` (application):
-  - Console menus, TUI input handling, and simulation presentation.
-  - Depends on `airtrace_core` for all algorithmic work.
+  - Console menus, TUI input handling, and operational presentation.
+  - Depends on `tools` for orchestration and `airtrace_core` for algorithms.
 
 - `examples`:
-  - Small, deterministic demos that exercise core behaviors.
+  - Small, deterministic demos that exercise core behaviors (test-only).
 
 - `docs`:
   - Project conventions and data source notes.
 
 - `configs`:
-  - Simulation configuration files for motion, sensors, and bounds.
+  - Configuration files for operational and test runs with explicit gating.
 - `scripts`:
   - Build and test entry points with input validation and fail-closed behavior.
 
 ## Boundaries
 
-- Core code must not depend on UI headers.
-- UI code can depend on core and should keep data handling separate from rendering.
+- Core code must not depend on UI or tools headers.
+- Tools code can depend on core and own all I/O, timing, and audit sinks.
+- UI code can depend on tools and core; data handling remains separate from rendering.
+- Simulation/test flows must be explicitly gated and isolated from operational runs.
 
 ## Configuration and Profiles
-- Config parsing lives in core and enforces profile inheritance rules.
+- Config parsing and file I/O live in the tools layer and enforce profile inheritance rules.
+- Core validation routines remain pure and deterministic.
 - UI reads the resolved profile/parent/modules for operator visibility.

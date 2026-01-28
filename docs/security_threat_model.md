@@ -6,6 +6,7 @@
 ## Assets
 - State vectors, sensor measurements, mode decisions, configuration files, simulation outputs.
 - Build metadata, audit logs, and verification evidence.
+- Provenance tags and run identifiers.
 
 ## Trust Boundaries
 - File system inputs (configs, logs).
@@ -40,6 +41,7 @@ P4 Core Mode Manager
 P5 Tracker/State
 P6 Dataset Validator
 P7 Audit Log Sink
+P8 Provenance Gate
 
 Flows:
 E1 -> P1 (menu selections, scenario inputs) [TB-1]
@@ -48,7 +50,8 @@ E2 -> P3 (measurements) [TB-1]
 D2 -> P6 (dataset files + hashes) [TB-1]
 P1 -> P4 (mode requests, operator actions)
 P2 -> P4 (policy + profile decisions)
-P3 -> P4 (normalized measurements)
+P3 -> P8 (normalized measurements + provenance)
+P8 -> P4 (authorized measurements)
 P6 -> P4 (dataset validation status)
 E3 -> P4 (network aids) [TB-2]
 P4 -> P5 (selected mode + state updates)
@@ -62,12 +65,14 @@ P4 -> P7 (audit events) -> D3 (logs)
 | Sensor Adapters | Sensor measurements | TB-1 | Measurement contract, health/confidence checks, freshness gating | REQ-FUNC-001, REQ-FUNC-012 |
 | Dataset Validator | Celestial dataset + hashes | TB-1 | Hash verification, versioned artifacts, deny on mismatch | REQ-FUNC-009, REQ-SAFE-005 |
 | Network Aid Gate | Network-aid inputs | TB-2 | Deny-by-default, role-based authorization, override logging | REQ-SEC-005, REQ-SEC-006, REQ-SEC-007 |
-| Audit Log Sink | Mode/config changes | Internal | Structured audit logging, build/config identifiers | REQ-SEC-004, REQ-SYS-006 |
+| Audit Log Sink | Mode/config changes | Internal | Structured audit logging, integrity/retention controls, build/config identifiers | REQ-SEC-004, REQ-SEC-009, REQ-SYS-006 |
+| Provenance Gate | Measurement provenance tags | TB-1 | Reject mixed/unknown provenance, log decisions | REQ-SYS-017, REQ-SYS-018, REQ-SEC-010 |
 
 ## Threats (STRIDE)
 - Spoofing: fake sensor data or plugin identity.
 - Tampering: modified config or logs.
 - Repudiation: lack of audit trail for mode changes.
+- Repudiation: missing provenance acceptance/rejection records.
 - Information disclosure: logs leaking sensitive data.
 - Denial of service: malformed configs or excessive input rates.
 - Elevation of privilege: untrusted plugin execution.
@@ -81,6 +86,7 @@ P4 -> P7 (audit events) -> D3 (logs)
 - Signed and versioned plugins with allowlists (REQ-SEC-003).
 - Explicit authorization gates for plugins/devices (REQ-SEC-002).
 - Structured audit logging for mode/config changes (REQ-SEC-004).
+- Audit log integrity and retention protections (REQ-SEC-009).
 - Least privilege for device access and isolated plugin execution.
 - Deny-by-default network-aid policy with credentialed overrides (REQ-SEC-005, REQ-SEC-006).
 - Dataset integrity checks for celestial nav inputs (REQ-FUNC-009).

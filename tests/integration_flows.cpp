@@ -230,7 +230,7 @@ int main()
 
     std::filesystem::path testHarnessCommands = writeConfigFile(
         "airtrace_testmode_harness.txt",
-        "input_int|Enter movement speed (1-100): |10\n"
+        "input_int|Enter movement speed (1-100, sim steps/sec): |10\n"
         "input_int|Enter number of iterations (0 for infinite): |0\n"
         "select|Testing and Debugging Menu|99\n");
 

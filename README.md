@@ -3,8 +3,9 @@
 [Overview](#overview) | [Safety](#safety-and-fail-closed-behavior) | [Quick Start](#quick-start) | [Build and Run](#build-and-run) | [Config](#configuration-notes) | [Documentation](#documentation) | [Status](#status) | [seperet.com](https://seperet.com)
 
 ## Overview
-AirTrace is a deterministic tracking and navigation simulator with a TUI for
-running scenarios and checking sensor fallback behavior. Supported platforms:
+AirTrace is a deterministic tracking and navigation tool with a TUI for
+operational workflows. Simulation and test modes are used strictly for
+verification and training and are explicitly gated. Supported platforms:
 Windows, Linux, and macOS. Build tools: C++17, CMake 3.10+, Ninja optional.
 
 Core behavior:
@@ -12,11 +13,13 @@ Core behavior:
 - Mode management with a fallback ladder and safe-state behavior.
 - Sensor modeling for GNSS, IMU, radar, thermal, vision, lidar, magnetometer, baro, and celestial.
 - Platform profiles with controlled sensor permissions and dataset tiers.
+- Audit logging for mode/config changes with integrity chaining and health status reporting.
 
 ## Safety and Fail-Closed Behavior
 - Invalid configs or missing datasets force hold mode.
 - Mode transitions enforce guard conditions and dwell times.
 - Degraded or conflicting inputs downgrade to safer sources.
+- Audit logging is required for operational runs; failure to initialize audit logging forces a safe exit.
 
 ## Quick Start
 - Clone with submodules: `git clone --recurse-submodules https://github.com/denv3rr/AirTrace`
@@ -47,9 +50,11 @@ Test harness (non-interactive, test-only):
 - Enable: `AIRTRACE_TEST_HARNESS=1`
 - Command file: `AIRTRACE_HARNESS_COMMANDS=configs/harness_commands.txt`
 - Example commands: `docs/harness_commands.example.txt`
+- Audit logs: `audit_log.jsonl` (operational) and `audit_log_test.jsonl` (test harness) are generated locally and gitignored.
 
 TUI controls:
 - Up/Down to move, Space/Enter to select, Esc to go back/exit.
+- During active runs, type `x` then Enter to abort safely.
 
 ## Configuration Notes
 - Configs are schema-validated and versioned; unknown keys are errors.
@@ -59,6 +64,8 @@ TUI controls:
 - Lockout behavior uses `mode.max_stale_count`, `mode.max_low_confidence_count`, and `mode.lockout_steps`.
 - Residual checks use `fusion.disagreement_threshold`, `fusion.max_disagreement_count`, and `fusion.max_residual_age_seconds`.
 - Trend evaluation windows use `mode.history_window`.
+- Role permissions gate test modes, history viewing, and destructive actions.
+- Provenance policy keys configure allowed inputs and mixed-input handling (see `docs/config_schema.md`).
 
 ## Documentation
 - Architecture: `docs/architecture.md`

@@ -38,12 +38,20 @@ add_executable(AirTrace
         src/ui/alerts.cpp
         src/ui/tui.cpp
         src/ui/simulation.cpp
+        src/ui/audit_log.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
 )
 
 target_include_directories(AirTrace PRIVATE include)
 target_link_libraries(AirTrace PRIVATE airtrace_core)
+if(NOT DEFINED AIRTRACE_BUILD_ID)
+    set(AIRTRACE_BUILD_ID "${PROJECT_NAME}-${PROJECT_VERSION}")
+    if(CMAKE_BUILD_TYPE)
+        set(AIRTRACE_BUILD_ID "${AIRTRACE_BUILD_ID}-${CMAKE_BUILD_TYPE}")
+    endif()
+endif()
+target_compile_definitions(AirTrace PRIVATE AIRTRACE_BUILD_ID="${AIRTRACE_BUILD_ID}")
 
 # Examples
 add_executable(AirTraceExample
@@ -91,6 +99,7 @@ add_executable(AirTraceHarnessRunner
         src/ui/alerts.cpp
         src/ui/tui.cpp
         src/ui/simulation.cpp
+        src/ui/audit_log.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
 )
@@ -114,6 +123,7 @@ add_executable(AirTraceIntegrationTests
         src/ui/alerts.cpp
         src/ui/tui.cpp
         src/ui/simulation.cpp
+        src/ui/audit_log.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
 )

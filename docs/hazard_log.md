@@ -32,3 +32,6 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-026 | Space weather degrades GNSS accuracy or availability. | Marginal | Occasional | Dataset/space-weather awareness and safe-state fallback. | V-062, V-036 |
 | HZ-027 | High-power RF interference saturates receivers. | Critical | Occasional | Signal health gating, confidence thresholds, degrade to safe sources. | V-033, V-054 |
 | HZ-028 | Misconfigured profile inheritance enables unsupported sensors. | Critical | Occasional | Deterministic merge rules, validation, and explicit permitted sensors. | V-073, V-074 |
+| HZ-029 | Audit logging unavailable or blocked causes loss of safety/audit events. | Marginal | Occasional | Bounded non-blocking logging, logging health status, fail closed on safety-event logging failure. | V-080, V-081 |
+| HZ-030 | Nondeterminism in core or simulation causes divergent outputs and unsafe decisions. | Critical | Occasional | Seeded RNG only, fixed timestep, deterministic scheduler, audit for nondeterminism. | V-079 |
+| HZ-031 | Simulation inputs contaminate operational runs. | Critical | Occasional | Explicit sim/test gating, provenance tagging, reject mixed provenance. | V-078 |

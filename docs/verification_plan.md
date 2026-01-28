@@ -26,12 +26,12 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-020 | REQ-SEC-001 | TEST | Fuzz config inputs. | Input validation blocks malformed data. |
 | V-021 | REQ-SEC-002 | INSPECTION | Review plugin loading paths. | Explicit authorization enforced. |
 | V-022 | REQ-SEC-003 | TEST | Load unsigned plugin. | Rejected with audit log. |
-| V-023 | REQ-SEC-004 | INSPECTION | Verify audit log entries. | Mode/config changes recorded. |
+| V-023 | REQ-SEC-004 | TEST | Trigger mode/config changes and capture audit records. | Records include event type, mode/config identifiers, role/actor, and timestamp. |
 | V-024 | REQ-INT-001 | INSPECTION | Review public headers. | Units/ranges documented. |
 | V-025 | REQ-INT-002 | DEMO | Operate UI with sensor changes. | Mode/health/status visible. |
 | V-026 | REQ-INT-003 | DEMO | Trigger invalid input or file I/O failure in UI flows. | Explicit error and recovery shown. |
 | V-027 | REQ-CFG-001 | TEST | Load versioned config. | Schema version enforced. |
-| V-028 | REQ-CFG-002 | TEST | Use invalid ranges. | Validation fails with errors. |
+| V-028 | REQ-CFG-002 | TEST | Use invalid ranges across baseline and extended fields. | Validation fails with explicit errors for all invalid fields. |
 | V-029 | REQ-CFG-003 | INSPECTION | Review config schema docs. | Defaults documented and justified. |
 | V-030 | REQ-VER-001 | INSPECTION | Cross-check requirements vs plan. | Every REQ has V mapping. |
 | V-031 | REQ-VER-002 | TEST | Run unit tests. | Boundary coverage present. |
@@ -80,3 +80,20 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-074 | REQ-CFG-007 | TEST | Provide invalid platform.profile_parent or child module identifiers. | Config validation fails with explicit errors. |
 | V-075 | REQ-INT-009 | TEST | Run menu flows with harness enabled and no TTY. | UI menus operate and exit without input errors. |
 | V-076 | REQ-VER-006 | TEST | Run integration tests for dropout ladder selection and dataset gating. | Modes follow ladder and dataset gating prevents celestial activation when unavailable. |
+| V-077 | REQ-INT-010 | TEST | Build the production AirTrace target without AIRTRACE_TEST_HARNESS defined. | Build succeeds and harness interface remains disabled. |
+| V-078 | REQ-SYS-014 | TEST | Attempt to invoke simulation/test modes without authorization. | Operational runs reject simulation/test modes and report denial. |
+| V-079 | REQ-SYS-015 | INSPECTION | Audit core for I/O, wall-clock, and non-seeded randomness. | No core file I/O, wall-clock calls, or unseeded RNG usage. |
+| V-080 | REQ-SYS-016 | TEST | Start app with and without an audit sink configured. | Logging health is reported; missing sink forces denial or safe state. |
+| V-081 | REQ-SAFE-010 | TEST | Simulate audit log write failure during safety event. | System enters safe state and reports denial. |
+| V-082 | REQ-SEC-009 | TEST | Attempt audit log tamper or retention violation. | Integrity checks detect tamper; retention policy enforced or explicitly denied. |
+| V-083 | REQ-INT-011 | DEMO | Run operational flow and observe status banner. | Banner shows profile, source, auth, contributors, and denial status. |
+| V-084 | REQ-INT-012 | TEST | Attempt destructive action without confirmation or role. | Action denied unless explicit confirmation and policy allow it. |
+| V-085 | REQ-INT-013 | TEST | Trigger operator abort during a run. | Run exits safely with recovery guidance. |
+| V-086 | REQ-INT-014 | INSPECTION | Review non-menu error/empty states. | Denial reasons and recovery guidance are present. |
+| V-087 | REQ-INT-015 | INSPECTION | Review prompts and outputs for measurement units. | All operator-facing measurements include units and frames. |
+| V-088 | REQ-SYS-017 | TEST | Inject mixed-provenance inputs and fused outputs. | Provenance tags persist and are reported on outputs. |
+| V-089 | REQ-SYS-018 | TEST | Attempt operational run with mixed/unknown provenance sources. | System rejects inputs, logs denial, and enters safe state. |
+| V-090 | REQ-SEC-010 | TEST | Trigger provenance accept/reject decisions. | Audit records include reason, sources, run ID, config version, build ID, and seed. |
+| V-091 | REQ-CFG-008 | TEST | Provide invalid or mixed provenance policy settings. | Config validation fails with explicit errors. |
+| V-092 | REQ-INT-016 | DEMO | Operate UI during provenance denial and unknown provenance conditions. | UI shows provenance status with recovery guidance. |
+| V-093 | REQ-SYS-015 | TEST | Run core purity scan for disallowed file I/O, wall-clock, or non-seeded RNG symbols. | Scan fails on violations and passes with allowlisted interfaces. |

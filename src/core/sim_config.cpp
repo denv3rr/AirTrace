@@ -186,6 +186,25 @@ bool toDatasetTier(const std::string &value, SimConfig::DatasetTier &out)
     return true;
 }
 
+bool toProvenanceMode(const std::string &value, SimConfig::ProvenanceMode &out)
+{
+    std::string lowered = toLower(trim(value));
+    if (lowered == "operational") out = SimConfig::ProvenanceMode::Operational;
+    else if (lowered == "simulation") out = SimConfig::ProvenanceMode::Simulation;
+    else if (lowered == "test") out = SimConfig::ProvenanceMode::Test;
+    else return false;
+    return true;
+}
+
+bool toUnknownProvenanceAction(const std::string &value, SimConfig::UnknownProvenanceAction &out)
+{
+    std::string lowered = toLower(trim(value));
+    if (lowered == "deny") out = SimConfig::UnknownProvenanceAction::Deny;
+    else if (lowered == "hold") out = SimConfig::UnknownProvenanceAction::Hold;
+    else return false;
+    return true;
+}
+
 void setIssue(ConfigResult &result, const std::string &key, const std::string &message)
 {
     result.ok = false;
@@ -202,6 +221,8 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     SimConfig::NetworkAidMode aidMode = SimConfig::NetworkAidMode::Deny;
     SimConfig::OverrideAuth authMode = SimConfig::OverrideAuth::Credential;
     SimConfig::DatasetTier tier = SimConfig::DatasetTier::Minimal;
+    SimConfig::ProvenanceMode provenanceMode = SimConfig::ProvenanceMode::Operational;
+    SimConfig::UnknownProvenanceAction unknownAction = SimConfig::UnknownProvenanceAction::Deny;
 
     if (key == "config.version")
     {
@@ -295,6 +316,37 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "policy.network_aid.override_timeout_seconds" && toInt(value, ival)) config.policy.overrideTimeoutSeconds = ival;
     else if (key == "policy.roles") config.policy.roles = splitList(value);
     else if (key == "policy.active_role") config.policy.activeRole = value;
+    else if (key == "provenance.run_mode" && toProvenanceMode(value, provenanceMode)) config.provenance.runMode = provenanceMode;
+    else if (key == "provenance.run_mode") setIssue(result, key, "invalid provenance run_mode");
+    else if (key == "provenance.allowed_inputs")
+    {
+        std::vector<std::string> inputs = splitList(value);
+        std::vector<SimConfig::ProvenanceMode> parsed;
+        parsed.reserve(inputs.size());
+        bool ok = true;
+        for (const auto &entry : inputs)
+        {
+            SimConfig::ProvenanceMode mode = SimConfig::ProvenanceMode::Operational;
+            if (!toProvenanceMode(entry, mode))
+            {
+                ok = false;
+                break;
+            }
+            parsed.push_back(mode);
+        }
+        if (!ok)
+        {
+            setIssue(result, key, "invalid provenance value");
+        }
+        else
+        {
+            config.provenance.allowedInputs = std::move(parsed);
+        }
+    }
+    else if (key == "provenance.allow_mixed" && toBool(value, bval)) config.provenance.allowMixed = bval;
+    else if (key == "provenance.allow_mixed") setIssue(result, key, "invalid boolean");
+    else if (key == "provenance.unknown_action" && toUnknownProvenanceAction(value, unknownAction)) config.provenance.unknownAction = unknownAction;
+    else if (key == "provenance.unknown_action") setIssue(result, key, "invalid unknown_action");
     else if (key.rfind("policy.role_permissions.", 0) == 0)
     {
         std::string role = key.substr(std::string("policy.role_permissions.").size());
@@ -531,6 +583,46 @@ void validateConfig(ConfigResult &result)
         {
             setIssue(result, "policy.role_permissions." + role, "role not defined");
         }
+    }
+
+    if (config.provenance.allowedInputs.empty())
+    {
+        setIssue(result, "provenance.allowed_inputs", "must include at least one provenance value");
+    }
+    else
+    {
+        std::unordered_map<int, int> counts;
+        for (const auto &mode : config.provenance.allowedInputs)
+        {
+            counts[static_cast<int>(mode)]++;
+        }
+        for (const auto &entry : counts)
+        {
+            if (entry.second > 1)
+            {
+                setIssue(result, "provenance.allowed_inputs", "duplicate provenance entries");
+                break;
+            }
+        }
+    }
+
+    bool runModeAllowed = false;
+    for (const auto &mode : config.provenance.allowedInputs)
+    {
+        if (mode == config.provenance.runMode)
+        {
+            runModeAllowed = true;
+            break;
+        }
+    }
+    if (!runModeAllowed)
+    {
+        setIssue(result, "provenance.run_mode", "run_mode must be included in allowed_inputs");
+    }
+
+    if (!config.provenance.allowMixed && config.provenance.allowedInputs.size() > 1)
+    {
+        setIssue(result, "provenance.allow_mixed", "mixed provenance not allowed with allow_mixed=false");
     }
 
     if (config.dataset.maxSizeMB < 0.0)

@@ -131,6 +131,36 @@ int main()
     assert(policyResult.ok);
     std::filesystem::remove(policyConfigPath);
 
+    std::filesystem::path provenanceConfig = writeConfigFile(
+        "airtrace_provenance.cfg",
+        "config.version=1.0\n"
+        "provenance.run_mode=operational\n"
+        "provenance.allowed_inputs=operational\n"
+        "provenance.allow_mixed=false\n"
+        "provenance.unknown_action=deny\n");
+    ConfigResult provenanceResult = loadSimConfig(provenanceConfig.string());
+    assert(provenanceResult.ok);
+    std::filesystem::remove(provenanceConfig);
+
+    std::filesystem::path provenanceMixedConfig = writeConfigFile(
+        "airtrace_provenance_mixed.cfg",
+        "config.version=1.0\n"
+        "provenance.run_mode=operational\n"
+        "provenance.allowed_inputs=operational,simulation\n"
+        "provenance.allow_mixed=false\n");
+    ConfigResult provenanceMixedResult = loadSimConfig(provenanceMixedConfig.string());
+    assert(!provenanceMixedResult.ok);
+    std::filesystem::remove(provenanceMixedConfig);
+
+    std::filesystem::path provenanceInvalidConfig = writeConfigFile(
+        "airtrace_provenance_invalid.cfg",
+        "config.version=1.0\n"
+        "provenance.run_mode=invalid\n"
+        "provenance.allowed_inputs=operational\n");
+    ConfigResult provenanceInvalidResult = loadSimConfig(provenanceInvalidConfig.string());
+    assert(!provenanceInvalidResult.ok);
+    std::filesystem::remove(provenanceInvalidConfig);
+
     std::filesystem::path sensorConfig = writeConfigFile(
         "airtrace_sensor_config.cfg",
         "config.version=1.0\n"

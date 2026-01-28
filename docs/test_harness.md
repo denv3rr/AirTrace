@@ -8,6 +8,7 @@ It is test-only and requires explicit build-time gating and runtime enablement.
 - Runtime: set `AIRTRACE_TEST_HARNESS=1`.
 - If the command file is missing, invalid, or mismatched, the harness fails closed.
 - When enabled, the harness allows menu flows without a TTY for test execution.
+- Audit logging is initialized to `audit_log_test.jsonl` when the harness is active.
 
 ## Command File Format
 Each command is a single line with pipe delimiters:

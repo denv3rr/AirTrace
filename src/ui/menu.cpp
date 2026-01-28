@@ -26,6 +26,7 @@ std::string buildHelp(const std::string &baseHelp)
         << " decision=" << (status.decisionReason.empty() ? "none" : status.decisionReason)
         << " denial=" << (status.denialReason.empty() ? "none" : status.denialReason)
         << " auth=" << status.authStatus
+        << " log=" << (status.loggingStatus.empty() ? "unknown" : status.loggingStatus)
         << " seed=" << status.seed
         << " det=" << (status.deterministic ? "on" : "off");
     if (!status.denialReason.empty())
@@ -73,6 +74,10 @@ bool showMainMenu()
         {
         case ui::MainMenuAction::Scenario:
         {
+            if (!uiEnsureAuditHealthy("scenario_mode"))
+            {
+                return false;
+            }
             int gpsTimeoutSeconds = 10;
             int heatTimeoutSeconds = 10;
             if (!tryGetValidatedIntInput("Enter GPS timeout seconds (1-120): ", 1, 120, gpsTimeoutSeconds) ||
@@ -90,15 +95,45 @@ bool showMainMenu()
             break;
         }
         case ui::MainMenuAction::TestMenu:
+            if (!uiEnsureAuditHealthy("test_menu"))
+            {
+                return false;
+            }
+            if (!uiHasPermission("test_mode"))
+            {
+                setUiDenialReason("sim_not_authorized");
+                std::cerr << "Test mode not authorized. Recovery: update role permissions and retry.\n";
+                return false;
+            }
             if (!showTestMenu())
             {
                 return false;
             }
             break;
         case ui::MainMenuAction::ViewHistory:
+            if (!uiEnsureAuditHealthy("view_history"))
+            {
+                return false;
+            }
+            if (!uiHasPermission("simulation_history"))
+            {
+                setUiDenialReason("sim_not_authorized");
+                std::cerr << "History access not authorized. Recovery: update role permissions and retry.\n";
+                return false;
+            }
             viewAndRerunPreviousSimulations();
             break;
         case ui::MainMenuAction::DeleteHistory:
+            if (!uiEnsureAuditHealthy("delete_history"))
+            {
+                return false;
+            }
+            if (!uiHasPermission("simulation_delete"))
+            {
+                setUiDenialReason("sim_not_authorized");
+                std::cerr << "Delete not authorized. Recovery: update role permissions and retry.\n";
+                return false;
+            }
             deletePreviousSimulation();
             break;
         default:
@@ -149,6 +184,12 @@ bool showTestMenu()
             }
             break;
         case ui::TestMenuAction::ViewLogs:
+            if (!uiHasPermission("test_mode"))
+            {
+                setUiDenialReason("sim_not_authorized");
+                std::cerr << "Test logs not authorized. Recovery: update role permissions and retry.\n";
+                return false;
+            }
             viewTestLogs();
             break;
         default:

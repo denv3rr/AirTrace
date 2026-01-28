@@ -5,6 +5,8 @@
 #include "ui/inputValidation.h"
 #include "ui/scenario.h"
 #include "ui/tui.h"
+#include "ui/alerts.h"
+#include "ui/audit_log.h"
 #include <iostream>
 #include <cmath>
 #include <atomic>
@@ -15,6 +17,7 @@
 #include <sstream>
 #include <string>
 #include <random>
+#include <cctype>
 
 // Global vector to store simulation history
 std::vector<SimulationData> simulationHistory;
@@ -35,6 +38,130 @@ struct UiContext
 };
 
 UiContext uiContext{};
+
+bool hasPermission(const std::string &permission)
+{
+#if defined(AIRTRACE_TEST_HARNESS)
+    if (permission == "test_mode" || permission == "simulation_history" || permission == "simulation_delete")
+    {
+        return true;
+    }
+#endif
+    const auto &policy = uiContext.config.policy;
+    auto it = policy.rolePermissions.find(policy.activeRole);
+    if (it == policy.rolePermissions.end())
+    {
+        return false;
+    }
+    for (const auto &entry : it->second)
+    {
+        if (entry == "all" || entry == permission)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ensureAuditHealthy(const std::string &context)
+{
+    setUiLoggingStatus(ui::auditLogStatus());
+    if (ui::auditLogHealthy())
+    {
+        return true;
+    }
+#if defined(AIRTRACE_TEST_HARNESS)
+    ui::AuditLogConfig testConfig{};
+    testConfig.logPath = "audit_log_test.jsonl";
+    testConfig.configPath = "configs/sim_default.cfg";
+    testConfig.buildId = "test";
+    testConfig.role = "test";
+    std::string status;
+    if (ui::initializeAuditLog(testConfig, status))
+    {
+        setUiLoggingStatus(ui::auditLogStatus());
+        ui::logAuditEvent("audit_recovered", "audit log initialized for test harness", context);
+        return true;
+    }
+#endif
+    setUiDenialReason("audit_unavailable");
+    std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
+    ui::logAuditEvent("audit_unavailable", "audit log unavailable", context);
+    return false;
+}
+
+bool requirePermission(const std::string &permission, const std::string &context)
+{
+    if (hasPermission(permission))
+    {
+        return true;
+    }
+    setUiDenialReason("sim_not_authorized");
+    std::cerr << "Not authorized for " << permission << ". Recovery: update role permissions and retry.\n";
+    ui::logAuditEvent("authorization_denied", "permission denied", context);
+    return false;
+}
+
+bool logAuditOrDeny(const std::string &eventType, const std::string &message, const std::string &detail, const std::string &context)
+{
+    if (ui::logAuditEvent(eventType, message, detail))
+    {
+        return true;
+    }
+    setUiLoggingStatus(ui::auditLogStatus());
+    setUiDenialReason("audit_unavailable");
+    std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
+    std::cerr << "Context: " << context << "\n";
+    return false;
+}
+
+void renderStatusBanner(const std::string &context)
+{
+    const UiStatus &status = getUiStatus();
+    std::cout << "\n[STATUS] context=" << context
+              << " profile=" << status.platformProfile
+              << " parent=" << (status.parentProfile.empty() ? "none" : status.parentProfile)
+              << " modules=" << (status.childModules.empty() ? "none" : status.childModules)
+              << " source=" << (status.activeSource.empty() ? "none" : status.activeSource)
+              << " contributors=" << (status.contributors.empty() ? "none" : status.contributors)
+              << " conf=" << status.modeConfidence
+              << " conc=" << (status.concurrencyStatus.empty() ? "none" : status.concurrencyStatus)
+              << " decision=" << (status.decisionReason.empty() ? "none" : status.decisionReason)
+              << " denial=" << (status.denialReason.empty() ? "none" : status.denialReason)
+              << " auth=" << (status.authStatus.empty() ? "unknown" : status.authStatus)
+              << " log=" << (status.loggingStatus.empty() ? "unknown" : status.loggingStatus)
+              << " seed=" << status.seed
+              << " det=" << (status.deterministic ? "on" : "off")
+              << "\n";
+    if (!status.denialReason.empty())
+    {
+        std::cout << ui::buildDenialBanner(status.denialReason) << "\n";
+    }
+    std::cout << "Abort: type 'x' then Enter to stop the current run.\n";
+}
+
+bool consumeAbortRequest()
+{
+    if (!inputStreamAvailable())
+    {
+        return false;
+    }
+    if (std::cin.rdbuf()->in_avail() <= 0)
+    {
+        return false;
+    }
+    std::string input;
+    if (!std::getline(std::cin, input))
+    {
+        return false;
+    }
+    if (input == "x" || input == "X")
+    {
+        return true;
+    }
+    return false;
+}
+
 
 std::string profileName(SimConfig::PlatformProfile profile)
 {
@@ -114,6 +241,10 @@ void updateStatusFromConfig(const SimConfig &config)
     uiContext.status.parentProfile = config.hasParentProfile ? profileName(config.parentProfile) : "none";
     uiContext.status.childModules = modulesToString(config.childModules);
     uiContext.status.authStatus = buildAuthStatus(config);
+    if (uiContext.status.loggingStatus.empty())
+    {
+        uiContext.status.loggingStatus = "unknown";
+    }
     uiContext.status.seed = config.seed;
     uiContext.status.deterministic = true;
     uiContext.status.contributors = "";
@@ -127,6 +258,21 @@ void updateStatusFromConfig(const SimConfig &config)
     }
 }
 } // namespace
+
+bool uiEnsureAuditHealthy(const std::string &context)
+{
+    return ensureAuditHealthy(context);
+}
+
+bool uiHasPermission(const std::string &permission)
+{
+    return hasPermission(permission);
+}
+
+void uiRenderStatusBanner(const std::string &context)
+{
+    renderStatusBanner(context);
+}
 
 bool initializeUiContext(const std::string &configPath)
 {
@@ -212,6 +358,11 @@ void setUiDenialReason(const std::string &reason)
     uiContext.status.denialReason = reason;
 }
 
+void setUiLoggingStatus(const std::string &status)
+{
+    uiContext.status.loggingStatus = status;
+}
+
 void resetUiRng()
 {
     uiContext.rng.seed(uiContext.seed);
@@ -275,6 +426,7 @@ void simulateManualConfig(const SimulationData &simData)
     resetUiRng();
     setUiActiveSource(simData.mode);
     setUiDecisionReason("manual_mode");
+    renderStatusBanner("manual_sim");
     // Use the simData to run the simulation
     Object target(1, "Target", simData.targetPos);
     Object follower(2, "Follower", simData.followerPos);
@@ -286,6 +438,13 @@ void simulateManualConfig(const SimulationData &simData)
     int stepCount = 0;
     while (tracker.isTrackingActive() && (simData.iterations == 0 || stepCount < simData.iterations))
     {
+        if (consumeAbortRequest())
+        {
+            setUiDenialReason("operator_abort");
+            ui::logAuditEvent("operator_abort", "manual simulation aborted", simData.mode);
+            std::cout << "Operator abort received. Returning to menu.\n";
+            break;
+        }
         tracker.update();
         std::this_thread::sleep_for(std::chrono::milliseconds(500 / simData.speed)); // Adjust based on speed
         stepCount++;
@@ -299,6 +458,7 @@ void simulateDeadReckoning(int speed, int iterations)
     resetUiRng();
     setUiActiveSource("dead_reckoning");
     setUiDecisionReason("dead_reckoning_active");
+    renderStatusBanner("dead_reckoning");
     Object target(1, "Target", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
     Object follower(2, "Follower", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
 
@@ -312,6 +472,13 @@ void simulateDeadReckoning(int speed, int iterations)
 
     while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {
+        if (consumeAbortRequest())
+        {
+            setUiDenialReason("operator_abort");
+            ui::logAuditEvent("operator_abort", "dead_reckoning aborted", "");
+            std::cout << "Operator abort received. Returning to menu.\n";
+            break;
+        }
         tracker.update();
 
         auto targetPos = target.getPosition();
@@ -321,13 +488,13 @@ void simulateDeadReckoning(int speed, int iterations)
 
         std::cout << "[Iteration " << stepCount << "] Dead Reckoning Mode\n";
         std::cout << "--------------------------------------------\n";
-        std::cout << "Target Position: (" << targetPos.first << ", " << targetPos.second << ")\n";
-        std::cout << "Follower Position: (" << followerPos.first << ", " << followerPos.second << ")\n";
-        std::cout << "Distance to Target: " << distance << " units\n";
+        std::cout << "Target Position (m): (" << targetPos.first << ", " << targetPos.second << ")\n";
+        std::cout << "Follower Position (m): (" << followerPos.first << ", " << followerPos.second << ")\n";
+        std::cout << "Distance to Target (m): " << distance << "\n";
         std::cout << "--------------------------------------------\n";
 
         simulationLog += "Iteration: " + std::to_string(stepCount) + ", Distance: " + std::to_string(distance) + "\n";
-        condensedLog += "Iteration " + std::to_string(stepCount) + " - Distance: " + std::to_string(distance) + " units\n";
+        condensedLog += "Iteration " + std::to_string(stepCount) + " - Distance: " + std::to_string(distance) + " m\n";
 
         if (distance < 0.1)
         {
@@ -348,6 +515,7 @@ void simulateHeatSeeking(int speed, int iterations)
     resetUiRng();
     setUiActiveSource("heat_signature");
     setUiDecisionReason("heat_signature_active");
+    renderStatusBanner("heat_seeking");
     // Initialize random positions for target and follower
     Object target(1, "Target", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
     Object follower(2, "Follower", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
@@ -363,6 +531,13 @@ void simulateHeatSeeking(int speed, int iterations)
     // Dynamically move target and update heat signature
     while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {
+        if (consumeAbortRequest())
+        {
+            setUiDenialReason("operator_abort");
+            ui::logAuditEvent("operator_abort", "heat_seeking aborted", "");
+            std::cout << "Operator abort received. Returning to menu.\n";
+            break;
+        }
         // Random movement for the target simulating real-world data
         int randomX = uiRandomInt(-1, 1); // -1, 0, or 1
         int randomY = uiRandomInt(-1, 1);
@@ -385,10 +560,10 @@ void simulateHeatSeeking(int speed, int iterations)
         std::cout << "\n[Iteration " << stepCount << "]\n";
         std::cout << "--------------------------------------------\n";
         std::cout << std::fixed << std::setprecision(2); // Two decimal places for numbers
-        std::cout << "Target Position: (" << targetPos.first << ", " << targetPos.second << ")\n";
-        std::cout << "Follower Position: (" << followerPos.first << ", " << followerPos.second << ")\n";
-        std::cout << "Distance to Target: " << distance << " units\n";
-        std::cout << "Heat Signature: " << heatSignature << " units\n";
+        std::cout << "Target Position (m): (" << targetPos.first << ", " << targetPos.second << ")\n";
+        std::cout << "Follower Position (m): (" << followerPos.first << ", " << followerPos.second << ")\n";
+        std::cout << "Distance to Target (m): " << distance << "\n";
+        std::cout << "Heat Signature (arb units): " << heatSignature << "\n";
         std::cout << "--------------------------------------------\n";
 
         // Logging compact information for the text file
@@ -416,6 +591,7 @@ void simulateGPSSeeking(int speed, int iterations)
     resetUiRng();
     setUiActiveSource("gps");
     setUiDecisionReason("gps_active");
+    renderStatusBanner("gps_seek");
     Object target(1, "Target", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
     Object follower(2, "Follower", {uiRandomInt(0, 99), uiRandomInt(0, 99)});
 
@@ -429,6 +605,13 @@ void simulateGPSSeeking(int speed, int iterations)
 
     while (tracker.isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {
+        if (consumeAbortRequest())
+        {
+            setUiDenialReason("operator_abort");
+            ui::logAuditEvent("operator_abort", "gps_seek aborted", "");
+            std::cout << "Operator abort received. Returning to menu.\n";
+            break;
+        }
         int randomX = uiRandomInt(-1, 1);
         int randomY = uiRandomInt(-1, 1);
         target.moveTo({target.getPosition().first + randomX, target.getPosition().second + randomY});
@@ -442,13 +625,13 @@ void simulateGPSSeeking(int speed, int iterations)
 
         std::cout << "[Iteration " << stepCount << "] GPS Mode\n";
         std::cout << "--------------------------------------------\n";
-        std::cout << "Target GPS Position: (" << targetPos.first << ", " << targetPos.second << ")\n";
-        std::cout << "Follower GPS Position: (" << followerPos.first << ", " << followerPos.second << ")\n";
-        std::cout << "Distance to Target: " << distance << " units\n";
+        std::cout << "Target GPS Position (m): (" << targetPos.first << ", " << targetPos.second << ")\n";
+        std::cout << "Follower GPS Position (m): (" << followerPos.first << ", " << followerPos.second << ")\n";
+        std::cout << "Distance to Target (m): " << distance << "\n";
         std::cout << "--------------------------------------------\n";
 
         simulationLog += "Iteration: " + std::to_string(stepCount) + ", Distance: " + std::to_string(distance) + "\n";
-        condensedLog += "Iteration " + std::to_string(stepCount) + " - Distance: " + std::to_string(distance) + " units\n";
+        condensedLog += "Iteration " + std::to_string(stepCount) + " - Distance: " + std::to_string(distance) + " m\n";
 
         if (distance < 0.1)
         {
@@ -469,7 +652,7 @@ void runGPSMode()
     int speed = 100;
     int iterations = 0;
 
-    // int speed = getValidatedIntInput("Enter movement speed (1-100): ", 1, 100);
+    // int speed = getValidatedIntInput("Enter movement speed (1-100, sim steps/sec): ", 1, 100);
     // int iterations = getValidatedIntInput("Enter number of iterations for the simulation (0 for infinite): ", 0, 10000);
 
     simulateGPSSeeking(speed, iterations);
@@ -479,6 +662,18 @@ void runGPSMode()
 
 void runTestMode()
 {
+    if (!ensureAuditHealthy("test_mode"))
+    {
+        return;
+    }
+    if (!requirePermission("test_mode", "test_mode"))
+    {
+        return;
+    }
+    if (!logAuditOrDeny("test_mode_start", "test mode initiated", "", "test_mode"))
+    {
+        return;
+    }
     int speed, iterations;
     std::string trackingMode;
 
@@ -487,11 +682,12 @@ void runTestMode()
     speed = 100;
     iterations = 0;
 
-    if (!tryGetValidatedIntInput("Enter movement speed (1-100): ", 1, 100, speed))
+    if (!tryGetValidatedIntInput("Enter movement speed (1-100, sim steps/sec): ", 1, 100, speed))
     {
         setUiDenialReason("input_unavailable");
         std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
+        ui::logAuditEvent("test_mode_abort", "input unavailable", "speed");
         return;
     }
     if (!tryGetValidatedIntInput("Enter number of iterations (0 for infinite): ", 0, 10000, iterations))
@@ -499,6 +695,7 @@ void runTestMode()
         setUiDenialReason("input_unavailable");
         std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
+        ui::logAuditEvent("test_mode_abort", "input unavailable", "iterations");
         return;
     }
 
@@ -514,12 +711,14 @@ void runTestMode()
     {
         setUiDenialReason("selection_cancelled");
         std::cout << "Recovery: re-open the menu to select a test mode.\n";
+        ui::logAuditEvent("test_mode_abort", "selection cancelled", "");
         return;
     }
     if (modeChoice >= static_cast<int>(options.size()))
     {
         setUiDenialReason("menu_selection_invalid");
         std::cerr << "Menu selection invalid. Returning to menu.\n";
+        ui::logAuditEvent("test_mode_abort", "menu selection invalid", "");
         return;
     }
 
@@ -543,6 +742,7 @@ void runTestMode()
     default:
         setUiDenialReason("menu_selection_invalid");
         std::cerr << "Menu selection invalid. Returning to menu.\n";
+        ui::logAuditEvent("test_mode_abort", "menu selection invalid", "");
         return;
     }
 
@@ -557,14 +757,15 @@ void runTestMode()
         int targetY = 0;
         int followerX = 0;
         int followerY = 0;
-        if (!tryGetValidatedIntInput("Enter initial target X position: ", -100000, 100000, targetX) ||
-            !tryGetValidatedIntInput("Enter initial target Y position: ", -100000, 100000, targetY) ||
-            !tryGetValidatedIntInput("Enter initial follower X position: ", -100000, 100000, followerX) ||
-            !tryGetValidatedIntInput("Enter initial follower Y position: ", -100000, 100000, followerY))
+        if (!tryGetValidatedIntInput("Enter initial target X position (m): ", -100000, 100000, targetX) ||
+            !tryGetValidatedIntInput("Enter initial target Y position (m): ", -100000, 100000, targetY) ||
+            !tryGetValidatedIntInput("Enter initial follower X position (m): ", -100000, 100000, followerX) ||
+            !tryGetValidatedIntInput("Enter initial follower Y position (m): ", -100000, 100000, followerY))
         {
             setUiDenialReason("input_unavailable");
             std::cout << "Recovery: verify input stream and try again.\n";
             std::cout << "Input unavailable. Returning to menu.\n";
+            ui::logAuditEvent("test_mode_abort", "input unavailable", "kalman_positions");
             return;
         }
 
@@ -600,14 +801,15 @@ void runTestMode()
         int targetY = 0;
         int followerX = 0;
         int followerY = 0;
-        if (!tryGetValidatedIntInput("Enter initial target X position: ", -100000, 100000, targetX) ||
-            !tryGetValidatedIntInput("Enter initial target Y position: ", -100000, 100000, targetY) ||
-            !tryGetValidatedIntInput("Enter initial follower X position: ", -100000, 100000, followerX) ||
-            !tryGetValidatedIntInput("Enter initial follower Y position: ", -100000, 100000, followerY))
+        if (!tryGetValidatedIntInput("Enter initial target X position (m): ", -100000, 100000, targetX) ||
+            !tryGetValidatedIntInput("Enter initial target Y position (m): ", -100000, 100000, targetY) ||
+            !tryGetValidatedIntInput("Enter initial follower X position (m): ", -100000, 100000, followerX) ||
+            !tryGetValidatedIntInput("Enter initial follower Y position (m): ", -100000, 100000, followerY))
         {
             setUiDenialReason("input_unavailable");
             std::cout << "Recovery: verify input stream and try again.\n";
             std::cout << "Input unavailable. Returning to menu.\n";
+            ui::logAuditEvent("test_mode_abort", "input unavailable", "manual_positions");
             return;
         }
 
@@ -621,6 +823,14 @@ void runTestMode()
 // Test function for Scenario Mode with exit prompt and logging
 bool runTestScenarioMode()
 {
+    if (!ensureAuditHealthy("test_scenario"))
+    {
+        return false;
+    }
+    if (!requirePermission("test_mode", "test_scenario"))
+    {
+        return false;
+    }
     if (!inputStreamAvailable())
     {
         setUiDenialReason("input_unavailable");
@@ -628,6 +838,10 @@ bool runTestScenarioMode()
         return false;
     }
 
+    if (!logAuditOrDeny("test_scenario_start", "test scenario initiated", "", "test_scenario"))
+    {
+        return false;
+    }
     std::cout << "Starting Test Mode for Scenario. Type 'x' then Enter to exit.\n";
     Object follower(2, "Follower", {0, 0}); // Initialize follower at origin
     int gpsTimeoutSeconds = 10;
@@ -651,10 +865,12 @@ bool runTestScenarioMode()
     }
     else if (exitedByUser)
     {
+        ui::logAuditEvent("operator_abort", "test scenario aborted", "");
         logData += "\nTest mode exited early by user.\n";
     }
     else
     {
+        ui::logAuditEvent("test_scenario_complete", "test scenario completed", "");
         logData += "\nTest mode completed normally.\n";
     }
 
@@ -676,6 +892,14 @@ bool runTestScenarioMode()
 
 void viewAndRerunPreviousSimulations()
 {
+    if (!ensureAuditHealthy("view_history"))
+    {
+        return;
+    }
+    if (!requirePermission("simulation_history", "view_history"))
+    {
+        return;
+    }
     if (simulationHistory.empty())
     {
         std::cout << "No previous simulations found.\n";
@@ -698,17 +922,30 @@ void viewAndRerunPreviousSimulations()
         setUiDenialReason("input_unavailable");
         std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
+        ui::logAuditEvent("history_rerun_abort", "input unavailable", "");
         return;
     }
 
     if (choice > 0)
     {
+        if (!logAuditOrDeny("history_rerun", "rerun previous simulation", std::to_string(choice), "history_rerun"))
+        {
+            return;
+        }
         simulateManualConfig(simulationHistory[choice - 1]); // Rerun the selected simulation
     }
 }
 
 void deletePreviousSimulation()
 {
+    if (!ensureAuditHealthy("delete_history"))
+    {
+        return;
+    }
+    if (!requirePermission("simulation_delete", "delete_history"))
+    {
+        return;
+    }
     if (simulationHistory.empty())
     {
         std::cout << "No previous simulations found.\n";
@@ -730,16 +967,44 @@ void deletePreviousSimulation()
         setUiDenialReason("input_unavailable");
         std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
+        ui::logAuditEvent("history_delete_abort", "input unavailable", "");
         return;
     }
 
     if (choice > 0)
     {
+        if (!inputStreamAvailable())
+        {
+            setUiDenialReason("input_unavailable");
+            std::cout << "Recovery: verify input stream and try again.\n";
+            ui::logAuditEvent("history_delete_abort", "input unavailable", "");
+            return;
+        }
+        std::cout << "Type DELETE to confirm: ";
+        std::string confirm;
+        if (!std::getline(std::cin, confirm))
+        {
+            setUiDenialReason("input_unavailable");
+            std::cout << "Recovery: verify input stream and try again.\n";
+            ui::logAuditEvent("history_delete_abort", "input unavailable", "");
+            return;
+        }
+        if (confirm != "DELETE")
+        {
+            setUiDenialReason("delete_not_confirmed");
+            std::cout << "Delete not confirmed. Returning to menu.\n";
+            ui::logAuditEvent("history_delete_abort", "delete not confirmed", "");
+            return;
+        }
         // Delete the selected simulation from memory and the file
         simulationHistory.erase(simulationHistory.begin() + (choice - 1));
         saveSimulationHistoryToFile(); // Re-save the updated history after deletion
 
         std::cout << "Simulation deleted successfully.\n";
+        if (!logAuditOrDeny("history_delete", "deleted simulation", std::to_string(choice), "history_delete"))
+        {
+            return;
+        }
     }
     else
     {

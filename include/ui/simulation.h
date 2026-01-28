@@ -32,6 +32,7 @@ struct UiStatus
     std::string decisionReason;
     std::string denialReason;
     std::string authStatus;
+    std::string loggingStatus;
     unsigned int seed = 0;
     bool deterministic = true;
 };
@@ -44,6 +45,10 @@ void setUiModeConfidence(double confidence);
 void setUiConcurrencyStatus(const std::string &status);
 void setUiDecisionReason(const std::string &reason);
 void setUiDenialReason(const std::string &reason);
+void setUiLoggingStatus(const std::string &status);
+bool uiEnsureAuditHealthy(const std::string &context);
+bool uiHasPermission(const std::string &permission);
+void uiRenderStatusBanner(const std::string &context);
 void resetUiRng();
 int uiRandomInt(int minValue, int maxValue);
 

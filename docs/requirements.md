@@ -16,6 +16,11 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SYS-011: The system shall support concurrent execution of compatible sensor pipelines without interrupting ongoing modes.
 - REQ-SYS-012: Build, run, and test scripts shall validate build type inputs and fail closed on invalid values.
 - REQ-SYS-013: The system shall support platform profile inheritance with deterministic merge rules for permitted sensors and policy defaults.
+- REQ-SYS-014: The system shall prioritize operational tool modes; simulation/test modes shall be explicitly identified, gated, and prohibited in operational runs unless authorized.
+- REQ-SYS-015: The core shall be free of direct file I/O, wall-clock time access, and non-seeded randomness; all external effects shall route through controlled interfaces.
+- REQ-SYS-016: The system shall bind a controlled audit log sink at startup and report logging health status.
+- REQ-SYS-017: The system shall tag every measurement and input with provenance (operational, simulation, test, unknown) and propagate provenance through fusion outputs.
+- REQ-SYS-018: Operational runs shall reject mixed or unknown provenance inputs by default and enter a defined safe state with explicit denial.
 
 ## Functional Requirements (FUNC)
 - REQ-FUNC-001: The core shall ingest sensor measurements using a common state and measurement contract.
@@ -54,6 +59,7 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SAFE-007: The system shall prevent concurrency-induced resource starvation or timing jitter from violating safe-state constraints.
 - REQ-SAFE-008: The system shall enter hold or safe degraded modes when timing jitter or stale data exceeds configured limits.
 - REQ-SAFE-009: The system shall prevent re-entry into a mode when contributors remain in lockout.
+- REQ-SAFE-010: The system shall enter a safe state or deny operations when audit logging is unavailable or fails to record safety-relevant events.
 
 ## Security Requirements (SEC)
 - REQ-SEC-001: All external inputs shall be validated and sanitized before use.
@@ -64,6 +70,8 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SEC-006: Overrides of deny-by-default policies shall require credential or key-based confirmation and be logged.
 - REQ-SEC-007: Authorization policies shall enforce role-based access with least-privilege defaults.
 - REQ-SEC-008: Multi-sensor fusion shall reject untrusted or unauthorized sources from contributing to fused modes.
+- REQ-SEC-009: Audit logs shall be protected for integrity and retention per policy.
+- REQ-SEC-010: Provenance decisions (accept/reject) shall be recorded with reason codes, source identifiers, run ID, config version, build ID, and seed.
 
 ## Interface Requirements (INT)
 - REQ-INT-001: All public interfaces shall declare units, valid ranges, and error behavior.
@@ -75,6 +83,14 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-INT-007: The UI shall display denial warnings with recovery guidance when safe-state or input failures occur.
 - REQ-INT-008: The test harness shall provide a non-interactive input source for UI flows without altering production input behavior.
 - REQ-INT-009: When the test harness is enabled, UI menu flows shall be permitted without a TTY while preserving production input checks.
+- REQ-INT-010: When the test harness is disabled, the UI shall provide a no-op harness interface and production builds shall succeed with the harness inactive.
+- REQ-INT-011: The UI shall display a persistent status banner during active operations showing profile, source, authorization, contributors, and denial status.
+- REQ-INT-012: Destructive actions shall require explicit confirmation and honor role/override policies.
+- REQ-INT-013: Active runs shall provide an operator abort control with explicit recovery messaging.
+- REQ-INT-014: Non-menu error and empty-state messages shall include explicit denial reasons and recovery guidance.
+- REQ-INT-015: Operator prompts and outputs shall include explicit units and reference frames for all measurements.
+- REQ-INT-010: Production builds shall provide a disabled input harness interface that preserves the UI input API without enabling harness behavior.
+- REQ-INT-016: The UI shall display current provenance status and explicit recovery guidance when provenance is denied or unknown.
 
 ## Configuration Requirements (CFG)
 - REQ-CFG-001: Configuration files shall be versioned and schema-validated.
@@ -84,6 +100,7 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-CFG-005: Configuration shall define roles, override rules, and dataset tier constraints.
 - REQ-CFG-006: Configuration shall define parameters for vision, lidar, magnetometer, barometer, and celestial sensors.
 - REQ-CFG-007: Configuration shall define platform.profile_parent and platform.child_modules with validation and deterministic defaults.
+- REQ-CFG-008: Configuration shall define allowed provenance values per run mode and reject unknown or mixed-policy settings.
 
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).

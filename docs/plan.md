@@ -11,6 +11,7 @@ Align the core/app with the mandatory standards, close sensor fallback gaps, and
 - Add/refresh `docs/waivers.md` if any coding-standard exceptions are required.
 - Reconcile defaults between `docs/config_schema.md` and `include/core/sim_config.h`.
 - Define dataset tiering and role-based authorization policy, including override workflows.
+- Define operational vs simulation provenance tagging and mixed-input rejection rules.
 
 ### Dataset System Plan (Separate Track)
 - Define dataset packaging format, versioning, and hash/signature scheme.
@@ -76,6 +77,8 @@ Verification and Test Readiness
 - Provide clear error prompts and recovery guidance on invalid input.
 - Add deterministic test inputs (seed selection) to UI simulation flows.
 - Ensure UI logging does not write outside approved locations.
+- Add explicit operator abort controls and confirmation prompts for destructive actions.
+- Add units and reference frames to all operator prompts and outputs.
 
 ## Phase 5: README + Operator Docs
 - Rewrite README to be concise, readable, and jargon-light with explicit explanations.
@@ -99,4 +102,7 @@ Verification and Test Readiness
 - Platform profile inheritance and child hardware modules are implemented in config parsing, validation, and UI status display.
 - Integration tests for dropout ladders, dataset gating, and UI menu flows are in place.
 - UI/TUI validation paths now fail closed on invalid selections and report file I/O errors with recovery guidance.
-- Remaining gaps still open: platform profile inheritance usage beyond config/UI in broader core workflows, full UI/TUI audit outside the menu/test flows, and broader documentation simplification.
+- Audit logging sink, health reporting, and fail-closed gating are in place for operational/test flows.
+- Status banners, abort controls, and destructive confirmations are enforced in simulation flows with audit trails.
+- Provenance policy keys now parsed and validated in config schema (REQ-CFG-008).
+- Remaining gaps still open: platform profile inheritance usage beyond config/UI in broader core workflows, full UI/TUI audit outside the menu/test flows, provenance tagging for sim vs operational inputs, and broader documentation simplification.

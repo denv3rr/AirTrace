@@ -1,17 +1,35 @@
-## License
+# License
 
-Copyright © 2026 Denver Clark
+Copyright (c) 2026 Denver Clark. All rights reserved.
 
-This work is licensed under a [Creative Commons Attribution || Non-Commercial || No-Derivatives || 4.0 International License](https://creativecommons.org/licenses/by-nc-nd/4.0/).  
+This repository contains private research software and documentation intended
+for controlled learning under strict safety standards. Unauthorized access,
+use, copying, modification, distribution, disclosure, publication, deployment,
+or commercialization is prohibited without a written license from the
+copyright holder.
 
-You may view this repository but may **not use, modify, or distribute it without explicit permission from the author**.
+Prohibited without explicit written permission:
+- Use in production, operational, or safety-critical environments.
+- Reverse engineering, decompilation, or derivation of source or methods.
+- Redistribution of any portion of this repository or its outputs.
+- Training, tuning, or benchmarking of machine-learning systems using this
+  repository or its outputs.
 
-<a href="https://seperet.com">
-<img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif">
-</a>
+Safety and compliance conditions:
+- Any authorized use must comply with project safety and security standards
+  (MIL-STD-498, MIL-STD-882E, MIL-STD-961E, MIL-STD-1472H, MIL-STD-810H,
+  NIST SP 800-53/RMF, and applicable STIGs).
+- If these conditions cannot be met, use is not authorized.
 
-<div>
-  <a href="https://seperet.com">
-    <img width="100" src="https://github.com/denv3rr/denv3rr/blob/main/IMG_4225.gif" />
-  </a>
-</div>
+Export and disclosure restrictions:
+- This repository may be subject to export control or national security
+  regulations. You are responsible for compliance with all applicable laws.
+- Do not transfer or disclose this material to any unauthorized party.
+
+No warranty:
+- This repository is provided "as is" without warranty of any kind, express or
+  implied, including but not limited to fitness for a particular purpose,
+  merchantability, or noninfringement.
+
+No license is granted by implication, estoppel, or otherwise. For licensing
+requests, contact the copyright holder.

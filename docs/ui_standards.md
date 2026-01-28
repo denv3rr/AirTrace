@@ -21,6 +21,11 @@ university sources with unclassified guidance.
 6) Safe defaults and fail-closed behavior on invalid inputs or menu selections.
 7) Denial reasons are surfaced with clear recovery guidance.
 8) Test harness inputs must be explicitly enabled and must not bypass authorization checks.
+9) Active runs must show a persistent status banner with profile/source/auth/contributors/denial.
+10) Destructive actions require explicit confirmation and role gating.
+11) Operator abort controls are available during long-running flows.
+12) Prompts and outputs include explicit units and reference frames.
+13) Provenance status is visible with explicit denial and recovery guidance.
 
 ## Implementation Notes
 - Menus must show platform profile, active source, and authorization
@@ -32,6 +37,12 @@ university sources with unclassified guidance.
 - Inputs must be validated with bounds and handled safely on EOF or
   stream failure, including a logged exit when menu selection is unavailable.
 - Denial warnings should be visible in the main menu status area.
+- Active runs should show a persistent status banner at start and on state changes.
+- Destructive actions should require typed confirmation and policy checks.
+- Long-running flows should advertise and honor an operator abort key.
+- Non-menu errors and empty states must include recovery guidance.
+- Operator prompts and outputs must include units and reference frames.
+- Provenance denials must include reason codes and recovery steps.
 - Harness-driven inputs must follow the same menu flow as operators.
 - When the test harness is enabled, menu flows must be allowed even without a TTY.
 - All overrides must be logged and shown in UI where relevant.

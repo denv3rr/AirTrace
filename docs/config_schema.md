@@ -64,6 +64,15 @@ Schema version: 1.0
   - Format: policy.role_permissions.<role>=comma-separated list.
 - policy.active_role (string): optional; default "operator".
 
+## Provenance
+- provenance.run_mode (string): optional; default "operational".
+  - Allowed: operational, simulation, test.
+- provenance.allowed_inputs (list): optional; default "operational".
+  - Format: comma-separated values (operational, simulation, test).
+- provenance.allow_mixed (bool): optional; default false.
+- provenance.unknown_action (string): optional; default "deny".
+  - Allowed: deny, hold.
+
 ## Dataset Tiers
 - dataset.celestial.tier (string): optional; default "minimal".
   - Allowed: minimal, standard, extended.
