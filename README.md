@@ -3,10 +3,16 @@
 [Overview](#overview) | [Safety](#safety-and-fail-closed-behavior) | [Quick Start](#quick-start) | [Build and Run](#build-and-run) | [Config](#configuration-notes) | [Documentation](#documentation) | [Sources](https://github.com/denv3rr/AirTrace/blob/main/sources_menu.md) | [seperet.com](https://seperet.com)
 
 ## Overview
-AirTrace is a deterministic tracking and navigation tool with a TUI for
-operational workflows. Simulation and test modes are used strictly for
-verification and training and are explicitly gated. Supported platforms:
-Windows, Linux, and macOS. Build tools: C++17, CMake 3.10+, Ninja optional.
+A tool for deterministic evaluation of mode switching logic with
+console interfaces, testing, and logging. Evaluates tracking behavior
+across platform contexts (air, ground, maritime, etc.).
+
+Simulation and test modes are used strictly for verification and
+training and are explicitly gated.
+
+Supported platforms: Windows, Linux, macOS
+
+Build tools: C++17, CMake 3.10+
 
 Core behavior:
 - Deterministic simulation with seeded RNG and fixed timesteps.
