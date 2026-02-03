@@ -1,6 +1,7 @@
 # AGENTS
 
-This project is governed by military-grade engineering standards. All work must comply with the baseline below with no exceptions. If a requirement is unclear, stop and request clarification before implementation.
+All work must comply with the baseline below with no exceptions.
+Note `sources_menu.md`and `docs/`.
 
 ## Compliance Baseline (Mandatory)
 - MIL-STD-498 (systems/software development and documentation)
