@@ -156,6 +156,35 @@ bool isValidModuleName(const std::string &name)
     return true;
 }
 
+bool isValidModeName(const std::string &name)
+{
+    static const std::vector<std::string> kModes = {
+        "gps_ins",
+        "gps",
+        "vio",
+        "lio",
+        "radar_inertial",
+        "thermal",
+        "radar",
+        "vision",
+        "lidar",
+        "mag_baro",
+        "magnetometer",
+        "baro",
+        "celestial",
+        "dead_reckoning",
+        "imu",
+        "hold"};
+    for (const auto &mode : kModes)
+    {
+        if (mode == name)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool toNetworkAidMode(const std::string &value, SimConfig::NetworkAidMode &out)
 {
     std::string lowered = toLower(trim(value));
@@ -316,6 +345,9 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "policy.network_aid.override_timeout_seconds" && toInt(value, ival)) config.policy.overrideTimeoutSeconds = ival;
     else if (key == "policy.roles") config.policy.roles = splitList(value);
     else if (key == "policy.active_role") config.policy.activeRole = value;
+    else if (key == "policy.authorization.version") config.policy.authorization.version = value;
+    else if (key == "policy.authorization.source") config.policy.authorization.source = value;
+    else if (key == "policy.authorization.allowed_modes") config.policy.authorization.allowedModes = splitList(value);
     else if (key == "provenance.run_mode" && toProvenanceMode(value, provenanceMode)) config.provenance.runMode = provenanceMode;
     else if (key == "provenance.run_mode") setIssue(result, key, "invalid provenance run_mode");
     else if (key == "provenance.allowed_inputs")
@@ -504,6 +536,15 @@ void validateConfig(ConfigResult &result)
     validateRange(result, "mode.lockout_steps", static_cast<double>(config.mode.lockoutSteps), 0.0, 100000.0);
     validateRange(result, "mode.history_window", static_cast<double>(config.mode.historyWindow), 0.0, 100000.0);
 
+    for (const auto &modeName : config.mode.ladderOrder)
+    {
+        if (!isValidModeName(modeName))
+        {
+            setIssue(result, "mode.ladder_order", "invalid mode in ladder_order: " + modeName);
+            break;
+        }
+    }
+
     validateRange(result, "fusion.max_data_age_seconds", config.fusion.maxDataAgeSeconds, 0.0, 60.0, false, true);
     validateRange(result, "fusion.disagreement_threshold", config.fusion.disagreementThreshold, 0.0, 1e6, false, true);
     validateRange(result, "fusion.min_confidence", config.fusion.minConfidence, 0.0, 1.0);
@@ -582,6 +623,30 @@ void validateConfig(ConfigResult &result)
         if (!found)
         {
             setIssue(result, "policy.role_permissions." + role, "role not defined");
+        }
+    }
+
+    if (config.policy.authorization.configured())
+    {
+        if (config.policy.authorization.version.empty())
+        {
+            setIssue(result, "policy.authorization.version", "required when authorization bundle is configured");
+        }
+        if (config.policy.authorization.source.empty())
+        {
+            setIssue(result, "policy.authorization.source", "required when authorization bundle is configured");
+        }
+        if (config.policy.authorization.allowedModes.empty())
+        {
+            setIssue(result, "policy.authorization.allowed_modes", "must include at least one mode");
+        }
+        for (const auto &mode : config.policy.authorization.allowedModes)
+        {
+            if (!isValidModeName(mode))
+            {
+                setIssue(result, "policy.authorization.allowed_modes", "invalid mode in authorization bundle: " + mode);
+                break;
+            }
         }
     }
 

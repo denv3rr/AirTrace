@@ -23,7 +23,10 @@ struct AuditLogState
     std::string path;
     std::string buildId;
     std::string configId;
+    std::string configVersion;
     std::string role;
+    std::string runId;
+    unsigned int seed = 0;
     std::string lastHash;
     std::string status = "uninitialized";
     bool healthy = false;
@@ -72,6 +75,13 @@ std::string utcTimestamp()
     return out.str();
 }
 
+std::string makeRunId(const std::string &seedText, const std::string &timestamp)
+{
+    std::ostringstream out;
+    out << "run-" << timestamp << "-" << seedText;
+    return out.str();
+}
+
 std::string hashFileHex(const std::string &path)
 {
     std::ifstream file(path, std::ios::binary);
@@ -101,7 +111,8 @@ std::string makeRecord(const std::string &eventType, const std::string &message,
 {
     std::ostringstream payload;
     payload << eventType << "|" << message << "|" << detail << "|" << timestamp << "|"
-            << g_state.buildId << "|" << g_state.configId << "|" << g_state.role << "|" << g_state.lastHash;
+            << g_state.buildId << "|" << g_state.configId << "|" << g_state.configVersion << "|"
+            << g_state.runId << "|" << g_state.seed << "|" << g_state.role << "|" << g_state.lastHash;
     std::string payloadStr = payload.str();
     std::vector<unsigned char> data(payloadStr.begin(), payloadStr.end());
     std::string entryHash = sha256Hex(data);
@@ -113,6 +124,9 @@ std::string makeRecord(const std::string &eventType, const std::string &message,
         << "\"detail\":\"" << escapeJson(detail) << "\","
         << "\"build_id\":\"" << escapeJson(g_state.buildId) << "\","
         << "\"config_id\":\"" << escapeJson(g_state.configId) << "\","
+        << "\"config_version\":\"" << escapeJson(g_state.configVersion) << "\","
+        << "\"run_id\":\"" << escapeJson(g_state.runId) << "\","
+        << "\"seed\":" << g_state.seed << ","
         << "\"role\":\"" << escapeJson(g_state.role) << "\","
         << "\"prev_hash\":\"" << escapeJson(g_state.lastHash) << "\","
         << "\"entry_hash\":\"" << escapeJson(entryHash) << "\"}"
@@ -140,7 +154,18 @@ bool initializeAuditLog(const AuditLogConfig &config, std::string &status)
     g_state.path = config.logPath;
     g_state.buildId = config.buildId.empty() ? "unknown" : config.buildId;
     g_state.configId = hashFileHex(config.configPath);
+    g_state.configVersion = config.configVersion.empty() ? "unknown" : config.configVersion;
     g_state.role = config.role.empty() ? "unknown" : config.role;
+    g_state.seed = config.seed;
+    const std::string timestamp = utcTimestamp();
+    if (config.runId.empty())
+    {
+        g_state.runId = makeRunId(std::to_string(g_state.seed), timestamp);
+    }
+    else
+    {
+        g_state.runId = config.runId;
+    }
     g_state.lastHash.clear();
 
     if (!ensureCapacity(g_state.path))
@@ -167,7 +192,6 @@ bool initializeAuditLog(const AuditLogConfig &config, std::string &status)
     status = g_state.status;
     setLogSink(&g_sink);
 
-    const std::string timestamp = utcTimestamp();
     std::string record = makeRecord("audit_start", "audit log initialized", "", timestamp);
     out << record;
     return true;
@@ -206,6 +230,24 @@ void setAuditRole(const std::string &role)
     if (!role.empty())
     {
         g_state.role = role;
+    }
+}
+
+void setAuditRunContext(const std::string &runId, const std::string &configVersion, unsigned int seed)
+{
+    std::lock_guard<std::mutex> lock(g_mutex);
+    if (!runId.empty())
+    {
+        g_state.runId = runId;
+    }
+    if (!configVersion.empty())
+    {
+        g_state.configVersion = configVersion;
+    }
+    g_state.seed = seed;
+    if (g_state.runId.empty())
+    {
+        g_state.runId = makeRunId(std::to_string(seed), utcTimestamp());
     }
 }
 

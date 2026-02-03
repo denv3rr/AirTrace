@@ -22,11 +22,19 @@ public:
     {
     }
 
+    void setProvenance(ProvenanceTag tag)
+    {
+        provenance = tag;
+    }
+
     void setStatus(bool healthy, double ageSeconds, double confidence)
     {
         status.healthy = healthy;
         status.timeSinceLastValid = ageSeconds;
         status.confidence = confidence;
+        status.hasMeasurement = healthy;
+        status.lastMeasurement.valid = healthy;
+        status.lastMeasurement.provenance = provenance;
     }
 
 protected:
@@ -36,6 +44,9 @@ protected:
         measurement.valid = true;
         return measurement;
     }
+
+private:
+    ProvenanceTag provenance = ProvenanceTag::Operational;
 };
 
 std::filesystem::path writeConfigFile(const std::string &name, const std::string &contents)
@@ -58,6 +69,33 @@ bool hasSensor(const std::vector<std::string> &sensors, const std::string &name)
     return false;
 }
 
+ProvenanceTag mapProvenance(SimConfig::ProvenanceMode mode)
+{
+    switch (mode)
+    {
+    case SimConfig::ProvenanceMode::Operational:
+        return ProvenanceTag::Operational;
+    case SimConfig::ProvenanceMode::Simulation:
+        return ProvenanceTag::Simulation;
+    case SimConfig::ProvenanceMode::Test:
+        return ProvenanceTag::Test;
+    default:
+        return ProvenanceTag::Unknown;
+    }
+}
+
+UnknownProvenanceAction mapUnknownAction(SimConfig::UnknownProvenanceAction action)
+{
+    switch (action)
+    {
+    case SimConfig::UnknownProvenanceAction::Hold:
+        return UnknownProvenanceAction::Hold;
+    case SimConfig::UnknownProvenanceAction::Deny:
+    default:
+        return UnknownProvenanceAction::Deny;
+    }
+}
+
 ModeManagerConfig buildModeConfig(const SimConfig &config)
 {
     ModeManagerConfig modeConfig;
@@ -74,6 +112,16 @@ ModeManagerConfig buildModeConfig(const SimConfig &config)
     modeConfig.maxResidualAgeSeconds = config.fusion.maxResidualAgeSeconds;
     modeConfig.permittedSensors = config.permittedSensors;
     modeConfig.ladderOrder = config.mode.ladderOrder;
+    modeConfig.authorizationRequired = (config.provenance.runMode == SimConfig::ProvenanceMode::Operational);
+    modeConfig.authorizationVerified = config.policy.authorization.configured();
+    modeConfig.authorizationAllowedModes = config.policy.authorization.allowedModes;
+    modeConfig.allowedProvenances.clear();
+    for (const auto &mode : config.provenance.allowedInputs)
+    {
+        modeConfig.allowedProvenances.push_back(mapProvenance(mode));
+    }
+    modeConfig.provenanceAllowMixed = config.provenance.allowMixed;
+    modeConfig.provenanceUnknownAction = mapUnknownAction(config.provenance.unknownAction);
     modeConfig.celestialAllowed = hasSensor(config.permittedSensors, "celestial");
     modeConfig.celestialDatasetAvailable = config.dataset.celestialAvailable();
     return modeConfig;
@@ -141,6 +189,8 @@ int main()
     std::filesystem::path ladderConfig = writeConfigFile(
         "airtrace_ladder.cfg",
         "config.version=1.0\n"
+        "provenance.run_mode=simulation\n"
+        "provenance.allowed_inputs=simulation\n"
         "platform.permitted_sensors=gps,radar\n"
         "mode.min_healthy_count=1\n"
         "mode.min_dwell_steps=0\n"
@@ -150,6 +200,8 @@ int main()
     ModeManager ladderManager(buildModeConfig(ladderResult.config));
     TestSensor ladderGps("gps");
     TestSensor ladderRadar("radar");
+    ladderGps.setProvenance(ProvenanceTag::Simulation);
+    ladderRadar.setProvenance(ProvenanceTag::Simulation);
     std::vector<SensorBase *> ladderSensors{&ladderGps, &ladderRadar};
     ladderGps.setStatus(false, 2.0, 0.2);
     ladderRadar.setStatus(true, 0.1, 0.9);
@@ -160,6 +212,8 @@ int main()
     std::filesystem::path datasetMissingConfig = writeConfigFile(
         "airtrace_dataset_missing.cfg",
         "config.version=1.0\n"
+        "provenance.run_mode=simulation\n"
+        "provenance.allowed_inputs=simulation\n"
         "platform.permitted_sensors=celestial\n"
         "mode.min_healthy_count=1\n"
         "mode.min_dwell_steps=0\n"
@@ -168,6 +222,7 @@ int main()
     assert(datasetMissingResult.ok);
     ModeManager datasetMissingManager(buildModeConfig(datasetMissingResult.config));
     TestSensor datasetCelestial("celestial");
+    datasetCelestial.setProvenance(ProvenanceTag::Simulation);
     std::vector<SensorBase *> datasetSensors{&datasetCelestial};
     datasetCelestial.setStatus(true, 0.1, 0.9);
     ModeDecision datasetMissingDecision = datasetMissingManager.decide(datasetSensors);
@@ -177,6 +232,8 @@ int main()
     std::filesystem::path datasetConfig = writeConfigFile(
         "airtrace_dataset_ok.cfg",
         "config.version=1.0\n"
+        "provenance.run_mode=simulation\n"
+        "provenance.allowed_inputs=simulation\n"
         "platform.permitted_sensors=celestial\n"
         "mode.min_healthy_count=1\n"
         "mode.min_dwell_steps=0\n"
@@ -188,6 +245,7 @@ int main()
     ConfigResult datasetResult = loadSimConfig(datasetConfig.string());
     assert(datasetResult.ok);
     ModeManager datasetManager(buildModeConfig(datasetResult.config));
+    datasetCelestial.setProvenance(ProvenanceTag::Simulation);
     datasetCelestial.setStatus(true, 0.1, 0.9);
     ModeDecision datasetDecision = datasetManager.decide(datasetSensors);
     assert(datasetDecision.mode == TrackingMode::Celestial);

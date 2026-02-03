@@ -66,6 +66,18 @@ struct SimConfig
 
     struct PolicyConfig
     {
+        struct AuthorizationBundle
+        {
+            std::string version{};
+            std::string source{};
+            std::vector<std::string> allowedModes{};
+
+            bool configured() const
+            {
+                return !version.empty() || !source.empty() || !allowedModes.empty();
+            }
+        };
+
         NetworkAidMode networkAidMode = NetworkAidMode::Deny;
         bool overrideRequired = true;
         OverrideAuth overrideAuth = OverrideAuth::Credential;
@@ -73,6 +85,7 @@ struct SimConfig
         std::vector<std::string> roles = {"operator"};
         std::unordered_map<std::string, std::vector<std::string>> rolePermissions{};
         std::string activeRole = "operator";
+        AuthorizationBundle authorization{};
     };
 
     struct ProvenancePolicy

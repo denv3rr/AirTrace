@@ -37,6 +37,20 @@ struct ModeDecisionDetail
     double confidence = 0.0;
     std::string reason;
     std::string downgradeReason;
+    struct DisqualifiedSource
+    {
+        std::string mode;
+        std::string source;
+        std::string reason;
+    };
+    struct LockoutState
+    {
+        std::string source;
+        int remainingSteps = 0;
+        std::string reason;
+    };
+    std::vector<DisqualifiedSource> disqualifiedSources;
+    std::vector<LockoutState> lockouts;
 };
 
 struct PipelineBudget

@@ -18,6 +18,8 @@
 #include <string>
 #include <random>
 #include <cctype>
+#include <algorithm>
+#include <unordered_map>
 
 // Global vector to store simulation history
 std::vector<SimulationData> simulationHistory;
@@ -76,9 +78,18 @@ bool ensureAuditHealthy(const std::string &context)
     testConfig.configPath = "configs/sim_default.cfg";
     testConfig.buildId = "test";
     testConfig.role = "test";
+    if (uiContext.configLoaded)
+    {
+        testConfig.configVersion = uiContext.config.version;
+        testConfig.seed = uiContext.seed;
+    }
     std::string status;
     if (ui::initializeAuditLog(testConfig, status))
     {
+        if (uiContext.configLoaded)
+        {
+            ui::setAuditRunContext("", uiContext.config.version, uiContext.seed);
+        }
         setUiLoggingStatus(ui::auditLogStatus());
         ui::logAuditEvent("audit_recovered", "audit log initialized for test harness", context);
         return true;
@@ -125,14 +136,27 @@ void renderStatusBanner(const std::string &context)
               << " source=" << (status.activeSource.empty() ? "none" : status.activeSource)
               << " contributors=" << (status.contributors.empty() ? "none" : status.contributors)
               << " conf=" << status.modeConfidence
+              << " disq=" << (status.disqualifiedSources.empty() ? "none" : status.disqualifiedSources)
+              << " lockout=" << (status.lockoutStatus.empty() ? "none" : status.lockoutStatus)
+              << " ladder=" << (status.ladderStatus.empty() ? "none" : status.ladderStatus)
               << " conc=" << (status.concurrencyStatus.empty() ? "none" : status.concurrencyStatus)
               << " decision=" << (status.decisionReason.empty() ? "none" : status.decisionReason)
               << " denial=" << (status.denialReason.empty() ? "none" : status.denialReason)
               << " auth=" << (status.authStatus.empty() ? "unknown" : status.authStatus)
+              << " prov=" << (status.provenanceStatus.empty() ? "unknown" : status.provenanceStatus)
               << " log=" << (status.loggingStatus.empty() ? "unknown" : status.loggingStatus)
+              << " sensors=" << (status.sensorStatusSummary.empty() ? "none" : status.sensorStatusSummary)
               << " seed=" << status.seed
               << " det=" << (status.deterministic ? "on" : "off")
               << "\n";
+    if (!status.ladderStatus.empty())
+    {
+        std::cout << "LADDER: " << status.ladderStatus << "\n";
+    }
+    if (!status.sensorStatusSummary.empty())
+    {
+        std::cout << "SENSORS: " << status.sensorStatusSummary << "\n";
+    }
     if (!status.denialReason.empty())
     {
         std::cout << ui::buildDenialBanner(status.denialReason) << "\n";
@@ -232,6 +256,64 @@ std::string buildAuthStatus(const SimConfig &config)
     {
         out << " override=none";
     }
+    if (config.policy.authorization.configured())
+    {
+        out << " auth_bundle=present";
+    }
+    else
+    {
+        out << " auth_bundle=missing";
+    }
+    return out.str();
+}
+
+std::string provenanceModeName(SimConfig::ProvenanceMode mode)
+{
+    switch (mode)
+    {
+    case SimConfig::ProvenanceMode::Operational:
+        return "operational";
+    case SimConfig::ProvenanceMode::Simulation:
+        return "simulation";
+    case SimConfig::ProvenanceMode::Test:
+        return "test";
+    default:
+        return "unknown";
+    }
+}
+
+std::string provenanceActionName(SimConfig::UnknownProvenanceAction action)
+{
+    switch (action)
+    {
+    case SimConfig::UnknownProvenanceAction::Hold:
+        return "hold";
+    case SimConfig::UnknownProvenanceAction::Deny:
+    default:
+        return "deny";
+    }
+}
+
+std::string buildProvenanceStatus(const SimConfig &config)
+{
+    std::ostringstream out;
+    out << "run=" << provenanceModeName(config.provenance.runMode)
+        << " allow_mixed=" << (config.provenance.allowMixed ? "y" : "n")
+        << " unknown=" << provenanceActionName(config.provenance.unknownAction)
+        << " allowed=";
+    if (config.provenance.allowedInputs.empty())
+    {
+        out << "none";
+        return out.str();
+    }
+    for (size_t idx = 0; idx < config.provenance.allowedInputs.size(); ++idx)
+    {
+        out << provenanceModeName(config.provenance.allowedInputs[idx]);
+        if (idx + 1 < config.provenance.allowedInputs.size())
+        {
+            out << ",";
+        }
+    }
     return out.str();
 }
 
@@ -241,6 +323,7 @@ void updateStatusFromConfig(const SimConfig &config)
     uiContext.status.parentProfile = config.hasParentProfile ? profileName(config.parentProfile) : "none";
     uiContext.status.childModules = modulesToString(config.childModules);
     uiContext.status.authStatus = buildAuthStatus(config);
+    uiContext.status.provenanceStatus = buildProvenanceStatus(config);
     if (uiContext.status.loggingStatus.empty())
     {
         uiContext.status.loggingStatus = "unknown";
@@ -249,6 +332,10 @@ void updateStatusFromConfig(const SimConfig &config)
     uiContext.status.deterministic = true;
     uiContext.status.contributors = "";
     uiContext.status.modeConfidence = 0.0;
+    uiContext.status.disqualifiedSources = "";
+    uiContext.status.lockoutStatus = "";
+    uiContext.status.ladderStatus = "";
+    uiContext.status.sensorStatusSummary = "";
     uiContext.status.concurrencyStatus = "none";
     uiContext.status.decisionReason = "";
     uiContext.status.denialReason = "";
@@ -299,6 +386,7 @@ bool initializeUiContext(const std::string &configPath)
     uiContext.seed = loaded.config.seed;
     uiContext.rng.seed(uiContext.seed);
     updateStatusFromConfig(loaded.config);
+    ui::setAuditRunContext("", loaded.config.version, loaded.config.seed);
     return true;
 }
 
@@ -347,15 +435,221 @@ void setUiConcurrencyStatus(const std::string &status)
 void setUiDecisionReason(const std::string &reason)
 {
     uiContext.status.decisionReason = reason;
-    if (!reason.empty())
-    {
-        uiContext.status.denialReason.clear();
-    }
 }
 
 void setUiDenialReason(const std::string &reason)
 {
     uiContext.status.denialReason = reason;
+}
+
+void setUiDisqualifiedSources(const std::string &summary)
+{
+    uiContext.status.disqualifiedSources = summary;
+}
+
+void setUiLockoutStatus(const std::string &summary)
+{
+    uiContext.status.lockoutStatus = summary;
+}
+
+void setUiLadderStatus(const std::string &summary)
+{
+    uiContext.status.ladderStatus = summary;
+}
+
+void setUiSensorStatusSummary(const std::string &summary)
+{
+    uiContext.status.sensorStatusSummary = summary;
+}
+
+namespace
+{
+std::string formatDisqualifiedSources(const std::vector<ModeDecisionDetail::DisqualifiedSource> &sources)
+{
+    if (sources.empty())
+    {
+        return "";
+    }
+    std::ostringstream out;
+    for (size_t idx = 0; idx < sources.size(); ++idx)
+    {
+        const auto &entry = sources[idx];
+        out << entry.mode << ":" << entry.source << "=" << entry.reason;
+        if (idx + 1 < sources.size())
+        {
+            out << ";";
+        }
+    }
+    return out.str();
+}
+
+std::string formatLockouts(const std::vector<ModeDecisionDetail::LockoutState> &lockouts)
+{
+    if (lockouts.empty())
+    {
+        return "";
+    }
+    std::ostringstream out;
+    for (size_t idx = 0; idx < lockouts.size(); ++idx)
+    {
+        const auto &entry = lockouts[idx];
+        out << entry.source << "(steps=" << entry.remainingSteps << ",reason=" << entry.reason << ")";
+        if (idx + 1 < lockouts.size())
+        {
+            out << ";";
+        }
+    }
+    return out.str();
+}
+
+std::string formatSensorSummary(std::vector<SensorUiSnapshot> sensors,
+                                const std::vector<ModeDecisionDetail::LockoutState> &lockouts)
+{
+    if (sensors.empty())
+    {
+        return "";
+    }
+    std::unordered_map<std::string, ModeDecisionDetail::LockoutState> lockoutBySource;
+    for (const auto &entry : lockouts)
+    {
+        lockoutBySource[entry.source] = entry;
+    }
+    std::sort(sensors.begin(), sensors.end(), [](const SensorUiSnapshot &a, const SensorUiSnapshot &b)
+    {
+        return a.name < b.name;
+    });
+    std::ostringstream out;
+    for (size_t idx = 0; idx < sensors.size(); ++idx)
+    {
+        const auto &sensor = sensors[idx];
+        out << sensor.name << "[avail=" << (sensor.available ? "y" : "n")
+            << ",health=" << (sensor.healthy ? "y" : "n")
+            << ",meas=" << (sensor.hasMeasurement ? "y" : "n")
+            << ",age_s=" << std::fixed << std::setprecision(2) << sensor.timeSinceLastValid
+            << ",conf=" << std::fixed << std::setprecision(2) << sensor.confidence;
+        auto lockoutIt = lockoutBySource.find(sensor.name);
+        if (lockoutIt != lockoutBySource.end())
+        {
+            out << ",lockout=steps:" << lockoutIt->second.remainingSteps
+                << ",reason:" << lockoutIt->second.reason;
+        }
+        if (!sensor.lastError.empty())
+        {
+            out << ",err=" << sensor.lastError;
+        }
+        out << "]";
+        if (idx + 1 < sensors.size())
+        {
+            out << ";";
+        }
+    }
+    return out.str();
+}
+
+std::string formatLadderStatus(const std::vector<std::string> &ladder, const ModeDecisionDetail &detail)
+{
+    if (ladder.empty())
+    {
+        return "";
+    }
+    std::unordered_map<std::string, std::vector<std::string>> disqualByMode;
+    for (const auto &entry : detail.disqualifiedSources)
+    {
+        disqualByMode[entry.mode].push_back(entry.source + "=" + entry.reason);
+    }
+    std::ostringstream out;
+    bool selectedSeen = false;
+    for (size_t idx = 0; idx < ladder.size(); ++idx)
+    {
+        const std::string &mode = ladder[idx];
+        out << mode << ":";
+        if (!detail.selectedMode.empty() && mode == detail.selectedMode)
+        {
+            out << "selected";
+            selectedSeen = true;
+        }
+        else
+        {
+            auto disqIt = disqualByMode.find(mode);
+            if (disqIt != disqualByMode.end())
+            {
+                out << "disq(";
+                const auto &sources = disqIt->second;
+                for (size_t sidx = 0; sidx < sources.size(); ++sidx)
+                {
+                    out << sources[sidx];
+                    if (sidx + 1 < sources.size())
+                    {
+                        out << ",";
+                    }
+                }
+                out << ")";
+            }
+            else if (selectedSeen)
+            {
+                out << "skipped";
+            }
+            else if (!detail.selectedMode.empty())
+            {
+                out << "unchecked";
+            }
+            else
+            {
+                out << "no_selection";
+            }
+        }
+        if (idx + 1 < ladder.size())
+        {
+            out << ";";
+        }
+    }
+    return out.str();
+}
+
+std::vector<std::string> defaultLadderOrder()
+{
+    return {
+        "gps_ins",
+        "gps",
+        "vio",
+        "lio",
+        "radar_inertial",
+        "vision",
+        "lidar",
+        "radar",
+        "thermal",
+        "mag_baro",
+        "magnetometer",
+        "baro",
+        "celestial",
+        "dead_reckoning",
+        "imu",
+        "hold"};
+}
+} // namespace
+
+void updateUiFromModeDecision(const ModeDecisionDetail &detail, const std::vector<SensorUiSnapshot> &sensors)
+{
+    setUiActiveSource(detail.selectedMode.empty() ? "none" : detail.selectedMode);
+    setUiContributors(detail.contributors);
+    setUiModeConfidence(detail.confidence);
+    setUiDecisionReason(detail.reason);
+    if (!detail.downgradeReason.empty())
+    {
+        setUiDenialReason(detail.downgradeReason);
+    }
+    setUiDisqualifiedSources(formatDisqualifiedSources(detail.disqualifiedSources));
+    setUiLockoutStatus(formatLockouts(detail.lockouts));
+    const auto &configuredLadder = uiContext.config.mode.ladderOrder;
+    if (configuredLadder.empty())
+    {
+        setUiLadderStatus(formatLadderStatus(defaultLadderOrder(), detail));
+    }
+    else
+    {
+        setUiLadderStatus(formatLadderStatus(configuredLadder, detail));
+    }
+    setUiSensorStatusSummary(formatSensorSummary(sensors, detail.lockouts));
 }
 
 void setUiLoggingStatus(const std::string &status)

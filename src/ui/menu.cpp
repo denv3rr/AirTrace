@@ -22,11 +22,14 @@ std::string buildHelp(const std::string &baseHelp)
         << " source=" << status.activeSource
         << " contributors=" << (status.contributors.empty() ? "none" : status.contributors)
         << " conf=" << status.modeConfidence
+        << " disq=" << (status.disqualifiedSources.empty() ? "none" : status.disqualifiedSources)
+        << " lockout=" << (status.lockoutStatus.empty() ? "none" : status.lockoutStatus)
         << " conc=" << (status.concurrencyStatus.empty() ? "none" : status.concurrencyStatus)
         << " decision=" << (status.decisionReason.empty() ? "none" : status.decisionReason)
         << " denial=" << (status.denialReason.empty() ? "none" : status.denialReason)
         << " auth=" << status.authStatus
         << " log=" << (status.loggingStatus.empty() ? "unknown" : status.loggingStatus)
+        << " sensors=" << (status.sensorStatusSummary.empty() ? "none" : status.sensorStatusSummary)
         << " seed=" << status.seed
         << " det=" << (status.deterministic ? "on" : "off");
     if (!status.denialReason.empty())

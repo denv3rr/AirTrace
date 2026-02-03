@@ -21,6 +21,7 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SYS-016: The system shall bind a controlled audit log sink at startup and report logging health status.
 - REQ-SYS-017: The system shall tag every measurement and input with provenance (operational, simulation, test, unknown) and propagate provenance through fusion outputs.
 - REQ-SYS-018: Operational runs shall reject mixed or unknown provenance inputs by default and enter a defined safe state with explicit denial.
+- REQ-SYS-019: The system shall evaluate mode eligibility via a deterministic, fail-closed pipeline that denies activation if any required eligibility input is missing or invalid (health, freshness, policy, provenance, dataset availability).
 
 ## Functional Requirements (FUNC)
 - REQ-FUNC-001: The core shall ingest sensor measurements using a common state and measurement contract.
@@ -44,6 +45,8 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-FUNC-019: The system shall enforce strict consistency checks for fused modes using cross-sensor residual thresholds.
 - REQ-FUNC-020: The system shall apply lockout rules for sensors that repeatedly violate freshness or confidence thresholds.
 - REQ-FUNC-021: The system shall require time-aligned measurements within a configured window for cross-sensor residual checks.
+- REQ-FUNC-022: The system shall compute and expose per-source eligibility decisions with explicit, stable reason codes for allow/deny outcomes.
+- REQ-FUNC-023: The system shall require policy and provenance authorization decisions prior to mode activation and shall deny if authorization cannot be confirmed.
 
 ## Performance Requirements (PERF)
 - REQ-PERF-001: The core update loop shall process a single state update in deterministic time for a fixed input.
@@ -60,6 +63,7 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SAFE-008: The system shall enter hold or safe degraded modes when timing jitter or stale data exceeds configured limits.
 - REQ-SAFE-009: The system shall prevent re-entry into a mode when contributors remain in lockout.
 - REQ-SAFE-010: The system shall enter a safe state or deny operations when audit logging is unavailable or fails to record safety-relevant events.
+- REQ-SAFE-011: The system shall enter hold or a safe degraded mode when eligibility evaluation or authorization decisioning is unavailable, inconsistent, or stale.
 
 ## Security Requirements (SEC)
 - REQ-SEC-001: All external inputs shall be validated and sanitized before use.
@@ -71,7 +75,8 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SEC-007: Authorization policies shall enforce role-based access with least-privilege defaults.
 - REQ-SEC-008: Multi-sensor fusion shall reject untrusted or unauthorized sources from contributing to fused modes.
 - REQ-SEC-009: Audit logs shall be protected for integrity and retention per policy.
-- REQ-SEC-010: Provenance decisions (accept/reject) shall be recorded with reason codes, source identifiers, run ID, config version, build ID, and seed.
+- REQ-SEC-010: Provenance decisions (accept/reject) shall be recorded with reason codes, source identifiers, run ID, config version, config ID, build ID, and seed.
+- REQ-SEC-011: Authorization decisions shall be versioned, auditable, and deny-by-default when policy provenance cannot be verified.
 
 ## Interface Requirements (INT)
 - REQ-INT-001: All public interfaces shall declare units, valid ranges, and error behavior.
@@ -89,8 +94,14 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-INT-013: Active runs shall provide an operator abort control with explicit recovery messaging.
 - REQ-INT-014: Non-menu error and empty-state messages shall include explicit denial reasons and recovery guidance.
 - REQ-INT-015: Operator prompts and outputs shall include explicit units and reference frames for all measurements.
-- REQ-INT-010: Production builds shall provide a disabled input harness interface that preserves the UI input API without enabling harness behavior.
 - REQ-INT-016: The UI shall display current provenance status and explicit recovery guidance when provenance is denied or unknown.
+- REQ-INT-017: The UI shall display the active fallback selection reason, including disqualified sources (health/authorization/freshness) and lockout state with reason codes and recovery guidance.
+- REQ-INT-018: The UI/TUI shall display a per-sensor health list that includes health state, freshness age, confidence, lockout state, and last update time with explicit units.
+- REQ-INT-019: The UI/TUI shall display the fallback ladder status with ordered sources, eligibility state, active selection, and disqualifier reason codes for each source.
+- REQ-INT-020: The UI/TUI shall display explicit denial reasons with recovery guidance for safe-state entry, policy denial, invalid data, and audit/logging failures.
+- REQ-INT-021: Scenario and test runs shall auto-cycle through visual modes aligned to the active or evaluated tracking modes, with deterministic ordering and timing.
+- REQ-INT-022: The UI shall support simultaneous visualization of multiple eligible modes when configured, including per-mode contributors, confidence, and denial reasons.
+- REQ-INT-023: Operator-facing UI interfaces shall be versioned and backward-compatible; updates shall preserve the interface contract and rendering semantics.
 
 ## Configuration Requirements (CFG)
 - REQ-CFG-001: Configuration files shall be versioned and schema-validated.
@@ -101,6 +112,7 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-CFG-006: Configuration shall define parameters for vision, lidar, magnetometer, barometer, and celestial sensors.
 - REQ-CFG-007: Configuration shall define platform.profile_parent and platform.child_modules with validation and deterministic defaults.
 - REQ-CFG-008: Configuration shall define allowed provenance values per run mode and reject unknown or mixed-policy settings.
+- REQ-CFG-009: Configuration shall define policy/provenance authorization inputs (version, source, allowed modes) and reject unknown or missing fields.
 
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).

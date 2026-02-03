@@ -5,6 +5,7 @@
 #include <random>
 #include <string>
 
+#include "core/provenance.h"
 #include "core/state.h"
 
 struct Measurement
@@ -18,6 +19,7 @@ struct Measurement
     std::optional<double> heading;
     bool valid = false;
     std::string note;
+    ProvenanceTag provenance = ProvenanceTag::Unknown;
 };
 
 struct SensorStatus
@@ -51,6 +53,8 @@ public:
     Measurement sample(const State9 &state, double dt, std::mt19937 &rng);
     const std::string &getName() const;
     const SensorStatus &getStatus() const;
+    void setProvenance(ProvenanceTag tag);
+    ProvenanceTag getProvenance() const;
 
 protected:
     virtual Measurement generateMeasurement(const State9 &state, std::mt19937 &rng) = 0;
@@ -61,6 +65,7 @@ protected:
     std::string name;
     SensorStatus status;
     double timeAccumulator;
+    ProvenanceTag provenance = ProvenanceTag::Unknown;
 };
 
 class GpsSensor : public SensorBase

@@ -15,11 +15,19 @@ public:
     {
     }
 
+    void setProvenance(ProvenanceTag tag)
+    {
+        provenance = tag;
+    }
+
     void setStatus(bool healthy, double ageSeconds, double confidence)
     {
         status.healthy = healthy;
         status.timeSinceLastValid = ageSeconds;
         status.confidence = confidence;
+        status.hasMeasurement = healthy;
+        status.lastMeasurement.valid = healthy;
+        status.lastMeasurement.provenance = provenance;
     }
 
     void setPositionMeasurement(const Vec3 &position, double timeSeconds)
@@ -27,6 +35,7 @@ public:
         Measurement measurement;
         measurement.position = position;
         measurement.valid = true;
+        measurement.provenance = provenance;
         status.hasMeasurement = true;
         status.lastMeasurement = measurement;
         status.lastMeasurementTime = timeSeconds;
@@ -39,6 +48,9 @@ protected:
         measurement.valid = true;
         return measurement;
     }
+
+private:
+    ProvenanceTag provenance = ProvenanceTag::Operational;
 };
 } // namespace
 

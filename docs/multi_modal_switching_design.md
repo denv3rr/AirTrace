@@ -63,6 +63,16 @@ Eligibility algorithm (deterministic):
 5) If mode is fused, require all mandatory contributors to be eligible.
 6) If disagreement exceeds fusion.disagreement_threshold, mark mode unsafe.
 
+Fail-closed rules:
+- Missing eligibility inputs or authorization data denies the source or mode.
+- Missing policy/provenance authorization denies the source or mode.
+- Denials are explicit and must carry stable reason codes for UI/TUI use.
+
+Eligibility decision outputs:
+- Per-source eligibility state (eligible/ineligible).
+- Denial reason code (stable taxonomy).
+- Contributing sources list for any selected mode.
+
 ## Disagreement and Safe-State Behavior
 Disagreement detection:
 - Compare measurements from contributors over a window.

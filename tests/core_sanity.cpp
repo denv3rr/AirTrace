@@ -22,16 +22,26 @@ public:
     {
     }
 
+    void setProvenance(ProvenanceTag tag)
+    {
+        provenance = tag;
+    }
+
     void setHealthy(bool healthy)
     {
         if (healthy)
         {
             recordSuccess();
+            status.hasMeasurement = true;
+            status.lastMeasurement.valid = true;
         }
         else
         {
             recordFailure("forced");
+            status.hasMeasurement = false;
+            status.lastMeasurement.valid = false;
         }
+        status.lastMeasurement.provenance = provenance;
     }
 
     void setStatus(bool healthy, double ageSeconds, double confidence)
@@ -39,6 +49,9 @@ public:
         status.healthy = healthy;
         status.timeSinceLastValid = ageSeconds;
         status.confidence = confidence;
+        status.hasMeasurement = healthy;
+        status.lastMeasurement.valid = healthy;
+        status.lastMeasurement.provenance = provenance;
     }
 
     void setPositionMeasurement(const Vec3 &position)
@@ -46,6 +59,7 @@ public:
         Measurement measurement;
         measurement.position = position;
         measurement.valid = true;
+        measurement.provenance = provenance;
         status.hasMeasurement = true;
         status.lastMeasurement = measurement;
     }
@@ -57,6 +71,9 @@ protected:
         measurement.valid = true;
         return measurement;
     }
+
+private:
+    ProvenanceTag provenance = ProvenanceTag::Operational;
 };
 
 std::filesystem::path writeConfigFile(const std::string &name, const std::string &contents)
@@ -110,6 +127,14 @@ int main()
     assert(!invalidResult.ok);
     std::filesystem::remove(invalidDt);
 
+    std::filesystem::path invalidLadder = writeConfigFile(
+        "airtrace_invalid_ladder.cfg",
+        "config.version=1.0\n"
+        "mode.ladder_order=gps,invalid_mode,hold\n");
+    ConfigResult invalidLadderResult = loadSimConfig(invalidLadder.string());
+    assert(!invalidLadderResult.ok);
+    std::filesystem::remove(invalidLadder);
+
     std::filesystem::path policyConfigPath = writeConfigFile(
         "airtrace_policy.cfg",
         "config.version=1.0\n"
@@ -130,6 +155,34 @@ int main()
     ConfigResult policyResult = loadSimConfig(policyConfigPath.string());
     assert(policyResult.ok);
     std::filesystem::remove(policyConfigPath);
+
+    std::filesystem::path authMissingConfig = writeConfigFile(
+        "airtrace_auth_missing.cfg",
+        "config.version=1.0\n"
+        "policy.authorization.version=1\n");
+    ConfigResult authMissingResult = loadSimConfig(authMissingConfig.string());
+    assert(!authMissingResult.ok);
+    std::filesystem::remove(authMissingConfig);
+
+    std::filesystem::path authInvalidModeConfig = writeConfigFile(
+        "airtrace_auth_invalid_mode.cfg",
+        "config.version=1.0\n"
+        "policy.authorization.version=1\n"
+        "policy.authorization.source=test\n"
+        "policy.authorization.allowed_modes=gps,invalid_mode\n");
+    ConfigResult authInvalidModeResult = loadSimConfig(authInvalidModeConfig.string());
+    assert(!authInvalidModeResult.ok);
+    std::filesystem::remove(authInvalidModeConfig);
+
+    std::filesystem::path authValidConfig = writeConfigFile(
+        "airtrace_auth_valid.cfg",
+        "config.version=1.0\n"
+        "policy.authorization.version=1\n"
+        "policy.authorization.source=test\n"
+        "policy.authorization.allowed_modes=gps,imu\n");
+    ConfigResult authValidResult = loadSimConfig(authValidConfig.string());
+    assert(authValidResult.ok);
+    std::filesystem::remove(authValidConfig);
 
     std::filesystem::path provenanceConfig = writeConfigFile(
         "airtrace_provenance.cfg",
@@ -319,6 +372,42 @@ int main()
     ModeManager celestialAllowedManager(policyConfig);
     decision = celestialAllowedManager.decide(celestialSensors);
     assert(decision.mode == TrackingMode::Celestial);
+
+    ModeManagerConfig authConfig;
+    authConfig.minHealthyCount = 1;
+    authConfig.authorizationRequired = true;
+    authConfig.authorizationVerified = false;
+    authConfig.authorizationAllowedModes = {"gps"};
+    authConfig.permittedSensors = {"gps"};
+    authConfig.ladderOrder = {"gps", "hold"};
+    ModeManager authManager(authConfig);
+    gps.setHealthy(true);
+    decision = authManager.decide(sensors);
+    assert(decision.mode == TrackingMode::Hold);
+    assert(decision.reason == "auth_unavailable");
+
+    authConfig.authorizationVerified = true;
+    ModeManager authVerifiedManager(authConfig);
+    decision = authVerifiedManager.decide(sensors);
+    assert(decision.mode == TrackingMode::Gps);
+
+    authConfig.authorizationAllowedModes = {"thermal"};
+    ModeManager authDeniedManager(authConfig);
+    decision = authDeniedManager.decide(sensors);
+    assert(decision.mode == TrackingMode::Hold);
+    assert(decision.reason == "auth_denied");
+
+    ModeManagerConfig provenanceModeConfig;
+    provenanceModeConfig.minHealthyCount = 1;
+    provenanceModeConfig.permittedSensors = {"gps"};
+    provenanceModeConfig.ladderOrder = {"gps", "hold"};
+    provenanceModeConfig.allowedProvenances = {ProvenanceTag::Simulation};
+    ModeManager provenanceManager(provenanceModeConfig);
+    gps.setProvenance(ProvenanceTag::Operational);
+    gps.setHealthy(true);
+    decision = provenanceManager.decide(sensors);
+    assert(decision.mode == TrackingMode::Hold);
+    assert(provenanceManager.getLastDecisionDetail().downgradeReason == "provenance_denied");
 
     ModeManagerConfig ladderConfig;
     ladderConfig.minHealthyCount = 1;

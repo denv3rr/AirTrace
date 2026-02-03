@@ -13,7 +13,7 @@ Core behavior:
 - Mode management with a fallback ladder and safe-state behavior.
 - Sensor modeling for GNSS, IMU, radar, thermal, vision, lidar, magnetometer, baro, and celestial.
 - Platform profiles with controlled sensor permissions and dataset tiers.
-- Audit logging for mode/config changes with integrity chaining and health status reporting.
+- Audit logging for mode/config changes with integrity chaining, health status reporting, and run/config identifiers.
 
 ## Safety and Fail-Closed Behavior
 - Invalid configs or missing datasets force hold mode.

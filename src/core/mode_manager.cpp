@@ -78,6 +78,22 @@ std::optional<double> residualBetween(const SensorStatus &a, const SensorStatus 
     return std::nullopt;
 }
 
+bool isAllowedProvenance(const ModeManagerConfig &config, ProvenanceTag tag)
+{
+    if (config.allowedProvenances.empty())
+    {
+        return false;
+    }
+    for (const auto &allowed : config.allowedProvenances)
+    {
+        if (allowed == tag)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool alignedInTime(const SensorStatus &a, const SensorStatus &b, double maxAgeSeconds)
 {
     if (maxAgeSeconds <= 0.0)
@@ -180,6 +196,32 @@ std::vector<std::string> requiredSensorsForMode(const std::string &modeName)
     return {};
 }
 
+bool modeAuthorized(const ModeManagerConfig &config, const std::string &modeName, std::string &reason)
+{
+    if (!config.authorizationRequired)
+    {
+        return true;
+    }
+    if (!config.authorizationVerified)
+    {
+        reason = "auth_unavailable";
+        return false;
+    }
+    if (modeName == "hold")
+    {
+        return true;
+    }
+    for (const auto &allowed : config.authorizationAllowedModes)
+    {
+        if (allowed == modeName)
+        {
+            return true;
+        }
+    }
+    reason = "auth_denied";
+    return false;
+}
+
 TrackingMode modeFromName(const std::string &modeName)
 {
     if (modeName == "gps_ins")
@@ -273,6 +315,23 @@ ModeDecisionDetail buildDecisionDetail(const std::string &modeName,
     detail.confidence = confidence;
     return detail;
 }
+
+void setLockout(std::unordered_map<std::string, int> &remaining,
+                std::unordered_map<std::string, std::string> &reasons,
+                const std::string &name,
+                int steps,
+                const std::string &reason)
+{
+    if (steps <= 0)
+    {
+        return;
+    }
+    remaining[name] = steps;
+    if (reasons.find(name) == reasons.end())
+    {
+        reasons[name] = reason;
+    }
+}
 } // namespace
 
 ModeManager::ModeManager(ModeManagerConfig config)
@@ -292,14 +351,6 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
 
     auto permitted = [&](const std::string &name) -> bool
     {
-        if (name == "celestial" && !config.celestialAllowed)
-        {
-            return false;
-        }
-        if (name == "celestial" && !config.celestialDatasetAvailable)
-        {
-            return false;
-        }
         if (config.permittedSensors.empty())
         {
             return true;
@@ -413,7 +464,7 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
                 }
                 if (staleCount >= config.maxStaleCount)
                 {
-                    lockoutRemaining[name] = config.lockoutSteps;
+                    setLockout(lockoutRemaining, lockoutReasons, name, config.lockoutSteps, "stale");
                 }
             }
             if (config.maxLowConfidenceCount > 0)
@@ -429,66 +480,132 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
                 }
                 if (lowCount >= config.maxLowConfidenceCount)
                 {
-                    lockoutRemaining[name] = config.lockoutSteps;
+                    setLockout(lockoutRemaining, lockoutReasons, name, config.lockoutSteps, "low_confidence");
                 }
             }
         }
     }
 
-    auto eligibleSensor = [&](const std::string &name) -> bool
+    auto eligibleSensor = [&](const std::string &name, std::string &reason) -> bool
     {
+        if (config.allowedProvenances.empty())
+        {
+            reason = "provenance_unconfigured";
+            return false;
+        }
+        if (name == "celestial" && !config.celestialDatasetAvailable)
+        {
+            reason = "dataset_unavailable";
+            return false;
+        }
+        if (name == "celestial" && !config.celestialAllowed)
+        {
+            reason = "celestial_disallowed";
+            return false;
+        }
         if (!permitted(name))
         {
+            reason = "not_permitted";
             return false;
         }
         auto lockoutIt = lockoutRemaining.find(name);
         if (lockoutIt != lockoutRemaining.end() && lockoutIt->second > 0)
         {
+            reason = "lockout";
             return false;
         }
         auto statusIt = statusByName.find(name);
         if (statusIt == statusByName.end())
         {
+            reason = "missing";
             return false;
         }
         const SensorStatus &status = statusIt->second;
+        if (!status.hasMeasurement)
+        {
+            reason = "no_measurement";
+            return false;
+        }
+        ProvenanceTag tag = status.lastMeasurement.provenance;
+        if (tag == ProvenanceTag::Unknown)
+        {
+            reason = "provenance_unknown";
+            return false;
+        }
+        if (!isAllowedProvenance(config, tag))
+        {
+            reason = "provenance_denied";
+            return false;
+        }
         if (status.timeSinceLastValid > config.maxDataAgeSeconds)
         {
+            reason = "stale";
             return false;
         }
         if (status.confidence < config.minConfidence)
         {
+            reason = "low_confidence";
             return false;
         }
         auto it = healthyCounts.find(name);
         if (it == healthyCounts.end())
         {
+            reason = "unhealthy_count";
             return false;
         }
-        return it->second >= config.minHealthyCount;
+        if (it->second < config.minHealthyCount)
+        {
+            reason = "unhealthy_count";
+            return false;
+        }
+        reason.clear();
+        return true;
     };
 
     TrackingMode desiredMode = TrackingMode::Hold;
     std::string desiredReason = "no_modes";
     std::string denialReason;
+    bool authDenied = false;
+    bool invalidLadder = false;
     std::unordered_map<std::string, bool> conflictNow;
     const std::vector<std::string> &ladder = config.ladderOrder;
+    std::vector<ModeDecisionDetail::DisqualifiedSource> disqualifiedSources;
     for (const auto &modeName : ladder)
     {
         if (modeName == "hold")
         {
             continue;
         }
+        std::string authReason;
+        if (!modeAuthorized(config, modeName, authReason))
+        {
+            disqualifiedSources.push_back({modeName, "authorization", authReason});
+            denialReason = authReason;
+            if (authReason == "auth_denied")
+            {
+                authDenied = true;
+            }
+            continue;
+        }
         std::vector<std::string> required = requiredSensorsForMode(modeName);
         if (required.empty())
         {
-            continue;
+            denialReason = "invalid_mode";
+            disqualifiedSources.push_back({modeName, "mode", "invalid_mode"});
+            invalidLadder = true;
+            break;
         }
         bool eligible = true;
         for (const auto &sensorName : required)
         {
-            if (!eligibleSensor(sensorName))
+            std::string reason;
+            if (!eligibleSensor(sensorName, reason))
             {
+                disqualifiedSources.push_back({modeName, sensorName, reason});
+                if (denialReason.empty() && reason.rfind("provenance_", 0) == 0)
+                {
+                    denialReason = reason;
+                }
                 eligible = false;
                 break;
             }
@@ -532,11 +649,51 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
             if (conflict)
             {
                 denialReason = "residual_conflict";
+                for (const auto &sensorName : required)
+                {
+                    disqualifiedSources.push_back({modeName, sensorName, "residual_conflict"});
+                }
                 continue;
             }
             if (unaligned)
             {
                 denialReason = "residual_unaligned";
+                for (const auto &sensorName : required)
+                {
+                    disqualifiedSources.push_back({modeName, sensorName, "residual_unaligned"});
+                }
+                continue;
+            }
+        }
+        if (!config.provenanceAllowMixed && required.size() > 1)
+        {
+            std::optional<ProvenanceTag> firstTag;
+            bool mixed = false;
+            for (const auto &sensorName : required)
+            {
+                auto it = statusByName.find(sensorName);
+                if (it == statusByName.end())
+                {
+                    continue;
+                }
+                ProvenanceTag tag = it->second.lastMeasurement.provenance;
+                if (!firstTag.has_value())
+                {
+                    firstTag = tag;
+                }
+                else if (firstTag.value() != tag)
+                {
+                    mixed = true;
+                    break;
+                }
+            }
+            if (mixed)
+            {
+                denialReason = "provenance_mixed";
+                for (const auto &sensorName : required)
+                {
+                    disqualifiedSources.push_back({modeName, sensorName, "provenance_mixed"});
+                }
                 continue;
             }
         }
@@ -578,21 +735,63 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
             }
             if (config.lockoutSteps > 0 && countValue >= config.maxDisagreementCount)
             {
-                lockoutRemaining[name] = config.lockoutSteps;
+                setLockout(lockoutRemaining, lockoutReasons, name, config.lockoutSteps, "disagreement");
             }
         }
+    }
+
+    auto finalizeDetail = [&](ModeDecisionDetail &detail)
+    {
+        detail.disqualifiedSources = disqualifiedSources;
+        detail.lockouts.clear();
+        for (const auto &entry : lockoutRemaining)
+        {
+            if (entry.second > 0)
+            {
+                ModeDecisionDetail::LockoutState lockout;
+                lockout.source = entry.first;
+                lockout.remainingSteps = entry.second;
+                auto reasonIt = lockoutReasons.find(entry.first);
+                if (reasonIt != lockoutReasons.end())
+                {
+                    lockout.reason = reasonIt->second;
+                }
+                detail.lockouts.push_back(lockout);
+            }
+        }
+    };
+
+    if (invalidLadder)
+    {
+        currentMode = TrackingMode::Hold;
+        dwellSteps = 0;
+        ModeDecision decision{TrackingMode::Hold, "invalid_ladder"};
+        lastDecisionDetail = buildDecisionDetail("hold", decision.reason, sensors);
+        lastDecisionDetail.downgradeReason = "invalid_ladder";
+        finalizeDetail(lastDecisionDetail);
+        return decision;
     }
 
     if (desiredMode == TrackingMode::Hold)
     {
         currentMode = TrackingMode::Hold;
         dwellSteps = 0;
-        ModeDecision decision{TrackingMode::Hold, "no_sensors"};
+        std::string finalReason = "no_sensors";
+        if (config.authorizationRequired && !config.authorizationVerified)
+        {
+            finalReason = "auth_unavailable";
+        }
+        else if (authDenied)
+        {
+            finalReason = "auth_denied";
+        }
+        ModeDecision decision{TrackingMode::Hold, finalReason};
         lastDecisionDetail = buildDecisionDetail("hold", decision.reason, sensors);
         if (!denialReason.empty())
         {
             lastDecisionDetail.downgradeReason = denialReason;
         }
+        finalizeDetail(lastDecisionDetail);
         return decision;
     }
 
@@ -606,6 +805,7 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
         {
             lastDecisionDetail.downgradeReason = denialReason;
         }
+        finalizeDetail(lastDecisionDetail);
         return decision;
     }
 
@@ -617,7 +817,8 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
         currentEligible = true;
         for (const auto &sensorName : required)
         {
-            if (!eligibleSensor(sensorName))
+            std::string reason;
+            if (!eligibleSensor(sensorName, reason))
             {
                 currentEligible = false;
                 break;
@@ -634,6 +835,7 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
         {
             lastDecisionDetail.downgradeReason = denialReason;
         }
+        finalizeDetail(lastDecisionDetail);
         return decision;
     }
 
@@ -647,6 +849,7 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
         {
             lastDecisionDetail.downgradeReason = denialReason;
         }
+        finalizeDetail(lastDecisionDetail);
         return decision;
     }
 
@@ -659,6 +862,7 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
         {
             lastDecisionDetail.downgradeReason = denialReason;
         }
+        finalizeDetail(lastDecisionDetail);
         return decision;
     }
 
@@ -670,6 +874,7 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
     {
         lastDecisionDetail.downgradeReason = denialReason;
     }
+    finalizeDetail(lastDecisionDetail);
     return decision;
 }
 

@@ -54,6 +54,11 @@ Schema version: 1.0
 - policy.network_aid.override_auth (string): optional; default "credential".
   - Allowed: credential, key, token.
 - policy.network_aid.override_timeout_seconds (seconds): optional; default 0 (no cached override).
+- policy.authorization.version (string): optional; default empty (no authorization bundle).
+- policy.authorization.source (string): optional; default empty (no authorization bundle).
+- policy.authorization.allowed_modes (list): optional; default empty (no additional allowances).
+  - Format: comma-separated mode names (example: gps_ins,vio).
+  - Unknown modes are errors.
 
 ## Roles
 - policy.roles (list): optional; default ["operator"].

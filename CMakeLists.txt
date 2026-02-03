@@ -85,10 +85,17 @@ add_executable(AirTraceUiTests
         tests/ui_ui_tests_main.cpp
         tests/ui_menu_selection.cpp
         tests/ui_alerts.cpp
+        tests/ui_status.cpp
         src/ui/menu_selection.cpp
         src/ui/alerts.cpp
+        src/ui/simulation.cpp
+        src/ui/audit_log.cpp
+        src/ui/inputValidation.cpp
+        src/ui/scenario.cpp
+        src/ui/tui.cpp
 )
 target_include_directories(AirTraceUiTests PRIVATE include)
+target_link_libraries(AirTraceUiTests PRIVATE airtrace_core)
 add_test(NAME AirTraceUiTests COMMAND AirTraceUiTests)
 
 add_executable(AirTraceHarnessRunner

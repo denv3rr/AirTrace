@@ -18,6 +18,14 @@
 - Simulation and test modes are explicitly identified, gated, and prohibited in operational runs unless authorized by policy.
 - Mixed provenance (sim + operational) is rejected and triggers a safe-state denial.
 
+## Operator Displays and UI Surfaces
+- The system supports multiple operator surfaces: cockpit UI, remote operator visuals, C2 screens, and TUI.
+- All surfaces must present consistent semantics for mode, source, contributors, and denial reason codes.
+- Displays expose per-sensor health/availability/freshness/confidence and lockout state.
+- Fallback selection reasons and disqualified sources are shown with recovery guidance (REQ-INT-017).
+- Scenario and test runs auto-cycle through visual modes aligned to evaluated tracking modes for rapid validation.
+- Multi-mode visualization may present multiple eligible modes concurrently when configured.
+
 ## Provenance and Gating
 - Every measurement and operator input is tagged with provenance: operational, simulation, test, or unknown.
 - Operational runs accept only operational provenance unless explicitly authorized by policy.
@@ -30,6 +38,7 @@
 - On loss of all sensors, the system shall enter hold mode.
 - The navigation ladder prefers higher-permitted sources before lower-permitted ones.
 - Celestial navigation is only permitted when higher-priority sources are unavailable or disallowed.
+ - Fallback selection decisions provide explicit reason codes for disqualification (policy, health, freshness, lockout).
 
 ## Multi-Modal Switching and Fusion
 - Fused modes combine a primary source with one or more aiding sources (GNSS+INS, VIO/LIO, radar/terrain, magnetometer+baro).
@@ -37,6 +46,14 @@
 - Mode transitions require state alignment checks to avoid discontinuities.
 - Operator status displays the active mode and contributing sources with confidence.
 - Disagreement beyond thresholds triggers downgrade to a safer mode or hold.
+
+## UI Data Model (Operator-Facing)
+- Active mode/source, contributors, and confidence.
+- Per-sensor status: available, healthy, freshness age, confidence, last error, has measurement.
+- Fallback ladder status with ordered candidates and disqualification reasons.
+- Lockout state with remaining steps and reason code.
+- Provenance status and policy authorization state.
+- Visual mode cycle status, including the current visual mode and its mapping to evaluated tracking modes.
 
 ## Concurrent Pipeline Operation
 - Compatible sensor pipelines may run concurrently when budgets permit.
@@ -57,6 +74,10 @@
 - Profiles may inherit from a parent profile with deterministic merge rules for permitted sensors.
 - Child hardware modules are listed explicitly to document platform composition.
 - See docs/navigation_fallbacks.md for ladder ordering and dataset tiers.
+
+## External Display Library Governance
+- Open-source display assets may be evaluated, but integration requires a security review.
+- No network access or dynamic loading; assets must be vendored, scanned, and listed in SBOM.
 
 ## Dataset Tiers
 - Tiered celestial datasets limit storage based on platform profile.

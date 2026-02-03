@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "core/provenance.h"
 #include "core/multi_modal_types.h"
 #include "core/sensors.h"
 
@@ -55,8 +56,14 @@ struct ModeManagerConfig
     int historyWindow = 0;
     double maxResidualAgeSeconds = 0.5;
     std::vector<std::string> permittedSensors{};
+    bool authorizationRequired = false;
+    bool authorizationVerified = false;
+    std::vector<std::string> authorizationAllowedModes{};
     bool celestialAllowed = false;
     bool celestialDatasetAvailable = true;
+    std::vector<ProvenanceTag> allowedProvenances{ProvenanceTag::Operational};
+    bool provenanceAllowMixed = false;
+    UnknownProvenanceAction provenanceUnknownAction = UnknownProvenanceAction::Deny;
     std::vector<std::string> ladderOrder = {
         "gps_ins",
         "gps",
@@ -97,6 +104,7 @@ private:
     std::unordered_map<std::string, TrendHistory> lowConfidenceHistory;
     std::unordered_map<std::string, TrendHistory> disagreementHistory;
     std::unordered_map<std::string, int> lockoutRemaining;
+    std::unordered_map<std::string, std::string> lockoutReasons;
     ModeDecisionDetail lastDecisionDetail{};
 };
 

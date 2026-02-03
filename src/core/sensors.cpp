@@ -45,6 +45,7 @@ SensorBase::SensorBase(std::string name, SensorConfig config)
 Measurement SensorBase::sample(const State9 &state, double dt, std::mt19937 &rng)
 {
     Measurement measurement;
+    measurement.provenance = provenance;
     status.timeSinceLastValid += dt;
     timeAccumulator += dt;
 
@@ -62,6 +63,7 @@ Measurement SensorBase::sample(const State9 &state, double dt, std::mt19937 &rng
     }
 
     measurement = generateMeasurement(state, rng);
+    measurement.provenance = provenance;
     if (!measurement.valid)
     {
         recordFailure(measurement.note);
@@ -83,6 +85,16 @@ const std::string &SensorBase::getName() const
 const SensorStatus &SensorBase::getStatus() const
 {
     return status;
+}
+
+void SensorBase::setProvenance(ProvenanceTag tag)
+{
+    provenance = tag;
+}
+
+ProvenanceTag SensorBase::getProvenance() const
+{
+    return provenance;
 }
 
 void SensorBase::recordFailure(const std::string &reason)

@@ -64,6 +64,7 @@ P4 -> P7 (audit events) -> D3 (logs)
 | Config Parser | Config files, policy, profiles | TB-1 | Schema validation, unknown key rejection, version checks | REQ-CFG-001, REQ-FUNC-003 |
 | Sensor Adapters | Sensor measurements | TB-1 | Measurement contract, health/confidence checks, freshness gating | REQ-FUNC-001, REQ-FUNC-012 |
 | Dataset Validator | Celestial dataset + hashes | TB-1 | Hash verification, versioned artifacts, deny on mismatch | REQ-FUNC-009, REQ-SAFE-005 |
+| Authorization Bundle | policy.authorization.* inputs | TB-1 | Versioned authorization bundle, provenance verification, deny-by-default on unverifiable inputs | REQ-SEC-011, REQ-FUNC-023 |
 | Network Aid Gate | Network-aid inputs | TB-2 | Deny-by-default, role-based authorization, override logging | REQ-SEC-005, REQ-SEC-006, REQ-SEC-007 |
 | Audit Log Sink | Mode/config changes | Internal | Structured audit logging, integrity/retention controls, build/config identifiers | REQ-SEC-004, REQ-SEC-009, REQ-SYS-006 |
 | Provenance Gate | Measurement provenance tags | TB-1 | Reject mixed/unknown provenance, log decisions | REQ-SYS-017, REQ-SYS-018, REQ-SEC-010 |
@@ -91,6 +92,7 @@ P4 -> P7 (audit events) -> D3 (logs)
 - Deny-by-default network-aid policy with credentialed overrides (REQ-SEC-005, REQ-SEC-006).
 - Dataset integrity checks for celestial nav inputs (REQ-FUNC-009).
 - Role-based authorization for overrides and policy changes (REQ-SEC-007).
+- Versioned authorization bundles with provenance checks; deny-by-default on unverifiable inputs (REQ-SEC-011).
 - Fusion source allowlists and authorization checks before contributing to fused modes (REQ-SEC-008).
 - Ladder ordering and fusion parameters locked to signed configs with audit logging.
 - Test harness input paths are compile-time gated and require explicit runtime enablement.
@@ -99,3 +101,20 @@ P4 -> P7 (audit events) -> D3 (logs)
 - STIG baseline for target OS.
 - SBOM and dependency provenance for each release.
 - Security test plan mapping to REQ-SEC requirements.
+
+## External UI Library Security Review (Gate)
+Any third-party cockpit/C2/visual display library requires a formal
+security review before integration.
+
+Minimum review criteria:
+- License compatibility and usage restrictions documented.
+- SBOM entry with version pin, source URL, and integrity hash.
+- Provenance verified (signed release or reproducible source build).
+- No network access or dynamic loading at runtime.
+- No telemetry/analytics, hidden network calls, or data exfil paths.
+- Deterministic rendering behavior with stable assets.
+- Explicit input validation for any UI bindings.
+- Static analysis and dependency vulnerability scan results recorded.
+
+Approval evidence must be captured in the security test plan and linked
+to REQ-SEC-001/004/009 and REQ-SYS-015.

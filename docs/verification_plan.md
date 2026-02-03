@@ -93,7 +93,17 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-087 | REQ-INT-015 | INSPECTION | Review prompts and outputs for measurement units. | All operator-facing measurements include units and frames. |
 | V-088 | REQ-SYS-017 | TEST | Inject mixed-provenance inputs and fused outputs. | Provenance tags persist and are reported on outputs. |
 | V-089 | REQ-SYS-018 | TEST | Attempt operational run with mixed/unknown provenance sources. | System rejects inputs, logs denial, and enters safe state. |
-| V-090 | REQ-SEC-010 | TEST | Trigger provenance accept/reject decisions. | Audit records include reason, sources, run ID, config version, build ID, and seed. |
+| V-090 | REQ-SEC-010 | TEST | Trigger provenance accept/reject decisions. | Audit records include reason, sources, run ID, config version, config ID, build ID, and seed. |
 | V-091 | REQ-CFG-008 | TEST | Provide invalid or mixed provenance policy settings. | Config validation fails with explicit errors. |
 | V-092 | REQ-INT-016 | DEMO | Operate UI during provenance denial and unknown provenance conditions. | UI shows provenance status with recovery guidance. |
+| V-094 | REQ-INT-017 | TEST | Force fallback/lockout conditions with disqualified sources. | UI shows reason codes, disqualified sources, and recovery guidance deterministically. |
 | V-093 | REQ-SYS-015 | TEST | Run core purity scan for disallowed file I/O, wall-clock, or non-seeded RNG symbols. | Scan fails on violations and passes with allowlisted interfaces. |
+| V-095 | REQ-SYS-019 | TEST | Inject missing eligibility inputs (health/freshness/policy/provenance/dataset). | Eligibility denies by default and safe state is entered. |
+| V-096 | REQ-FUNC-022 | TEST | Exercise each eligibility denial path. | Reason codes are deterministic and stable. |
+| V-097 | REQ-FUNC-023; REQ-SEC-011 | TEST | Simulate missing or unverifiable policy provenance. | Authorization is denied and an audit entry is recorded. |
+| V-098 | REQ-SAFE-011 | TEST | Disable eligibility evaluation or authorization inputs. | Hold or safe degraded mode is entered. |
+| V-099 | REQ-CFG-009 | TEST | Provide invalid or unknown policy/provenance authorization fields. | Schema validation fails with explicit errors. |
+| V-100 | REQ-INT-018; REQ-INT-019; REQ-INT-020 | TEST | Inject deterministic sensor health and ladder states with denial reasons. | UI/TUI displays per-sensor health, ladder status, and recovery guidance with stable mappings. |
+| V-101 | REQ-INT-021 | TEST | Run scenario/test flow with auto-visual mode cycling enabled. | Modes cycle deterministically and align to evaluated tracking modes. |
+| V-102 | REQ-INT-022 | DEMO | Enable multi-mode visualization in a scenario run. | Concurrent mode views show contributors, confidence, and denial reasons. |
+| V-103 | REQ-INT-023 | INSPECTION | Review UI interface contract versioning and compatibility checks. | Interface contract is versioned and changes are backward-compatible. |

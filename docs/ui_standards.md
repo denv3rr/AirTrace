@@ -26,6 +26,12 @@ university sources with unclassified guidance.
 11) Operator abort controls are available during long-running flows.
 12) Prompts and outputs include explicit units and reference frames.
 13) Provenance status is visible with explicit denial and recovery guidance.
+14) Fallback decisions show selection reasons, disqualified sources, and lockout status with reason codes.
+15) Per-sensor health/availability/freshness/confidence is visible without requiring mode changes.
+16) Multi-platform displays (cockpit, remote operator, C2) present consistent semantics and reason codes.
+17) Scenario/test flows auto-cycle through visual modes aligned to evaluated tracking modes for rapid operator validation.
+18) Multi-mode visualization supports concurrent views with consistent labels and reason codes.
+19) UI interface contracts are versioned and backward-compatible; updates preserve semantics and layout invariants.
 
 ## Implementation Notes
 - Menus must show platform profile, active source, and authorization
@@ -34,6 +40,18 @@ university sources with unclassified guidance.
   main status line for auditability.
 - When fused modes are active, display contributing sensors and their
   confidence or weights.
+- Display fallback selection reasons with disqualified sources and lockout
+  status (reason codes + recovery steps) to satisfy REQ-INT-017.
+- Per-sensor status shall include: available, healthy, freshness (age),
+  confidence, last error, and measurement validity.
+- Provide a ladder view or ordered list showing current priority and
+  why higher-ranked sources are disqualified (policy, health, freshness).
+- Scenario and test flows must auto-switch visual mode panels to reflect
+  the active or evaluated tracking modes in a deterministic sequence.
+- When multi-mode visualization is enabled, show each mode with its
+  contributors, confidence, and denial reasons.
+- UI interface contracts (fields, labels, layout invariants) must be
+  versioned and remain backward-compatible to prevent breaking updates.
 - Inputs must be validated with bounds and handled safely on EOF or
   stream failure, including a logged exit when menu selection is unavailable.
 - Denial warnings should be visible in the main menu status area.
@@ -46,6 +64,22 @@ university sources with unclassified guidance.
 - Harness-driven inputs must follow the same menu flow as operators.
 - When the test harness is enabled, menu flows must be allowed even without a TTY.
 - All overrides must be logged and shown in UI where relevant.
+
+## Multi-Platform Display Surfaces
+- Cockpit UI: high-contrast, low-clutter summary with quick-glance mode,
+  active source, and denial banner; detailed sensor panel on demand.
+- Remote operator visuals: persistent status banner + expandable ladder
+  and per-sensor tables for diagnostics.
+- C2 screens: aggregate status with role-based drill-down into per-sensor
+  health, lockout, and provenance history.
+- TUI: ASCII tables/labels must preserve the same semantics and reason
+  codes as GUI displays.
+
+## External Display Libraries (Security Gate)
+- External display libraries or open-source cockpit/C2 UI assets require
+  explicit security review and approval before integration.
+- No dynamic loading or network fetches; assets must be vendored and
+  validated, with SBOM entries and provenance recorded.
 
 ## Practical Notes
 Guidance for defense-facing UI favors high-contrast text, stable layouts,
