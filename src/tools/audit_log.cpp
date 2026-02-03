@@ -1,4 +1,4 @@
-#include "ui/audit_log.h"
+#include "tools/audit_log.h"
 
 #include "core/hash.h"
 #include "core/logging.h"
@@ -12,7 +12,7 @@
 #include <sstream>
 #include <vector>
 
-namespace ui
+namespace tools
 {
 namespace
 {
@@ -262,4 +262,4 @@ bool auditLogHealthy()
     std::lock_guard<std::mutex> lock(g_mutex);
     return g_state.healthy;
 }
-} // namespace ui
+} // namespace tools

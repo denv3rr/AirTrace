@@ -1,6 +1,6 @@
 #include "core/mode_manager.h"
 #include "core/sensors.h"
-#include "core/sim_config.h"
+#include "tools/sim_config_loader.h"
 #include "core/mode_scheduler.h"
 #include "core/state.h"
 #include "core/hash.h"
@@ -271,6 +271,31 @@ int main()
     ConfigResult missingHashResult = loadSimConfig(missingHashConfig.string());
     assert(!missingHashResult.ok);
     std::filesystem::remove(missingHashConfig);
+
+    std::filesystem::path invalidSurfaceConfig = writeConfigFile(
+        "airtrace_invalid_surface.cfg",
+        "config.version=1.0\n"
+        "ui.surface=invalid\n");
+    ConfigResult invalidSurfaceResult = loadSimConfig(invalidSurfaceConfig.string());
+    assert(!invalidSurfaceResult.ok);
+    std::filesystem::remove(invalidSurfaceConfig);
+
+    std::filesystem::path missingAdapterVersionConfig = writeConfigFile(
+        "airtrace_missing_adapter_version.cfg",
+        "config.version=1.0\n"
+        "adapter.id=air\n");
+    ConfigResult missingAdapterVersionResult = loadSimConfig(missingAdapterVersionConfig.string());
+    assert(!missingAdapterVersionResult.ok);
+    std::filesystem::remove(missingAdapterVersionConfig);
+
+    std::filesystem::path unknownAdapterConfig = writeConfigFile(
+        "airtrace_unknown_adapter.cfg",
+        "config.version=1.0\n"
+        "adapter.id=custom\n"
+        "adapter.version=1.0.0\n");
+    ConfigResult unknownAdapterResult = loadSimConfig(unknownAdapterConfig.string());
+    assert(!unknownAdapterResult.ok);
+    std::filesystem::remove(unknownAdapterConfig);
 
     std::vector<unsigned char> abc = {'a', 'b', 'c'};
     std::string abcHash = sha256Hex(abc);

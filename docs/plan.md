@@ -3,10 +3,40 @@
 ## Purpose
 Align the core/app with the mandatory standards, close sensor fallback gaps, and bring tests, UI, and docs to a verifiable state without duplicating work.
 
+## Modularity and Safety Priority (Continuous)
+- Every module must remain independently usable and testable with explicit interfaces and declared dependencies.
+- Safety and fail-closed behavior remain first-order requirements for all modules and adapters.
+
 ## Next Session Priority (2026-02-03)
 - Implement plugin authorization/signing gates (REQ-SEC-002/003) with audit logging.
 - Enforce network-aid deny-by-default and override auditing (REQ-SEC-005/006/007).
 - Begin usability/visual mode validation implementation for scenario/test runs (REQ-INT-021/022/023).
+- Define the modular interface contract and packaging boundaries for core/tools/UI/adapters.
+
+## Phase 0: Modularization and Interface Contracts (Gate Before Code)
+Goal: Ensure each module is independently usable, with explicit, versioned interfaces and no hidden dependencies.
+
+Scope and Design Updates
+- Define module contracts for core, tools, UI, and platform adapters (inputs/outputs, units, error behavior).
+- Define dependency rules and allowed import directions; prohibit implicit cross-module I/O or logging.
+- Define packaging boundaries (build targets per module) and optional adapter inclusion.
+- Define interface versioning, compatibility policy, and ABI/stability expectations.
+- Define third-party adapter enablement rules limited to safety, security, and compliance gates.
+- Define adapter registry and allowlist requirements, including signed manifests and rejection reason codes.
+- Define adapter registry implementation path (config enforcement, allowlist lookup, signature validation, UI surface mapping).
+- Define adapter UI mapping flow for baseline + extension data points (REQ-INT-024).
+
+Requirements and Verification Gate (Before Code)
+- Reconfirm REQ-SYS-002 and REQ-SYS-015 coverage and update traceability to modular interfaces.
+- Add verification cases for module independence (build/use module in isolation).
+- Confirm REQ-CFG-010, REQ-INT-024, REQ-MOD-004, and REQ-SEC-012 verification mappings for adapter selection, UI mapping, and registry enforcement.
+
+Exit Criteria
+- Module contracts documented in architecture and interface docs.
+- Build graph reflects the module boundaries with independent targets.
+- Third-party adapter acceptance criteria documented.
+- Adapter registry and contract versioning documented.
+- Adapter registry implementation plan and UI mapping plan documented with owners and integration points.
 
 ## Phase 1: Requirements, Safety, and Traceability (Gate Before Code)
 - Define explicit fallback requirements for each sensor class (when used, how degraded data is labeled, safe-state rules).
@@ -64,7 +94,20 @@ Exit Criteria (Gate Before Code)
 - Define tier sizes and update cadence per platform profile.
 - Define offline update workflow and audit logging for dataset installs.
 - Add validation tooling to verify dataset integrity at startup.
+- Enforce dataset integrity in the tools layer and deny-by-default in core gating when validation fails.
 - Add tests for missing/corrupt datasets and downgrade attacks.
+
+## Traceability Closure Plan (Gate Before Release)
+Goal: Eliminate all traceability "TBD" entries and ensure every requirement maps to code and verification.
+
+Scope
+- Enumerate all `TBD` entries in `docs/traceability.md` and assign owners.
+- For each REQ with no implementation, either implement or explicitly mark "not implemented" with rationale.
+- Update `docs/verification_plan.md` with concrete test inputs and expected outcomes for newly implemented items.
+
+Exit Criteria
+- No `TBD` entries remain in `docs/traceability.md`.
+- Verification evidence exists for each mapped requirement.
 
 ## Phase 2: Sensor Fallback Modules (Core)
 - Define a platform hierarchy: a shared parent module with child modules for air, ground, maritime, space, and handheld.
@@ -200,12 +243,17 @@ Rolling Backlog (Initial)
 - Enforce network-aid deny-by-default and credentialed overrides (REQ-SEC-005/006/007).
 - Implement deterministic replay logging and restore (REQ-FUNC-004).
 - Define and measure deterministic performance budget for fixed inputs (REQ-PERF-001).
+- Implement adapter registry + allowlist enforcement with contract version checks and audit logging (REQ-MOD-004, REQ-SEC-012, REQ-ADP-006).
+- Enforce adapter selection and UI surface config keys in tools parsing (REQ-CFG-010).
+- Implement adapter UI mapping for baseline + extensions and surface rendering (REQ-INT-024, REQ-ADP-003).
+- Add official adapter skeletons with signed manifests and UI extension mappings per platform (REQ-ADP-001/002/005).
+- Implement public-key signature verification for adapter manifests and retire WVR-001.
 
 ## Perpetual Plan Addendum (Gap Closure Subplans)
 ### Gap Closure A: REQ-SEC-010 Audit Fields and Run Context
 Objective: Ensure audit records for provenance accept/reject include reason codes, source identifiers, run ID, config version, config ID, build ID, and seed.
 Prereqs: Confirm audit record schema in `docs/security_threat_model.md` and audit sink contract.
-Implementation Targets: `src/ui/audit_log.cpp`, `include/ui/audit_log.h`, `src/ui/simulation.cpp`.
+Implementation Targets: `src/tools/audit_log.cpp`, `include/tools/audit_log.h`, `src/ui/simulation.cpp`.
 Verification: V-090 with explicit field presence and value checks.
 Traceability Update: Replace REQ-SEC-010 TBD with concrete code references.
 
@@ -244,6 +292,13 @@ Implementation Targets: `src/ui/simulation.cpp`, `src/ui/scenario.cpp`, `include
 Verification: V-101 deterministic mode cycling, V-102 multi-mode view demo, V-103 UI contract inspection.
 Traceability Update: Replace REQ-INT-021/022/023 TBD entries with code references.
 
+### Gap Closure G: Adapter Registry + UI Mapping + Official Skeletons
+Objective: Implement adapter registry enforcement, config selection, and UI mapping with official adapter skeletons.
+Prereqs: Adapter contract and UI data-point baseline are finalized in `docs/adapter_contract.md` and `docs/adapters/ui_data_points.md`.
+Implementation Targets: `src/core/adapter_registry.cpp`, `include/core/adapter_registry.h`, `src/ui/adapter_ui_mapping.cpp`, `include/ui/adapter_ui_mapping.h`, `adapters/official/*`.
+Verification: V-104 UI extensions render, V-107 version mismatch denied, V-109/110 official adapter inspection, V-113 allowlist enforcement.
+Traceability Update: Replace REQ-INT-024/REQ-ADP-001..006/REQ-MOD-004/REQ-SEC-012 TBD entries with code references.
+
 ## Notes
 - No code changes may proceed until Phase 1 updates are merged.
 - Keep all new additions ASCII unless the file already uses Unicode.
@@ -263,4 +318,7 @@ Traceability Update: Replace REQ-INT-021/022/023 TBD entries with code reference
 - Authorization bundle inputs are parsed/validated and mode eligibility now denies when authorization is unavailable or denied.
 - UI status banner now includes ladder status and per-sensor lockout details.
 - Provenance tagging added to measurements with eligibility gating and UI provenance status display.
+- Adapter architecture and official platform adapter design notes are documented under `docs/adapter_architecture.md` and `docs/adapters/`.
+- Tools layer scaffolded with config loader and audit log ownership; adapter SDK skeleton created under `adapters/sdk/`.
+- Adapter registry loader validates manifests/allowlists with hash checks; adapter config keys and UI extension summaries are enforced; official adapter manifests and allowlist are present under `adapters/`.
 - Remaining gaps still open: platform profile inheritance usage beyond config/UI in broader core workflows, full UI/TUI audit outside the menu/test flows, provenance tagging for sim vs operational inputs, and broader documentation simplification.

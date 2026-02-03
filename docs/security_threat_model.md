@@ -1,7 +1,7 @@
 # Security Threat Model
 
 ## Scope
-- Core tracking library, configuration ingestion, UI/TUI, examples, and future plugin/device interfaces.
+- Core tracking library, configuration ingestion, UI/TUI, examples, and platform adapters (official and third-party).
 
 ## Assets
 - State vectors, sensor measurements, mode decisions, configuration files, simulation outputs.
@@ -11,7 +11,7 @@
 ## Trust Boundaries
 - File system inputs (configs, logs).
 - Operator inputs (TUI).
-- Future plugin/device interfaces (explicit boundary).
+- Platform adapters and plugin/device interfaces (explicit boundary).
 
 ## Entry Points
 - Config parser and CLI arguments.
@@ -19,6 +19,8 @@
 - Example binaries and scripts.
 - Celestial dataset ingestion.
 - Network-aid interfaces (when enabled).
+- Adapter activation and capability registration.
+- Adapter manifest and allowlist files.
 
 ## Data Flow Diagram (Text)
 Legend: E = External entity, P = Process, D = Data store, TB = Trust boundary.
@@ -68,6 +70,7 @@ P4 -> P7 (audit events) -> D3 (logs)
 | Network Aid Gate | Network-aid inputs | TB-2 | Deny-by-default, role-based authorization, override logging | REQ-SEC-005, REQ-SEC-006, REQ-SEC-007 |
 | Audit Log Sink | Mode/config changes | Internal | Structured audit logging, integrity/retention controls, build/config identifiers | REQ-SEC-004, REQ-SEC-009, REQ-SYS-006 |
 | Provenance Gate | Measurement provenance tags | TB-1 | Reject mixed/unknown provenance, log decisions | REQ-SYS-017, REQ-SYS-018, REQ-SEC-010 |
+| Adapter Registry | Adapter identity, capabilities, UI extensions | TB-1 | Signed/allowlisted adapters, versioned contracts, deny on mismatch | REQ-SEC-012, REQ-MOD-004, REQ-ADP-002 |
 
 ## Threats (STRIDE)
 - Spoofing: fake sensor data or plugin identity.
@@ -86,6 +89,9 @@ P4 -> P7 (audit events) -> D3 (logs)
 - Input validation and schema enforcement (REQ-SEC-001, REQ-CFG-001).
 - Signed and versioned plugins with allowlists (REQ-SEC-003).
 - Explicit authorization gates for plugins/devices (REQ-SEC-002).
+- Signed/allowlisted adapter validation with versioned contracts (REQ-SEC-012).
+- Allowlist hash validation for adapter manifests; deny on hash mismatch.
+- Public-key signature validation is tracked as a waiver until PKI integration is available (docs/waivers.md).
 - Structured audit logging for mode/config changes (REQ-SEC-004).
 - Audit log integrity and retention protections (REQ-SEC-009).
 - Least privilege for device access and isolated plugin execution.

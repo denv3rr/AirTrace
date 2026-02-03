@@ -4,7 +4,7 @@
 #include "core/GPSAlgorithm.h"
 #include "ui/inputValidation.h"
 #include "ui/simulation.h"
-#include "ui/audit_log.h"
+#include "tools/audit_log.h"
 
 #include <atomic>
 #include <iostream>
@@ -17,7 +17,7 @@ namespace
 {
 bool auditOrDeny(const std::string &eventType, const std::string &message, const std::string &detail, const std::string &context)
 {
-    if (ui::logAuditEvent(eventType, message, detail))
+    if (tools::logAuditEvent(eventType, message, detail))
     {
         return true;
     }
@@ -46,7 +46,7 @@ bool runScenarioMode(Object &follower, int gpsTimeout, int heatTimeout, std::ato
         if (exitRequested && exitRequested->load())
         {
             setUiDenialReason("operator_abort");
-            ui::logAuditEvent("operator_abort", "scenario aborted", "gps");
+            tools::logAuditEvent("operator_abort", "scenario aborted", "gps");
             return false;
         }
         if (inputStreamAvailable() && std::cin.rdbuf()->in_avail() > 0)
@@ -55,7 +55,7 @@ bool runScenarioMode(Object &follower, int gpsTimeout, int heatTimeout, std::ato
             if (std::getline(std::cin, input) && (input == "x" || input == "X"))
             {
                 setUiDenialReason("operator_abort");
-                ui::logAuditEvent("operator_abort", "scenario aborted", "gps");
+                tools::logAuditEvent("operator_abort", "scenario aborted", "gps");
                 return false;
             }
         }
@@ -79,7 +79,7 @@ bool runScenarioMode(Object &follower, int gpsTimeout, int heatTimeout, std::ato
             if (exitRequested && exitRequested->load())
             {
                 setUiDenialReason("operator_abort");
-                ui::logAuditEvent("operator_abort", "scenario aborted", "heat_signature");
+                tools::logAuditEvent("operator_abort", "scenario aborted", "heat_signature");
                 return false;
             }
             if (inputStreamAvailable() && std::cin.rdbuf()->in_avail() > 0)
@@ -88,7 +88,7 @@ bool runScenarioMode(Object &follower, int gpsTimeout, int heatTimeout, std::ato
                 if (std::getline(std::cin, input) && (input == "x" || input == "X"))
                 {
                     setUiDenialReason("operator_abort");
-                    ui::logAuditEvent("operator_abort", "scenario aborted", "heat_signature");
+                    tools::logAuditEvent("operator_abort", "scenario aborted", "heat_signature");
                     return false;
                 }
             }
@@ -119,4 +119,5 @@ bool runScenarioMainMode(Object &follower, int gpsTimeout, int heatTimeout)
     std::cerr << "Input stream unavailable. Exiting.\n";
     return false;
 }
+
 

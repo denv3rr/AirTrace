@@ -6,7 +6,10 @@
 #include "ui/scenario.h"
 #include "ui/tui.h"
 #include "ui/alerts.h"
-#include "ui/audit_log.h"
+#include "ui/adapter_ui_mapping.h"
+#include "tools/audit_log.h"
+#include "tools/adapter_registry_loader.h"
+#include "tools/sim_config_loader.h"
 #include <iostream>
 #include <cmath>
 #include <atomic>
@@ -67,13 +70,13 @@ bool hasPermission(const std::string &permission)
 
 bool ensureAuditHealthy(const std::string &context)
 {
-    setUiLoggingStatus(ui::auditLogStatus());
-    if (ui::auditLogHealthy())
+    setUiLoggingStatus(tools::auditLogStatus());
+    if (tools::auditLogHealthy())
     {
         return true;
     }
 #if defined(AIRTRACE_TEST_HARNESS)
-    ui::AuditLogConfig testConfig{};
+    tools::AuditLogConfig testConfig{};
     testConfig.logPath = "audit_log_test.jsonl";
     testConfig.configPath = "configs/sim_default.cfg";
     testConfig.buildId = "test";
@@ -84,20 +87,20 @@ bool ensureAuditHealthy(const std::string &context)
         testConfig.seed = uiContext.seed;
     }
     std::string status;
-    if (ui::initializeAuditLog(testConfig, status))
+    if (tools::initializeAuditLog(testConfig, status))
     {
         if (uiContext.configLoaded)
         {
-            ui::setAuditRunContext("", uiContext.config.version, uiContext.seed);
+            tools::setAuditRunContext("", uiContext.config.version, uiContext.seed);
         }
-        setUiLoggingStatus(ui::auditLogStatus());
-        ui::logAuditEvent("audit_recovered", "audit log initialized for test harness", context);
+        setUiLoggingStatus(tools::auditLogStatus());
+        tools::logAuditEvent("audit_recovered", "audit log initialized for test harness", context);
         return true;
     }
 #endif
     setUiDenialReason("audit_unavailable");
     std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
-    ui::logAuditEvent("audit_unavailable", "audit log unavailable", context);
+    tools::logAuditEvent("audit_unavailable", "audit log unavailable", context);
     return false;
 }
 
@@ -109,17 +112,17 @@ bool requirePermission(const std::string &permission, const std::string &context
     }
     setUiDenialReason("sim_not_authorized");
     std::cerr << "Not authorized for " << permission << ". Recovery: update role permissions and retry.\n";
-    ui::logAuditEvent("authorization_denied", "permission denied", context);
+    tools::logAuditEvent("authorization_denied", "permission denied", context);
     return false;
 }
 
 bool logAuditOrDeny(const std::string &eventType, const std::string &message, const std::string &detail, const std::string &context)
 {
-    if (ui::logAuditEvent(eventType, message, detail))
+    if (tools::logAuditEvent(eventType, message, detail))
     {
         return true;
     }
-    setUiLoggingStatus(ui::auditLogStatus());
+    setUiLoggingStatus(tools::auditLogStatus());
     setUiDenialReason("audit_unavailable");
     std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
     std::cerr << "Context: " << context << "\n";
@@ -129,6 +132,20 @@ bool logAuditOrDeny(const std::string &eventType, const std::string &message, co
 void renderStatusBanner(const std::string &context)
 {
     const UiStatus &status = getUiStatus();
+    std::string adapterLabel = "none";
+    if (!status.adapterId.empty())
+    {
+        adapterLabel = status.adapterId;
+        if (!status.adapterVersion.empty())
+        {
+            adapterLabel += "@";
+            adapterLabel += status.adapterVersion;
+        }
+        else
+        {
+            adapterLabel += "@unknown";
+        }
+    }
     std::cout << "\n[STATUS] context=" << context
               << " profile=" << status.platformProfile
               << " parent=" << (status.parentProfile.empty() ? "none" : status.parentProfile)
@@ -144,6 +161,9 @@ void renderStatusBanner(const std::string &context)
               << " denial=" << (status.denialReason.empty() ? "none" : status.denialReason)
               << " auth=" << (status.authStatus.empty() ? "unknown" : status.authStatus)
               << " prov=" << (status.provenanceStatus.empty() ? "unknown" : status.provenanceStatus)
+              << " adapter=" << adapterLabel
+              << " surface=" << (status.adapterSurface.empty() ? "tui" : status.adapterSurface)
+              << " adapter_status=" << (status.adapterStatus.empty() ? "unknown" : status.adapterStatus)
               << " log=" << (status.loggingStatus.empty() ? "unknown" : status.loggingStatus)
               << " sensors=" << (status.sensorStatusSummary.empty() ? "none" : status.sensorStatusSummary)
               << " seed=" << status.seed
@@ -156,6 +176,10 @@ void renderStatusBanner(const std::string &context)
     if (!status.sensorStatusSummary.empty())
     {
         std::cout << "SENSORS: " << status.sensorStatusSummary << "\n";
+    }
+    if (!status.adapterFields.empty())
+    {
+        std::cout << "ADAPTER FIELDS: " << status.adapterFields << "\n";
     }
     if (!status.denialReason.empty())
     {
@@ -324,6 +348,11 @@ void updateStatusFromConfig(const SimConfig &config)
     uiContext.status.childModules = modulesToString(config.childModules);
     uiContext.status.authStatus = buildAuthStatus(config);
     uiContext.status.provenanceStatus = buildProvenanceStatus(config);
+    uiContext.status.adapterId = config.adapter.id;
+    uiContext.status.adapterVersion = config.adapter.version;
+    uiContext.status.adapterSurface = config.adapter.uiSurface.empty() ? "tui" : config.adapter.uiSurface;
+    uiContext.status.adapterStatus = config.adapter.id.empty() ? "none" : "unverified";
+    uiContext.status.adapterFields = "";
     if (uiContext.status.loggingStatus.empty())
     {
         uiContext.status.loggingStatus = "unknown";
@@ -386,7 +415,15 @@ bool initializeUiContext(const std::string &configPath)
     uiContext.seed = loaded.config.seed;
     uiContext.rng.seed(uiContext.seed);
     updateStatusFromConfig(loaded.config);
-    ui::setAuditRunContext("", loaded.config.version, loaded.config.seed);
+    {
+        tools::AdapterUiSnapshot snapshot = tools::loadAdapterUiSnapshot(loaded.config);
+        uiContext.status.adapterId = snapshot.adapterId;
+        uiContext.status.adapterVersion = snapshot.adapterVersion;
+        uiContext.status.adapterSurface = snapshot.surface.empty() ? "tui" : snapshot.surface;
+        uiContext.status.adapterStatus = snapshot.status;
+        uiContext.status.adapterFields = ui::formatAdapterFieldSummary(snapshot.fields);
+    }
+    tools::setAuditRunContext("", loaded.config.version, loaded.config.seed);
     return true;
 }
 
@@ -735,7 +772,7 @@ void simulateManualConfig(const SimulationData &simData)
         if (consumeAbortRequest())
         {
             setUiDenialReason("operator_abort");
-            ui::logAuditEvent("operator_abort", "manual simulation aborted", simData.mode);
+            tools::logAuditEvent("operator_abort", "manual simulation aborted", simData.mode);
             std::cout << "Operator abort received. Returning to menu.\n";
             break;
         }
@@ -769,7 +806,7 @@ void simulateDeadReckoning(int speed, int iterations)
         if (consumeAbortRequest())
         {
             setUiDenialReason("operator_abort");
-            ui::logAuditEvent("operator_abort", "dead_reckoning aborted", "");
+            tools::logAuditEvent("operator_abort", "dead_reckoning aborted", "");
             std::cout << "Operator abort received. Returning to menu.\n";
             break;
         }
@@ -828,7 +865,7 @@ void simulateHeatSeeking(int speed, int iterations)
         if (consumeAbortRequest())
         {
             setUiDenialReason("operator_abort");
-            ui::logAuditEvent("operator_abort", "heat_seeking aborted", "");
+            tools::logAuditEvent("operator_abort", "heat_seeking aborted", "");
             std::cout << "Operator abort received. Returning to menu.\n";
             break;
         }
@@ -902,7 +939,7 @@ void simulateGPSSeeking(int speed, int iterations)
         if (consumeAbortRequest())
         {
             setUiDenialReason("operator_abort");
-            ui::logAuditEvent("operator_abort", "gps_seek aborted", "");
+            tools::logAuditEvent("operator_abort", "gps_seek aborted", "");
             std::cout << "Operator abort received. Returning to menu.\n";
             break;
         }
@@ -981,7 +1018,7 @@ void runTestMode()
         setUiDenialReason("input_unavailable");
         std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
-        ui::logAuditEvent("test_mode_abort", "input unavailable", "speed");
+        tools::logAuditEvent("test_mode_abort", "input unavailable", "speed");
         return;
     }
     if (!tryGetValidatedIntInput("Enter number of iterations (0 for infinite): ", 0, 10000, iterations))
@@ -989,7 +1026,7 @@ void runTestMode()
         setUiDenialReason("input_unavailable");
         std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
-        ui::logAuditEvent("test_mode_abort", "input unavailable", "iterations");
+        tools::logAuditEvent("test_mode_abort", "input unavailable", "iterations");
         return;
     }
 
@@ -1005,14 +1042,14 @@ void runTestMode()
     {
         setUiDenialReason("selection_cancelled");
         std::cout << "Recovery: re-open the menu to select a test mode.\n";
-        ui::logAuditEvent("test_mode_abort", "selection cancelled", "");
+        tools::logAuditEvent("test_mode_abort", "selection cancelled", "");
         return;
     }
     if (modeChoice >= static_cast<int>(options.size()))
     {
         setUiDenialReason("menu_selection_invalid");
         std::cerr << "Menu selection invalid. Returning to menu.\n";
-        ui::logAuditEvent("test_mode_abort", "menu selection invalid", "");
+        tools::logAuditEvent("test_mode_abort", "menu selection invalid", "");
         return;
     }
 
@@ -1036,7 +1073,7 @@ void runTestMode()
     default:
         setUiDenialReason("menu_selection_invalid");
         std::cerr << "Menu selection invalid. Returning to menu.\n";
-        ui::logAuditEvent("test_mode_abort", "menu selection invalid", "");
+        tools::logAuditEvent("test_mode_abort", "menu selection invalid", "");
         return;
     }
 
@@ -1059,7 +1096,7 @@ void runTestMode()
             setUiDenialReason("input_unavailable");
             std::cout << "Recovery: verify input stream and try again.\n";
             std::cout << "Input unavailable. Returning to menu.\n";
-            ui::logAuditEvent("test_mode_abort", "input unavailable", "kalman_positions");
+            tools::logAuditEvent("test_mode_abort", "input unavailable", "kalman_positions");
             return;
         }
 
@@ -1103,7 +1140,7 @@ void runTestMode()
             setUiDenialReason("input_unavailable");
             std::cout << "Recovery: verify input stream and try again.\n";
             std::cout << "Input unavailable. Returning to menu.\n";
-            ui::logAuditEvent("test_mode_abort", "input unavailable", "manual_positions");
+            tools::logAuditEvent("test_mode_abort", "input unavailable", "manual_positions");
             return;
         }
 
@@ -1159,12 +1196,12 @@ bool runTestScenarioMode()
     }
     else if (exitedByUser)
     {
-        ui::logAuditEvent("operator_abort", "test scenario aborted", "");
+        tools::logAuditEvent("operator_abort", "test scenario aborted", "");
         logData += "\nTest mode exited early by user.\n";
     }
     else
     {
-        ui::logAuditEvent("test_scenario_complete", "test scenario completed", "");
+        tools::logAuditEvent("test_scenario_complete", "test scenario completed", "");
         logData += "\nTest mode completed normally.\n";
     }
 
@@ -1216,7 +1253,7 @@ void viewAndRerunPreviousSimulations()
         setUiDenialReason("input_unavailable");
         std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
-        ui::logAuditEvent("history_rerun_abort", "input unavailable", "");
+        tools::logAuditEvent("history_rerun_abort", "input unavailable", "");
         return;
     }
 
@@ -1261,7 +1298,7 @@ void deletePreviousSimulation()
         setUiDenialReason("input_unavailable");
         std::cout << "Recovery: verify input stream and try again.\n";
         std::cout << "Input unavailable. Returning to menu.\n";
-        ui::logAuditEvent("history_delete_abort", "input unavailable", "");
+        tools::logAuditEvent("history_delete_abort", "input unavailable", "");
         return;
     }
 
@@ -1271,7 +1308,7 @@ void deletePreviousSimulation()
         {
             setUiDenialReason("input_unavailable");
             std::cout << "Recovery: verify input stream and try again.\n";
-            ui::logAuditEvent("history_delete_abort", "input unavailable", "");
+            tools::logAuditEvent("history_delete_abort", "input unavailable", "");
             return;
         }
         std::cout << "Type DELETE to confirm: ";
@@ -1280,14 +1317,14 @@ void deletePreviousSimulation()
         {
             setUiDenialReason("input_unavailable");
             std::cout << "Recovery: verify input stream and try again.\n";
-            ui::logAuditEvent("history_delete_abort", "input unavailable", "");
+            tools::logAuditEvent("history_delete_abort", "input unavailable", "");
             return;
         }
         if (confirm != "DELETE")
         {
             setUiDenialReason("delete_not_confirmed");
             std::cout << "Delete not confirmed. Returning to menu.\n";
-            ui::logAuditEvent("history_delete_abort", "delete not confirmed", "");
+            tools::logAuditEvent("history_delete_abort", "delete not confirmed", "");
             return;
         }
         // Delete the selected simulation from memory and the file
@@ -1407,4 +1444,5 @@ void loadSimulationHistory()
     }
     inFile.close();
 }
+
 

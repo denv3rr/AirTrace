@@ -1,0 +1,50 @@
+{
+  "adapter.id": "air",
+  "adapter.version": "1.0.0",
+  "adapter.contract_version": "1.0.0",
+  "ui.contract_version": "1.0.0",
+  "core.compatibility.min": "1.0.0",
+  "core.compatibility.max": "1.0.0",
+  "tools.compatibility.min": "1.0.0",
+  "tools.compatibility.max": "1.0.0",
+  "ui.compatibility.min": "1.0.0",
+  "ui.compatibility.max": "1.0.0",
+  "capabilities": [
+    {
+      "id": "altitude_msl",
+      "description": "Mean sea level altitude reporting",
+      "units": "meters",
+      "range_min": 0,
+      "range_max": 20000,
+      "error_behavior": "hold"
+    },
+    {
+      "id": "airspeed",
+      "description": "True airspeed input",
+      "units": "m/s",
+      "range_min": 0,
+      "range_max": 350,
+      "error_behavior": "hold"
+    }
+  ],
+  "ui_extensions": [
+    {
+      "field_id": "air.altitude_msl",
+      "type": "number",
+      "units": "meters",
+      "range_min": 0,
+      "range_max": 20000,
+      "error_behavior": "hold",
+      "surfaces": ["tui", "cockpit"]
+    },
+    {
+      "field_id": "air.airspeed",
+      "type": "number",
+      "units": "m/s",
+      "range_min": 0,
+      "range_max": 350,
+      "error_behavior": "hold",
+      "surfaces": ["tui", "cockpit"]
+    }
+  ]
+}

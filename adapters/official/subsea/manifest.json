@@ -1,0 +1,50 @@
+{
+  "adapter.id": "subsea",
+  "adapter.version": "1.0.0",
+  "adapter.contract_version": "1.0.0",
+  "ui.contract_version": "1.0.0",
+  "core.compatibility.min": "1.0.0",
+  "core.compatibility.max": "1.0.0",
+  "tools.compatibility.min": "1.0.0",
+  "tools.compatibility.max": "1.0.0",
+  "ui.compatibility.min": "1.0.0",
+  "ui.compatibility.max": "1.0.0",
+  "capabilities": [
+    {
+      "id": "depth",
+      "description": "Depth below surface",
+      "units": "meters",
+      "range_min": 0,
+      "range_max": 6000,
+      "error_behavior": "hold"
+    },
+    {
+      "id": "salinity_psu",
+      "description": "Water salinity estimate",
+      "units": "psu",
+      "range_min": 0,
+      "range_max": 42,
+      "error_behavior": "hold"
+    }
+  ],
+  "ui_extensions": [
+    {
+      "field_id": "subsea.depth",
+      "type": "number",
+      "units": "meters",
+      "range_min": 0,
+      "range_max": 6000,
+      "error_behavior": "hold",
+      "surfaces": ["tui", "remote_operator"]
+    },
+    {
+      "field_id": "subsea.salinity",
+      "type": "number",
+      "units": "psu",
+      "range_min": 0,
+      "range_max": 42,
+      "error_behavior": "hold",
+      "surfaces": ["tui", "remote_operator"]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 #include "core/mode_manager.h"
-#include "core/sim_config.h"
+#include "tools/sim_config_loader.h"
 #include "core/sensors.h"
 #include "ui/input_harness.h"
 #include "ui/menu.h"

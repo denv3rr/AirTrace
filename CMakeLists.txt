@@ -23,12 +23,21 @@ add_library(airtrace_core
         src/core/sensors.cpp
         src/core/mode_manager.cpp
         src/core/mode_scheduler.cpp
-        src/core/sim_config.cpp
         src/core/logging.cpp
         src/core/hash.cpp
+        src/core/adapter_registry.cpp
 )
 
 target_include_directories(airtrace_core PUBLIC include)
+
+# Tools library
+add_library(airtrace_tools
+        src/tools/sim_config_loader.cpp
+        src/tools/audit_log.cpp
+        src/tools/adapter_registry_loader.cpp
+)
+target_include_directories(airtrace_tools PUBLIC include)
+target_link_libraries(airtrace_tools PUBLIC airtrace_core)
 
 # CLI application
 add_executable(AirTrace
@@ -37,14 +46,14 @@ add_executable(AirTrace
         src/ui/menu_selection.cpp
         src/ui/alerts.cpp
         src/ui/tui.cpp
+        src/ui/adapter_ui_mapping.cpp
         src/ui/simulation.cpp
-        src/ui/audit_log.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
 )
 
 target_include_directories(AirTrace PRIVATE include)
-target_link_libraries(AirTrace PRIVATE airtrace_core)
+target_link_libraries(AirTrace PRIVATE airtrace_core airtrace_tools)
 if(NOT DEFINED AIRTRACE_BUILD_ID)
     set(AIRTRACE_BUILD_ID "${PROJECT_NAME}-${PROJECT_VERSION}")
     if(CMAKE_BUILD_TYPE)
@@ -71,7 +80,7 @@ add_executable(AirTraceCoreTests
         tests/core_sanity.cpp
 )
 target_include_directories(AirTraceCoreTests PRIVATE include)
-target_link_libraries(AirTraceCoreTests PRIVATE airtrace_core)
+target_link_libraries(AirTraceCoreTests PRIVATE airtrace_core airtrace_tools)
 add_test(NAME AirTraceCoreTests COMMAND AirTraceCoreTests)
 
 add_executable(AirTraceEdgeCaseTests
@@ -88,14 +97,14 @@ add_executable(AirTraceUiTests
         tests/ui_status.cpp
         src/ui/menu_selection.cpp
         src/ui/alerts.cpp
+        src/ui/adapter_ui_mapping.cpp
         src/ui/simulation.cpp
-        src/ui/audit_log.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
         src/ui/tui.cpp
 )
 target_include_directories(AirTraceUiTests PRIVATE include)
-target_link_libraries(AirTraceUiTests PRIVATE airtrace_core)
+target_link_libraries(AirTraceUiTests PRIVATE airtrace_core airtrace_tools)
 add_test(NAME AirTraceUiTests COMMAND AirTraceUiTests)
 
 add_executable(AirTraceHarnessRunner
@@ -105,14 +114,14 @@ add_executable(AirTraceHarnessRunner
         src/ui/menu_selection.cpp
         src/ui/alerts.cpp
         src/ui/tui.cpp
+        src/ui/adapter_ui_mapping.cpp
         src/ui/simulation.cpp
-        src/ui/audit_log.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
 )
 target_include_directories(AirTraceHarnessRunner PRIVATE include)
 target_compile_definitions(AirTraceHarnessRunner PRIVATE AIRTRACE_TEST_HARNESS=1)
-target_link_libraries(AirTraceHarnessRunner PRIVATE airtrace_core)
+target_link_libraries(AirTraceHarnessRunner PRIVATE airtrace_core airtrace_tools)
 
 add_executable(AirTraceHarnessTests
         tests/ui_harness_tests.cpp
@@ -129,12 +138,12 @@ add_executable(AirTraceIntegrationTests
         src/ui/menu_selection.cpp
         src/ui/alerts.cpp
         src/ui/tui.cpp
+        src/ui/adapter_ui_mapping.cpp
         src/ui/simulation.cpp
-        src/ui/audit_log.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
 )
 target_include_directories(AirTraceIntegrationTests PRIVATE include)
 target_compile_definitions(AirTraceIntegrationTests PRIVATE AIRTRACE_TEST_HARNESS=1)
-target_link_libraries(AirTraceIntegrationTests PRIVATE airtrace_core)
+target_link_libraries(AirTraceIntegrationTests PRIVATE airtrace_core airtrace_tools)
 add_test(NAME AirTraceIntegrationTests COMMAND AirTraceIntegrationTests)

@@ -3,12 +3,17 @@
 [Overview](#overview) | [Safety](#safety-and-fail-closed-behavior) | [Quick Start](#quick-start) | [Build and Run](#build-and-run) | [Config](#configuration-notes) | [Documentation](#documentation) | [Sources](https://github.com/denv3rr/AirTrace/blob/main/sources_menu.md) | [seperet.com](https://seperet.com)
 
 ## Overview
-A tool for deterministic evaluation of mode switching logic with
-console interfaces, testing, and logging. Evaluates tracking behavior
+AirTrace is a deterministic evaluation tool for mode switching logic with
+console interfaces, tests, and audit logging. It evaluates tracking behavior
 across platform contexts (air, ground, maritime, etc.).
 
-Simulation and test modes are used strictly for verification and
-training and are explicitly gated.
+Simulation and test modes are used strictly for verification and training and
+are explicitly gated.
+
+The system is modular by design: core, tools, UI, and adapters are separated.
+Core and tools are implemented as reusable library targets; UI is a thin app
+layer. Adapter contracts and SDK skeletons are defined, with official adapter
+implementations planned.
 
 Supported platforms: Windows, Linux, macOS
 
@@ -20,6 +25,32 @@ Core behavior:
 - Sensor modeling for GNSS, IMU, radar, thermal, vision, lidar, magnetometer, baro, and celestial.
 - Platform profiles with controlled sensor permissions and dataset tiers.
 - Audit logging for mode/config changes with integrity chaining, health status reporting, and run/config identifiers.
+
+## Adapters and Modules
+Current build targets:
+- `airtrace_core` (core library)
+- `airtrace_tools` (config + audit logging I/O)
+- `AirTrace` (TUI application)
+
+Planned build targets:
+- `airtrace_ui` (UI library target)
+- `airtrace_adapter_<platform>` (official adapter modules)
+
+Official adapter profiles (initial set):
+- air
+- ground
+- maritime
+- space
+- handheld
+- fixed_site
+- subsea
+
+Adapter SDK skeleton: `adapters/sdk`
+Official adapter manifests + allowlist: `adapters/official` and `adapters/allowlist.json`.
+
+Official adapter implementations are planned; design notes live in `docs/adapters/`.
+Third-party adapters are accepted only when they pass contract validation,
+safety checks, and security authorization.
 
 ## Safety and Fail-Closed Behavior
 - Invalid configs or missing datasets force hold mode.
@@ -72,14 +103,21 @@ TUI controls:
 - Trend evaluation windows use `mode.history_window`.
 - Role permissions gate test modes, history viewing, and destructive actions.
 - Provenance policy keys configure allowed inputs and mixed-input handling (see `docs/config_schema.md`).
+- Adapter selection and UI surface keys are defined in `docs/config_schema.md`.
+- Adapter registry enforcement uses `adapter.manifest_path` and `adapter.allowlist_path` (defaults to `adapters/official/<id>/manifest.json` and `adapters/allowlist.json`).
 
 ## Documentation
 - Architecture: `docs/architecture.md`
+- Adapter architecture: `docs/adapter_architecture.md`
+- Adapter contract: `docs/adapter_contract.md`
+- Adapter notes: `docs/adapters/README.md`
+- Module contracts: `docs/module_contracts.md`
 - Requirements: `docs/requirements.md`
 - Verification plan: `docs/verification_plan.md`
 - Traceability: `docs/traceability.md`
 - Hazard log: `docs/hazard_log.md`
 - Security threat model: `docs/security_threat_model.md`
+- Waivers: `docs/waivers.md`
 - Config schema: `docs/config_schema.md`
 - Operational concepts: `docs/operational_concepts.md`
 - Navigation fallbacks: `docs/navigation_fallbacks.md`

@@ -39,6 +39,11 @@ struct UiStatus
     std::string authStatus;
     std::string provenanceStatus;
     std::string loggingStatus;
+    std::string adapterId;
+    std::string adapterVersion;
+    std::string adapterSurface;
+    std::string adapterStatus;
+    std::string adapterFields;
     unsigned int seed = 0;
     bool deterministic = true;
 };

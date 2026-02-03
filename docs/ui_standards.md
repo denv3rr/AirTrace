@@ -50,6 +50,8 @@ university sources with unclassified guidance.
   the active or evaluated tracking modes in a deterministic sequence.
 - When multi-mode visualization is enabled, show each mode with its
   contributors, confidence, and denial reasons.
+- Adapter-defined UI extensions must follow the same validation, units,
+  and recovery guidance rules as baseline fields.
 - UI interface contracts (fields, labels, layout invariants) must be
   versioned and remain backward-compatible to prevent breaking updates.
 - Inputs must be validated with bounds and handled safely on EOF or

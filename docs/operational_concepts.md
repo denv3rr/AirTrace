@@ -26,6 +26,13 @@
 - Scenario and test runs auto-cycle through visual modes aligned to evaluated tracking modes for rapid validation.
 - Multi-mode visualization may present multiple eligible modes concurrently when configured.
 
+## Modularity and Interface Contracts
+- Core, tools, UI, and platform adapters are modular and independently deployable.
+- Interfaces are versioned and explicit; integration uses allowlisted capabilities and deny-by-default policies.
+- Safety and fail-closed behavior apply consistently across all modules and adapters.
+- Third-party platform adapters are supported when they pass contract, safety, and security gates; no additional restrictions apply.
+- Adapter selection uses manifest and allowlist validation; hash mismatches or missing manifests deny activation.
+
 ## Provenance and Gating
 - Every measurement and operator input is tagged with provenance: operational, simulation, test, or unknown.
 - Operational runs accept only operational provenance unless explicitly authorized by policy.

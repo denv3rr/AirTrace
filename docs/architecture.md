@@ -18,6 +18,12 @@ AirTrace is an operational tool with simulation and test harnesses used strictly
   - Console menus, TUI input handling, and operational presentation.
   - Depends on `tools` for orchestration and `airtrace_core` for algorithms.
 
+- `adapters` (official platform modules):
+  - Platform-specific I/O bindings, data points, and UI extensions.
+  - Built and deployed independently from core/tools/UI.
+  - Use versioned interface contracts; no direct coupling to internal core types.
+  - Third-party adapters are permitted when they pass contract, safety, and security gates.
+
 - `examples`:
   - Small, deterministic demos that exercise core behaviors (test-only).
 
@@ -28,6 +34,23 @@ AirTrace is an operational tool with simulation and test harnesses used strictly
   - Configuration files for operational and test runs with explicit gating.
 - `scripts`:
   - Build and test entry points with input validation and fail-closed behavior.
+
+## Modularity and Independence (Priority)
+- Each module must be independently usable and testable with explicit, stable interfaces.
+- No hidden cross-module dependencies; all dependencies must be declared at build and interface levels.
+- Core remains pure and deterministic (no I/O, wall-clock, or non-seeded randomness).
+- Tools own all external I/O and policy enforcement; UI owns presentation only.
+- Platform adapters are optional, modular extensions with versioned contracts and allowlisted capabilities.
+
+## Build Targets (Current + Planned)
+Current:
+- `airtrace_core` (core library)
+- `airtrace_tools` (controlled I/O and policy)
+- `AirTrace` (operator TUI application)
+
+Planned:
+- `airtrace_ui` (operator surfaces as a library target)
+- `airtrace_adapter_<platform>` (official adapters; per platform profile)
 
 ## Boundaries
 

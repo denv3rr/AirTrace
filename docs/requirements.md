@@ -1,6 +1,8 @@
 # AirTrace Requirements
 
 All requirements use "shall" language per MIL-STD-961E. Each requirement must be testable and traceable.
+Modularity and safety remain continuous priorities. The system is expected to support independently usable modules,
+with explicit interfaces and no hidden cross-module dependencies or side effects.
 
 ## System Requirements (SYS)
 - REQ-SYS-001: The system shall provide a deterministic simulation mode with a user-specified seed and fixed timestep.
@@ -22,6 +24,7 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SYS-017: The system shall tag every measurement and input with provenance (operational, simulation, test, unknown) and propagate provenance through fusion outputs.
 - REQ-SYS-018: Operational runs shall reject mixed or unknown provenance inputs by default and enter a defined safe state with explicit denial.
 - REQ-SYS-019: The system shall evaluate mode eligibility via a deterministic, fail-closed pipeline that denies activation if any required eligibility input is missing or invalid (health, freshness, policy, provenance, dataset availability).
+- REQ-SYS-020: The tools layer shall own configuration and audit logging I/O; the core shall not perform file I/O or wall-clock operations.
 
 ## Functional Requirements (FUNC)
 - REQ-FUNC-001: The core shall ingest sensor measurements using a common state and measurement contract.
@@ -64,6 +67,7 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SAFE-009: The system shall prevent re-entry into a mode when contributors remain in lockout.
 - REQ-SAFE-010: The system shall enter a safe state or deny operations when audit logging is unavailable or fails to record safety-relevant events.
 - REQ-SAFE-011: The system shall enter hold or a safe degraded mode when eligibility evaluation or authorization decisioning is unavailable, inconsistent, or stale.
+- REQ-SAFE-012: Adapter health or data failures shall trigger safe-state entry and deny further mode activation until recovery.
 
 ## Security Requirements (SEC)
 - REQ-SEC-001: All external inputs shall be validated and sanitized before use.
@@ -77,6 +81,7 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-SEC-009: Audit logs shall be protected for integrity and retention per policy.
 - REQ-SEC-010: Provenance decisions (accept/reject) shall be recorded with reason codes, source identifiers, run ID, config version, config ID, build ID, and seed.
 - REQ-SEC-011: Authorization decisions shall be versioned, auditable, and deny-by-default when policy provenance cannot be verified.
+- REQ-SEC-012: Adapters shall be signed, allowlisted, and validated before activation; failures shall be denied and logged.
 
 ## Interface Requirements (INT)
 - REQ-INT-001: All public interfaces shall declare units, valid ranges, and error behavior.
@@ -102,6 +107,23 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-INT-021: Scenario and test runs shall auto-cycle through visual modes aligned to the active or evaluated tracking modes, with deterministic ordering and timing.
 - REQ-INT-022: The UI shall support simultaneous visualization of multiple eligible modes when configured, including per-mode contributors, confidence, and denial reasons.
 - REQ-INT-023: Operator-facing UI interfaces shall be versioned and backward-compatible; updates shall preserve the interface contract and rendering semantics.
+- REQ-INT-024: Platform-specific UI surfaces shall render adapter-defined data points in addition to the baseline UI contract, with explicit units, ranges, and error behavior.
+
+## Modularity Requirements (MOD)
+- REQ-MOD-001: The system shall provide independently buildable modules for core, tools, UI, and adapters with explicit, versioned interfaces.
+- REQ-MOD-002: The core shall operate without adapters; adapters shall be optional extensions.
+- REQ-MOD-003: Modules shall declare all dependencies and shall not access undeclared modules at runtime.
+- REQ-MOD-004: Module interface version mismatches shall be detected and shall fail closed with explicit reason codes.
+- REQ-MOD-005: The system shall support third-party platform adapters via the versioned adapter contract; integration shall only be constrained by safety, security, and compliance gates.
+
+## Adapter Requirements (ADP)
+- REQ-ADP-001: The system shall provide official adapters for the platform profiles: air, ground, maritime, space, handheld, fixed_site, and subsea.
+- REQ-ADP-002: Each adapter shall declare its capabilities and UI extension fields with units, ranges, and error behavior; unknown capabilities or fields shall be rejected.
+- REQ-ADP-003: Official adapters shall provide a platform UI mapping that includes the baseline UI contract and adapter-specific extensions for each supported surface.
+- REQ-ADP-004: Adapter failures or invalid data shall trigger safe-state entry with explicit denial and audit logging.
+- REQ-ADP-005: Each official adapter shall provide a design note documenting environmental constraints (MIL-STD-810H) and applicable human factors/symbology guidance (MIL-STD-1472H, MIL-STD-2525 where applicable).
+- REQ-ADP-006: Third-party adapters shall be allowed when they pass contract validation, safety checks, and security authorization, without additional restrictions.
+- REQ-ADP-007: The system shall provide an adapter SDK skeleton with versioned interface headers and build templates.
 
 ## Configuration Requirements (CFG)
 - REQ-CFG-001: Configuration files shall be versioned and schema-validated.
@@ -113,6 +135,8 @@ All requirements use "shall" language per MIL-STD-961E. Each requirement must be
 - REQ-CFG-007: Configuration shall define platform.profile_parent and platform.child_modules with validation and deterministic defaults.
 - REQ-CFG-008: Configuration shall define allowed provenance values per run mode and reject unknown or mixed-policy settings.
 - REQ-CFG-009: Configuration shall define policy/provenance authorization inputs (version, source, allowed modes) and reject unknown or missing fields.
+- REQ-CFG-010: Configuration shall specify adapter selection (id + version) and UI surface; unknown adapter identifiers or surfaces are errors.
+- REQ-CFG-011: Configuration shall support adapter manifest and allowlist paths with deterministic defaults for official adapters; missing or invalid adapter registry paths shall fail closed.
 
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).

@@ -1,10 +1,12 @@
-#include "core/sim_config.h"
+#include "tools/sim_config_loader.h"
 
 #include <algorithm>
 #include <cctype>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+
+#include "tools/adapter_registry_loader.h"
 
 namespace
 {
@@ -156,6 +158,18 @@ bool isValidModuleName(const std::string &name)
     return true;
 }
 
+bool isValidAdapterId(const std::string &name)
+{
+    return isValidModuleName(name);
+}
+
+bool isOfficialAdapterId(const std::string &name)
+{
+    return name == "air" || name == "ground" || name == "maritime" ||
+           name == "space" || name == "handheld" || name == "fixed_site" ||
+           name == "subsea";
+}
+
 bool isValidModeName(const std::string &name)
 {
     static const std::vector<std::string> kModes = {
@@ -234,6 +248,17 @@ bool toUnknownProvenanceAction(const std::string &value, SimConfig::UnknownProve
     return true;
 }
 
+bool toUiSurface(const std::string &value, std::string &out)
+{
+    std::string lowered = toLower(trim(value));
+    if (lowered == "tui" || lowered == "cockpit" || lowered == "remote_operator" || lowered == "c2")
+    {
+        out = lowered;
+        return true;
+    }
+    return false;
+}
+
 void setIssue(ConfigResult &result, const std::string &key, const std::string &message)
 {
     result.ok = false;
@@ -252,6 +277,7 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     SimConfig::DatasetTier tier = SimConfig::DatasetTier::Minimal;
     SimConfig::ProvenanceMode provenanceMode = SimConfig::ProvenanceMode::Operational;
     SimConfig::UnknownProvenanceAction unknownAction = SimConfig::UnknownProvenanceAction::Deny;
+    std::string uiSurface;
 
     if (key == "config.version")
     {
@@ -397,6 +423,12 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "dataset.celestial.ephemeris_path") config.dataset.celestialEphemerisPath = value;
     else if (key == "dataset.celestial.catalog_hash") config.dataset.celestialCatalogHash = value;
     else if (key == "dataset.celestial.ephemeris_hash") config.dataset.celestialEphemerisHash = value;
+    else if (key == "adapter.id") config.adapter.id = toLower(trim(value));
+    else if (key == "adapter.version") config.adapter.version = trim(value);
+    else if (key == "adapter.manifest_path") config.adapter.manifestPath = trim(value);
+    else if (key == "adapter.allowlist_path") config.adapter.allowlistPath = trim(value);
+    else if (key == "ui.surface" && toUiSurface(value, uiSurface)) config.adapter.uiSurface = uiSurface;
+    else if (key == "ui.surface") setIssue(result, key, "invalid ui surface");
     else if (key == "mode.ladder_order") config.mode.ladderOrder = splitList(value);
     else if (key == "mode.min_healthy_count" && toInt(value, ival)) config.mode.minHealthyCount = ival;
     else if (key == "mode.min_dwell_steps" && toInt(value, ival)) config.mode.minDwellSteps = ival;
@@ -703,6 +735,37 @@ void validateConfig(ConfigResult &result)
     {
         setIssue(result, "dataset.celestial.ephemeris_hash", "required when ephemeris_path is set");
     }
+
+    if (!config.adapter.id.empty())
+    {
+        if (!isValidAdapterId(config.adapter.id))
+        {
+            setIssue(result, "adapter.id", "invalid adapter identifier");
+        }
+        if (config.adapter.version.empty())
+        {
+            setIssue(result, "adapter.version", "required when adapter.id is set");
+        }
+        if (config.adapter.manifestPath.empty() && !isOfficialAdapterId(config.adapter.id))
+        {
+            setIssue(result, "adapter.manifest_path", "required for non-official adapter");
+        }
+    }
+    if (config.adapter.id.empty())
+    {
+        if (!config.adapter.manifestPath.empty())
+        {
+            setIssue(result, "adapter.manifest_path", "adapter.id required for manifest_path");
+        }
+        if (!config.adapter.allowlistPath.empty())
+        {
+            setIssue(result, "adapter.allowlist_path", "adapter.id required for allowlist_path");
+        }
+    }
+    if (!config.adapter.uiSurface.empty() && !toUiSurface(config.adapter.uiSurface, config.adapter.uiSurface))
+    {
+        setIssue(result, "ui.surface", "invalid ui surface");
+    }
 }
 } // namespace
 
@@ -786,6 +849,15 @@ ConfigResult loadSimConfig(const std::string &path)
     }
 
     validateConfig(result);
+
+    if (result.ok && !result.config.adapter.id.empty())
+    {
+        std::string reason;
+        if (!tools::validateAdapterSelection(result.config, reason))
+        {
+            setIssue(result, "adapter.registry", reason);
+        }
+    }
 
     return result;
 }

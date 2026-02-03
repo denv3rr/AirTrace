@@ -1,0 +1,50 @@
+{
+  "adapter.id": "maritime",
+  "adapter.version": "1.0.0",
+  "adapter.contract_version": "1.0.0",
+  "ui.contract_version": "1.0.0",
+  "core.compatibility.min": "1.0.0",
+  "core.compatibility.max": "1.0.0",
+  "tools.compatibility.min": "1.0.0",
+  "tools.compatibility.max": "1.0.0",
+  "ui.compatibility.min": "1.0.0",
+  "ui.compatibility.max": "1.0.0",
+  "capabilities": [
+    {
+      "id": "sea_state",
+      "description": "Sea state estimate",
+      "units": "state",
+      "range_min": 0,
+      "range_max": 9,
+      "error_behavior": "hold"
+    },
+    {
+      "id": "heading",
+      "description": "Platform heading",
+      "units": "deg",
+      "range_min": 0,
+      "range_max": 360,
+      "error_behavior": "hold"
+    }
+  ],
+  "ui_extensions": [
+    {
+      "field_id": "maritime.sea_state",
+      "type": "number",
+      "units": "state",
+      "range_min": 0,
+      "range_max": 9,
+      "error_behavior": "hold",
+      "surfaces": ["tui", "remote_operator"]
+    },
+    {
+      "field_id": "maritime.heading",
+      "type": "number",
+      "units": "deg",
+      "range_min": 0,
+      "range_max": 360,
+      "error_behavior": "hold",
+      "surfaces": ["tui", "remote_operator"]
+    }
+  ]
+}

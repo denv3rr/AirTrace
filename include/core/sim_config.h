@@ -133,6 +133,15 @@ struct SimConfig
         std::unordered_map<std::string, double> sourceWeights{};
     };
 
+    struct AdapterConfig
+    {
+        std::string id;
+        std::string version;
+        std::string manifestPath;
+        std::string allowlistPath;
+        std::string uiSurface = "tui";
+    };
+
     PlatformProfile platformProfile = PlatformProfile::Base;
     bool hasParentProfile = false;
     PlatformProfile parentProfile = PlatformProfile::Base;
@@ -141,6 +150,7 @@ struct SimConfig
     PolicyConfig policy{};
     ProvenancePolicy provenance{};
     DatasetConfig dataset{};
+    AdapterConfig adapter{};
     ModeConfig mode{};
     FusionConfig fusion{};
     SchedulerConfig scheduler{};
@@ -172,7 +182,5 @@ struct ConfigResult
     std::vector<ConfigIssue> issues;
     bool ok = true;
 };
-
-ConfigResult loadSimConfig(const std::string &path);
 
 #endif // CORE_SIM_CONFIG_H

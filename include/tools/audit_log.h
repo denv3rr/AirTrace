@@ -1,9 +1,9 @@
-#ifndef UI_AUDIT_LOG_H
-#define UI_AUDIT_LOG_H
+#ifndef TOOLS_AUDIT_LOG_H
+#define TOOLS_AUDIT_LOG_H
 
 #include <string>
 
-namespace ui
+namespace tools
 {
 struct AuditLogConfig
 {
@@ -22,6 +22,6 @@ void setAuditRole(const std::string &role);
 void setAuditRunContext(const std::string &runId, const std::string &configVersion, unsigned int seed);
 std::string auditLogStatus();
 bool auditLogHealthy();
-} // namespace ui
+} // namespace tools
 
-#endif // UI_AUDIT_LOG_H
+#endif // TOOLS_AUDIT_LOG_H

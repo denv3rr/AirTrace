@@ -107,3 +107,16 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-101 | REQ-INT-021 | TEST | Run scenario/test flow with auto-visual mode cycling enabled. | Modes cycle deterministically and align to evaluated tracking modes. |
 | V-102 | REQ-INT-022 | DEMO | Enable multi-mode visualization in a scenario run. | Concurrent mode views show contributors, confidence, and denial reasons. |
 | V-103 | REQ-INT-023 | INSPECTION | Review UI interface contract versioning and compatibility checks. | Interface contract is versioned and changes are backward-compatible. |
+| V-104 | REQ-INT-024 | DEMO | Render platform-specific UI extensions on at least one official adapter surface. | Adapter-defined fields appear with units and error behavior. |
+| V-105 | REQ-MOD-001; REQ-MOD-002 | TEST | Build and run core/tools/UI without adapters, then build an adapter independently. | Modules build and operate independently without missing dependencies. |
+| V-106 | REQ-MOD-003 | INSPECTION | Review module dependency declarations and link graph. | No undeclared cross-module dependencies exist. |
+| V-107 | REQ-MOD-004 | TEST | Attempt to load an adapter with an incompatible interface version. | Activation fails closed with explicit reason code. |
+| V-108 | REQ-MOD-005 | TEST | Register a third-party adapter that passes contract, safety, and security gates. | Adapter activates without additional restrictions. |
+| V-109 | REQ-ADP-001 | INSPECTION | Review official adapter list and build targets. | Official adapters exist for each required platform profile. |
+| V-110 | REQ-ADP-002; REQ-ADP-003 | INSPECTION | Review adapter capability declarations and UI mappings. | Capabilities/UI extensions are declared with units and mapped to surfaces. |
+| V-111 | REQ-ADP-004; REQ-SAFE-012 | TEST | Inject adapter health/data failure during a run. | Safe-state entry with explicit denial and audit log. |
+| V-112 | REQ-ADP-005 | INSPECTION | Review adapter design notes for environmental and human factors guidance. | Notes cover MIL-STD-810H and MIL-STD-1472H/2525 as applicable. |
+| V-113 | REQ-SEC-012; REQ-CFG-010; REQ-ADP-006 | TEST | Attempt to load unsigned or unknown adapter; load a signed allowlisted adapter. | Unknown/unsigned adapters denied; allowlisted adapters load when configured and manifest hash matches allowlist. |
+| V-114 | REQ-SYS-020 | INSPECTION | Verify config and audit logging I/O are owned by tools; core has no file or wall-clock I/O. | Core I/O scan passes; tools provide config/audit interfaces. |
+| V-115 | REQ-ADP-007 | INSPECTION | Review adapter SDK skeleton headers and build templates. | SDK skeleton exists and is versioned. |
+| V-116 | REQ-CFG-011 | TEST | Load config with adapter registry paths missing or invalid, then with valid overrides. | Missing/invalid paths fail closed; valid overrides load allowlisted manifest. |

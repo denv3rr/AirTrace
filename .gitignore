@@ -32,9 +32,18 @@
 *.app
 
 /build
+/adapters/**/build/
+/adapters/**/dist/
+/adapters/**/out/
+/adapters/**/bin/
+/adapters/**/obj/
+/adapters/**/logs/
+/adapters/**/log/
 simulation_history.txt
 test_logs.txt
 audit_log*.jsonl
+adapter_audit_log*.jsonl
+adapter_log*.jsonl
 *.log
 *.tmp
 *.trace

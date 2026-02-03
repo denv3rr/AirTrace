@@ -78,6 +78,17 @@ Schema version: 1.0
 - provenance.unknown_action (string): optional; default "deny".
   - Allowed: deny, hold.
 
+## Adapter and UI Surface
+- adapter.id (string): optional; default empty (no adapter).
+  - Allowed: adapter identifiers registered in the adapter allowlist.
+- adapter.version (string): optional; default empty.
+  - Required when adapter.id is set.
+- adapter.manifest_path (string): optional; default empty (uses official manifest path when adapter.id is official).
+- For non-official adapter ids, adapter.manifest_path is required.
+- adapter.allowlist_path (string): optional; default empty (uses `adapters/allowlist.json`).
+- ui.surface (string): optional; default "tui".
+  - Allowed: tui, cockpit, remote_operator, c2.
+
 ## Dataset Tiers
 - dataset.celestial.tier (string): optional; default "minimal".
   - Allowed: minimal, standard, extended.

@@ -38,3 +38,4 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-032 | Eligibility evaluation fails open due to missing policy/provenance inputs, enabling unsafe mode activation. | Critical | Occasional | Deny-by-default eligibility, explicit safe-state entry, audit logging. | V-095, V-097, V-098 |
 | HZ-033 | Stale or unverifiable authorization policy yields incorrect eligibility decisions. | Critical | Occasional | Policy provenance verification, version gating, deny-by-default. | V-097, V-099 |
 | HZ-034 | Operator cannot interpret eligibility denial causes, leading to unsafe manual override attempts. | Critical | Occasional | Explicit reason codes and recovery guidance in UI/TUI. | V-100 |
+| HZ-035 | Adapter malfunction or incompatible interface yields unsafe data or UI ambiguity. | Critical | Occasional | Signed allowlisted adapters, versioned contracts, safe-state on adapter failure, explicit UI validation. | V-111, V-113 |

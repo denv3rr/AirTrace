@@ -1,0 +1,50 @@
+{
+  "adapter.id": "space",
+  "adapter.version": "1.0.0",
+  "adapter.contract_version": "1.0.0",
+  "ui.contract_version": "1.0.0",
+  "core.compatibility.min": "1.0.0",
+  "core.compatibility.max": "1.0.0",
+  "tools.compatibility.min": "1.0.0",
+  "tools.compatibility.max": "1.0.0",
+  "ui.compatibility.min": "1.0.0",
+  "ui.compatibility.max": "1.0.0",
+  "capabilities": [
+    {
+      "id": "orbit_altitude",
+      "description": "Orbital altitude estimate",
+      "units": "meters",
+      "range_min": 160000,
+      "range_max": 2000000,
+      "error_behavior": "hold"
+    },
+    {
+      "id": "sun_angle",
+      "description": "Sun angle to platform",
+      "units": "deg",
+      "range_min": 0,
+      "range_max": 180,
+      "error_behavior": "hold"
+    }
+  ],
+  "ui_extensions": [
+    {
+      "field_id": "space.orbit_altitude",
+      "type": "number",
+      "units": "meters",
+      "range_min": 160000,
+      "range_max": 2000000,
+      "error_behavior": "hold",
+      "surfaces": ["tui", "c2"]
+    },
+    {
+      "field_id": "space.sun_angle",
+      "type": "number",
+      "units": "deg",
+      "range_min": 0,
+      "range_max": 180,
+      "error_behavior": "hold",
+      "surfaces": ["tui", "c2"]
+    }
+  ]
+}

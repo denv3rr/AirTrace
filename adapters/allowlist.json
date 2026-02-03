@@ -1,0 +1,67 @@
+{
+  "entries": [
+    {
+      "adapter.id": "air",
+      "adapter.version": "1.0.0",
+      "signature.hash": "0FDCC3D82EDEA719E78BE3935D3BECCC3FC89F206E9FFD885C5DD3FD2246E04B",
+      "signature.algorithm": "sha256",
+      "approved_by": "airtrace_srr",
+      "approval_date": "2026-02-03",
+      "allowed_surfaces": ["tui", "cockpit", "remote_operator", "c2"]
+    },
+    {
+      "adapter.id": "fixed_site",
+      "adapter.version": "1.0.0",
+      "signature.hash": "3C42AEF1C88BD59E67B97A02315B7A1F8CAD8B5E4DA6C8E04BB53598413B9A71",
+      "signature.algorithm": "sha256",
+      "approved_by": "airtrace_srr",
+      "approval_date": "2026-02-03",
+      "allowed_surfaces": ["tui", "cockpit", "remote_operator", "c2"]
+    },
+    {
+      "adapter.id": "ground",
+      "adapter.version": "1.0.0",
+      "signature.hash": "7847707245E9C6C8064516F27DB6840D125443088A62DB4AAA1DDE69FAC5FF92",
+      "signature.algorithm": "sha256",
+      "approved_by": "airtrace_srr",
+      "approval_date": "2026-02-03",
+      "allowed_surfaces": ["tui", "cockpit", "remote_operator", "c2"]
+    },
+    {
+      "adapter.id": "handheld",
+      "adapter.version": "1.0.0",
+      "signature.hash": "114D8F2D54B048992CBD53030A4010B6DED76A72131EC4DC8F6A2586ADF27245",
+      "signature.algorithm": "sha256",
+      "approved_by": "airtrace_srr",
+      "approval_date": "2026-02-03",
+      "allowed_surfaces": ["tui", "cockpit", "remote_operator", "c2"]
+    },
+    {
+      "adapter.id": "maritime",
+      "adapter.version": "1.0.0",
+      "signature.hash": "FAB1556C54BFB45885903FA54274909A21E2176C6AFD14E67C81CF6B65603731",
+      "signature.algorithm": "sha256",
+      "approved_by": "airtrace_srr",
+      "approval_date": "2026-02-03",
+      "allowed_surfaces": ["tui", "cockpit", "remote_operator", "c2"]
+    },
+    {
+      "adapter.id": "space",
+      "adapter.version": "1.0.0",
+      "signature.hash": "E1D55A60FADEB391B76A4E41A8076278CFBB854FE4A5BAF9A4F56891A3F6159F",
+      "signature.algorithm": "sha256",
+      "approved_by": "airtrace_srr",
+      "approval_date": "2026-02-03",
+      "allowed_surfaces": ["tui", "cockpit", "remote_operator", "c2"]
+    },
+    {
+      "adapter.id": "subsea",
+      "adapter.version": "1.0.0",
+      "signature.hash": "C984EB9A3BCCE62891EAEAB8E9D05F907464F0A7EFD49A41A66BE0F2961AB4DD",
+      "signature.algorithm": "sha256",
+      "approved_by": "airtrace_srr",
+      "approval_date": "2026-02-03",
+      "allowed_surfaces": ["tui", "cockpit", "remote_operator", "c2"]
+    }
+  ]
+}
