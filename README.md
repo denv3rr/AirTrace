@@ -1,6 +1,6 @@
 # AirTrace
 
-[Overview](#overview) | [Safety](#safety-and-fail-closed-behavior) | [Quick Start](#quick-start) | [Build and Run](#build-and-run) | [Config](#configuration-notes) | [Documentation](#documentation) | [Status](#status) | [seperet.com](https://seperet.com)
+[Overview](#overview) | [Safety](#safety-and-fail-closed-behavior) | [Quick Start](#quick-start) | [Build and Run](#build-and-run) | [Config](#configuration-notes) | [Documentation](#documentation) | [Sources](https://github.com/denv3rr/AirTrace/blob/main/sources_menu.md) | [seperet.com](https://seperet.com)
 
 ## Overview
 AirTrace is a tool for deterministic evaluation of mode switching logic with
