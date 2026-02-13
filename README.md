@@ -1,15 +1,26 @@
 # AirTrace
 
-Deterministic tracking and platform-interface validation tool with a fail-closed safety posture.
+> [!NOTE]
+> Work in progress.
 
-AirTrace is built for teams that need one operator surface to test platform behavior, adapter compatibility, mode decisions, and integration outputs across multiple profiles (air, ground, maritime, space, handheld, fixed-site, subsea).
+A deterministic tracking and interface testing tool for a variety of platforms and contexts. Design is intended for user-created modules and tests with standardized data structuring. You do not need to modify existing source code to run baseline checks.
 
-## Who This Is For
-- Engineers validating sensor/mode logic under deterministic conditions.
-- Operators/test teams running repeatable platform workbench checks.
-- Integrators consuming a stable machine-readable output envelope.
+Built for researchers that need one operator surface to test platform behavior, adapter compatibility, mode decisions, and integration outputs across multiple profiles (air, ground, maritime, space, handheld, fixed-site, subsea).
 
-If you have never coded before: start with **Quick Start** below, then use the **Main Menu** in the app. You do not need to modify source code to run baseline checks.
+<details>
+  <summary>More</summary>
+  
+  <br>
+  
+  For (but not limited to):
+  - Engineers validating sensor/mode logic under deterministic conditions.
+  - Operators/test teams running repeatable platform workbench checks.
+  - Integrators consuming a stable machine-readable output envelope.
+ 
+</details>
+
+Contact:
+- https://seperet.com/contact
 
 ## Project Stack
 - Language: C++17
@@ -32,7 +43,7 @@ If you have never coded before: start with **Quick Start** below, then use the *
 - Adapter manifest/allowlist validation.
 - Versioned external I/O envelope for cross-system integration.
 
-## Safety and Security Model
+## Safety
 - Fail closed by default on invalid/missing data.
 - External inputs are validated and schema-checked.
 - Authorization/provenance/policy denials are surfaced with recovery guidance.
@@ -89,4 +100,6 @@ If you have never coded before: start with **Quick Start** below, then use the *
 
 ## External Sources and Standards
 - Standards and references list: `sources_menu.md`
-- Public project site: https://seperet.com
+
+## Contact
+- https://seperet.com/contact
