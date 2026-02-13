@@ -15,6 +15,7 @@ This document is intentionally context-agnostic: tracker, ISR-style platform tes
 - Operator entry path is implemented via `Front-View Display Workbench` in `src/ui/menu.cpp`.
 - External envelope now carries front-view telemetry via `include/core/external_io_envelope.h` and `src/ui/simulation.cpp`.
 - Deterministic tests are present in `tests/front_view_display.cpp`, `tests/ui_status.cpp`, and harness integration flow tests.
+- Stage-1 contract hardening is implemented for deterministic frame timestamp, frame age, latency-stage breakdown, stream identity, and stabilization/gimbal metadata with fail-closed validation paths.
 
 ## Designated Workstreams
 - Team A (`core/tools`): config and safety/security gate enforcement for `front_view.*` keys and fail-closed behavior.
@@ -228,15 +229,21 @@ Algorithms are selected by profile and latency budget; no single algorithm is fo
 
 ## Candidate Configuration Additions
 - `front_view.enabled`
-- `front_view.cycle.enabled`
-- `front_view.cycle.order`
-- `front_view.cycle.interval_seconds`
-- `front_view.mode.default`
-- `front_view.render.max_latency_ms`
-- `front_view.palette.*`
-- `front_view.thermal.*`
-- `front_view.proximity_2d.*`
-- `front_view.proximity_3d.*`
+- `front_view.display_families`
+- `front_view.auto_cycle.enabled`
+- `front_view.auto_cycle.order`
+- `front_view.auto_cycle.interval_ms`
+- `front_view.render.latency_budget_ms`
+- `front_view.proximity.max_range_m`
+- `front_view.frame.max_age_ms`
+- `front_view.frame.min_confidence`
+- `front_view.multi_view.max_streams`
+- `front_view.multi_view.stream_ids`
+- `front_view.stabilization.enabled`
+- `front_view.stabilization.mode`
+- `front_view.gimbal.enabled`
+- `front_view.gimbal.max_yaw_rate_deg_s`
+- `front_view.gimbal.max_pitch_rate_deg_s`
 - `front_view.spoof.*`
 - `front_view.threading.*`
 

@@ -60,7 +60,7 @@ Inputs:
 Outputs:
 - Operator prompts, status banners, and denial guidance.
 - Versioned external I/O envelope records for interoperable platform test exchange.
-- Front-view telemetry fields (mode/state/frame/latency/drop/provenance/auth) in the external I/O envelope.
+- Front-view telemetry fields (mode/state/frame/source/stream/timestamp/frame-age/latency-breakdown/stabilization/gimbal/drop/provenance/auth) in the external I/O envelope.
 
 ## Adapter Contract
 Adapter responsibilities:

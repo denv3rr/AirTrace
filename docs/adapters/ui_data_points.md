@@ -47,7 +47,8 @@ The envelope schema is versioned and backward-compatible.
 | mode.active | Active mode/source. | none | enumerated | Unknown -> reject payload. |
 | mode.contributors[] | Active contributors list. | none | list | Unknown source IDs -> reject payload. |
 | sensors[] | Per-sensor health/freshness/confidence records. | mixed | per field | Missing sensor id -> reject payload. |
-| front_view.* | Front-view display mode/state/frame/latency/drop/provenance/auth telemetry. | mixed | per field | Invalid or unknown front-view fields -> reject payload. |
+| front_view.* | Front-view display mode/state/frame/source/stream/timestamp/frame-age/latency-breakdown/stabilization/gimbal/drop/provenance/auth telemetry. | mixed | per field | Invalid or unknown front-view fields -> reject payload. |
+| front_view_streams[] | Per-stream front-view telemetry for concurrent views. | mixed | per field | Missing stream id or inconsistent stream metadata -> reject payload. |
 | status.* | Authorization, provenance, logging, adapter status and reasons. | none | stable IDs/text | Unknown mandatory status -> reject payload. |
 
 ## Adapter Extension Rules

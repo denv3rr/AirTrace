@@ -334,6 +334,31 @@ bool isValidFrontViewMotion(const std::string &value)
            value == "static";
 }
 
+bool isValidFrontViewStabilizationMode(const std::string &value)
+{
+    return value == "off" ||
+           value == "eis" ||
+           value == "gimbal_lock" ||
+           value == "hybrid";
+}
+
+bool isValidFrontViewStreamId(const std::string &value)
+{
+    if (value.empty())
+    {
+        return false;
+    }
+    for (char ch : value)
+    {
+        const unsigned char uch = static_cast<unsigned char>(ch);
+        if (!(std::islower(uch) || std::isdigit(uch) || ch == '_' || ch == '-'))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 void setIssue(ConfigResult &result, const std::string &key, const std::string &message)
 {
     result.ok = false;
@@ -528,6 +553,15 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "front_view.auto_cycle.order") config.frontView.autoCycleOrder = splitList(value);
     else if (key == "front_view.render.latency_budget_ms" && toDouble(value, dval)) config.frontView.renderLatencyBudgetMs = dval;
     else if (key == "front_view.proximity.max_range_m" && toDouble(value, dval)) config.frontView.proximityMaxRangeMeters = dval;
+    else if (key == "front_view.frame.max_age_ms" && toDouble(value, dval)) config.frontView.frameMaxAgeMs = dval;
+    else if (key == "front_view.frame.min_confidence" && toDouble(value, dval)) config.frontView.frameMinConfidence = dval;
+    else if (key == "front_view.multi_view.max_streams" && toInt(value, ival)) config.frontView.maxConcurrentViews = ival;
+    else if (key == "front_view.multi_view.stream_ids") config.frontView.streamIds = splitList(value);
+    else if (key == "front_view.stabilization.enabled" && toBool(value, bval)) config.frontView.stabilizationEnabled = bval;
+    else if (key == "front_view.stabilization.mode") config.frontView.stabilizationMode = toLower(trim(value));
+    else if (key == "front_view.gimbal.enabled" && toBool(value, bval)) config.frontView.gimbalEnabled = bval;
+    else if (key == "front_view.gimbal.max_yaw_rate_deg_s" && toDouble(value, dval)) config.frontView.gimbalMaxYawRateDegPerSec = dval;
+    else if (key == "front_view.gimbal.max_pitch_rate_deg_s" && toDouble(value, dval)) config.frontView.gimbalMaxPitchRateDegPerSec = dval;
     else if (key == "front_view.spoof.enabled" && toBool(value, bval)) config.frontView.spoofEnabled = bval;
     else if (key == "front_view.spoof.pattern") config.frontView.spoofPattern = toLower(trim(value));
     else if (key == "front_view.spoof.motion_profile") config.frontView.spoofMotionProfile = toLower(trim(value));
@@ -1013,6 +1047,53 @@ void validateConfig(ConfigResult &result)
     }
     validateRange(result, "front_view.render.latency_budget_ms", config.frontView.renderLatencyBudgetMs, 0.0, 5000.0, false, true);
     validateRange(result, "front_view.proximity.max_range_m", config.frontView.proximityMaxRangeMeters, 0.0, 1e6, false, true);
+    validateRange(result, "front_view.frame.max_age_ms", config.frontView.frameMaxAgeMs, 0.0, 10000.0, false, true);
+    validateRange(result, "front_view.frame.min_confidence", config.frontView.frameMinConfidence, 0.0, 1.0);
+    validateRange(result, "front_view.multi_view.max_streams", static_cast<double>(config.frontView.maxConcurrentViews), 1.0, 16.0);
+    if (config.frontView.streamIds.empty())
+    {
+        setIssue(result, "front_view.multi_view.stream_ids", "must include at least one stream id");
+    }
+    else
+    {
+        std::unordered_map<std::string, int> streamCounts;
+        for (const auto &streamId : config.frontView.streamIds)
+        {
+            if (!isValidFrontViewStreamId(streamId))
+            {
+                setIssue(result, "front_view.multi_view.stream_ids", "invalid stream id: " + streamId);
+                break;
+            }
+            streamCounts[streamId]++;
+            if (streamCounts[streamId] > 1)
+            {
+                setIssue(result, "front_view.multi_view.stream_ids", "duplicate stream id: " + streamId);
+                break;
+            }
+        }
+    }
+    if (static_cast<int>(config.frontView.streamIds.size()) < config.frontView.maxConcurrentViews)
+    {
+        setIssue(result, "front_view.multi_view.max_streams", "max_streams exceeds configured stream_ids");
+    }
+    if (!isValidFrontViewStabilizationMode(config.frontView.stabilizationMode))
+    {
+        setIssue(result, "front_view.stabilization.mode", "invalid stabilization mode");
+    }
+    if (config.frontView.stabilizationEnabled && config.frontView.stabilizationMode == "off")
+    {
+        setIssue(result, "front_view.stabilization.mode", "must not be off when stabilization is enabled");
+    }
+    if (!config.frontView.stabilizationEnabled && config.frontView.stabilizationMode != "off")
+    {
+        setIssue(result, "front_view.stabilization.mode", "must be off when stabilization is disabled");
+    }
+    validateRange(result, "front_view.gimbal.max_yaw_rate_deg_s", config.frontView.gimbalMaxYawRateDegPerSec, 0.0, 720.0, false, true);
+    validateRange(result, "front_view.gimbal.max_pitch_rate_deg_s", config.frontView.gimbalMaxPitchRateDegPerSec, 0.0, 720.0, false, true);
+    if (config.frontView.gimbalEnabled && !config.frontView.stabilizationEnabled)
+    {
+        setIssue(result, "front_view.gimbal.enabled", "stabilization must be enabled when gimbal is enabled");
+    }
     if (!isValidFrontViewPattern(config.frontView.spoofPattern))
     {
         setIssue(result, "front_view.spoof.pattern", "invalid spoof pattern");
@@ -1035,6 +1116,10 @@ void validateConfig(ConfigResult &result)
     if (!config.frontView.threadingEnabled && config.frontView.threadingMaxWorkers != 1)
     {
         setIssue(result, "front_view.threading.max_workers", "must be 1 when front_view.threading.enabled is false");
+    }
+    if (!config.frontView.threadingEnabled && config.frontView.maxConcurrentViews > 1)
+    {
+        setIssue(result, "front_view.multi_view.max_streams", "must be 1 when front_view.threading.enabled is false");
     }
 }
 } // namespace

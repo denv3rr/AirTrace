@@ -34,8 +34,8 @@ university sources with unclassified guidance.
 19) UI interface contracts are versioned and backward-compatible; updates preserve semantics and layout invariants.
 20) A single UI surface provides an operator-invoked platform workbench for profile-specific validation; profile cycling is optional per run.
 21) External integration outputs use a machine-readable, versioned envelope with stable field semantics and reason codes.
-22) Front-view display workbench provides deterministic mode rendering and cycle behavior with explicit mode/state/latency/drop indicators.
-23) Front-view denials (invalid mode/source/spoof config) must be fail-closed with explicit recovery guidance.
+22) Front-view display workbench provides deterministic mode rendering and cycle behavior with explicit mode/state/source/stream/timestamp/frame-age/latency/drop indicators.
+23) Front-view denials (invalid mode/source/spoof/stream/stabilization/gimbal config) must be fail-closed with explicit recovery guidance.
 
 ## Implementation Notes
 - Menus must show platform profile, active source, and authorization

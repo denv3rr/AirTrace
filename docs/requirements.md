@@ -117,6 +117,8 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-INT-027: The system shall emit a versioned, machine-readable external I/O envelope with platform, mode, sensor, adapter, authorization, provenance, and determinism fields for cross-system integration.
 - REQ-INT-028: The UI shall provide a front-view display workbench with deterministic EO/IR/proximity display families and operator-selectable single-mode or cycle-all execution from one session.
 - REQ-INT-029: Front-view rendering shall fail closed on invalid, unauthorized, or unavailable frame sources and shall provide explicit denial reasons and recovery guidance.
+- REQ-INT-030: Front-view frame records shall include deterministic timestamp, frame age, acquisition/processing/render latency breakdown, source identifier, stream identifier/index/count, confidence, provenance, and authorization status for every rendered frame.
+- REQ-INT-031: Front-view display workflows shall support stabilized and swiveling multi-view operation with explicit stabilization and gimbal state metadata, and shall fail closed on invalid stream, stabilization, or gimbal settings.
 
 ## Modularity Requirements (MOD)
 - REQ-MOD-001: The system shall provide independently buildable modules for core, tools, UI, and adapters with explicit, versioned interfaces.
@@ -148,6 +150,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-CFG-011: Configuration shall support adapter manifest and allowlist paths with deterministic defaults for official adapters; missing or invalid adapter registry paths shall fail closed.
 - REQ-CFG-012: Configuration shall define adapter runtime compatibility context versions and allowlist freshness limits; invalid semantic versions or freshness limits are errors.
 - REQ-CFG-013: Configuration shall define `front_view.*` display, cycle, spoof, latency, proximity, security, and threading controls with explicit units/ranges/defaults; invalid values shall fail closed.
+- REQ-CFG-014: Configuration shall define `front_view.frame.*`, `front_view.multi_view.*`, `front_view.stabilization.*`, and `front_view.gimbal.*` controls with explicit units/ranges/inter-field constraints; invalid or incompatible combinations shall fail closed.
 
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).

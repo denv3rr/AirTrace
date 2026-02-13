@@ -1,6 +1,7 @@
 #ifndef CORE_EXTERNAL_IO_ENVELOPE_H
 #define CORE_EXTERNAL_IO_ENVELOPE_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -43,8 +44,14 @@ struct ExternalIoFrontViewRecord
     std::string activeMode;
     std::string viewState;
     std::string frameId;
+    std::string sourceId;
     std::string sensorType;
     unsigned int sequence = 0;
+    std::uint64_t timestampMs = 0;
+    double frameAgeMs = 0.0;
+    double acquisitionLatencyMs = 0.0;
+    double processingLatencyMs = 0.0;
+    double renderLatencyMs = 0.0;
     double latencyMs = 0.0;
     int droppedFrames = 0;
     std::string dropReason;
@@ -52,6 +59,32 @@ struct ExternalIoFrontViewRecord
     double confidence = 0.0;
     std::string provenance;
     std::string authStatus;
+    std::string streamId;
+    unsigned int streamIndex = 0;
+    unsigned int streamCount = 0;
+    unsigned int maxConcurrentViews = 0;
+    std::string stabilizationMode;
+    bool stabilizationActive = false;
+    double stabilizationErrorDeg = 0.0;
+    double gimbalYawDeg = 0.0;
+    double gimbalPitchDeg = 0.0;
+    double gimbalYawRateDegPerSec = 0.0;
+    double gimbalPitchRateDegPerSec = 0.0;
+};
+
+struct ExternalIoFrontViewStreamRecord
+{
+    std::string streamId;
+    std::string activeMode;
+    std::string frameId;
+    std::string sensorType;
+    unsigned int sequence = 0;
+    std::uint64_t timestampMs = 0;
+    double frameAgeMs = 0.0;
+    double latencyMs = 0.0;
+    double confidence = 0.0;
+    std::string stabilizationMode;
+    bool stabilizationActive = false;
 };
 
 struct ExternalIoEnvelope
@@ -68,6 +101,7 @@ struct ExternalIoEnvelope
     std::string adapterReason;
     std::string adapterFields;
     ExternalIoFrontViewRecord frontView{};
+    std::vector<ExternalIoFrontViewStreamRecord> frontViewStreams{};
 };
 
 #endif // CORE_EXTERNAL_IO_ENVELOPE_H

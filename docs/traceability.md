@@ -106,6 +106,8 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-INT-027 | docs/adapters/ui_data_points.md; docs/module_contracts.md | include/core/external_io_envelope.h; src/ui/simulation.cpp; include/ui/simulation.h | V-124 |
 | REQ-INT-028 | docs/front_view_display_architecture.md; docs/ui_standards.md | src/ui/menu.cpp; src/ui/front_view.cpp; include/ui/front_view.h; src/ui/simulation.cpp; include/ui/simulation.h | V-125 |
 | REQ-INT-029 | docs/front_view_display_architecture.md; docs/security_threat_model.md | src/ui/front_view.cpp; include/ui/front_view.h; src/ui/alerts.cpp; src/ui/menu.cpp; src/ui/simulation.cpp | V-126 |
+| REQ-INT-030 | docs/front_view_display_architecture.md; docs/adapters/ui_data_points.md | include/ui/front_view.h; src/ui/front_view.cpp; include/core/external_io_envelope.h; src/ui/simulation.cpp; include/ui/simulation.h | V-128 |
+| REQ-INT-031 | docs/front_view_display_architecture.md; docs/operational_concepts.md; docs/security_threat_model.md | src/ui/front_view.cpp; src/tools/sim_config_loader.cpp; include/core/sim_config.h; src/ui/alerts.cpp | V-129 |
 | REQ-MOD-001 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | TBD (planned: build targets per module) | V-105 |
 | REQ-MOD-002 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | TBD (planned: build targets per module) | V-105 |
 | REQ-MOD-003 | docs/architecture.md; docs/module_contracts.md | TBD (planned: build graph enforcement) | V-106 |
@@ -131,6 +133,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-CFG-011 | docs/config_schema.md; docs/adapter_contract.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h; src/tools/adapter_registry_loader.cpp | V-116 |
 | REQ-CFG-012 | docs/config_schema.md; docs/adapter_contract.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h | V-117 |
 | REQ-CFG-013 | docs/config_schema.md; docs/front_view_display_architecture.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h | V-127 |
+| REQ-CFG-014 | docs/config_schema.md; docs/front_view_display_architecture.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h; src/ui/front_view.cpp | V-130 |
 | REQ-VER-001 | docs/verification_plan.md | docs/verification_plan.md | V-030 |
 | REQ-VER-002 | docs/verification_plan.md | tests/core_sanity.cpp | V-031 |
 | REQ-VER-003 | docs/verification_plan.md | scripts/test.ps1; scripts/test.sh | V-068 |

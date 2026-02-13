@@ -64,7 +64,7 @@ P4 -> P7 (audit events) -> D3 (logs)
 | --- | --- | --- | --- | --- | --- | --- |
 | UI/TUI Input | Menu selections, scenario values | TB-1 | Input validation, fail-closed on unavailable input, explicit recovery prompts | REQ-SEC-001, REQ-INT-003, REQ-INT-006 | HZ-007, HZ-034 | V-026, V-066, V-069, V-100 |
 | External I/O Envelope Export | Platform, mode, sensor, adapter, policy status fields | TB-1 | Versioned schema, deterministic metadata, explicit reason codes, fail-closed profile validation before export | REQ-INT-025, REQ-INT-026, REQ-INT-027 | HZ-007, HZ-035 | V-122, V-123, V-124 |
-| Front-View Display Pipeline | Front-view mode selection, spoofed frame generation, render telemetry | TB-1 | Contract validation for spoof source and mode/cycle inputs, fail-closed denial on invalid frame source, deterministic status export | REQ-INT-028, REQ-INT-029, REQ-CFG-013 | HZ-036 | V-125, V-126, V-127 |
+| Front-View Display Pipeline | Front-view mode selection, spoofed frame generation, stream/stabilization/gimbal metadata, render telemetry | TB-1 | Contract validation for spoof source, stream IDs, stabilization/gimbal settings, and mode/cycle inputs; fail-closed denial on invalid frame source or timing/stabilization state; deterministic status export | REQ-INT-028, REQ-INT-029, REQ-INT-030, REQ-INT-031, REQ-CFG-013, REQ-CFG-014 | HZ-036, HZ-037 | V-125, V-126, V-127, V-128, V-129, V-130 |
 | Config Parser | Config files, policy, profiles | TB-1 | Schema validation, unknown key rejection, version checks | REQ-CFG-001, REQ-FUNC-003, REQ-CFG-012 | HZ-001, HZ-028 | V-009, V-027, V-028, V-117 |
 | Sensor Adapters | Sensor measurements | TB-1 | Measurement contract, health/confidence checks, freshness gating | REQ-FUNC-001, REQ-FUNC-012 | HZ-002, HZ-003, HZ-022 | V-007, V-050, V-062 |
 | Dataset Validator | Celestial dataset + hashes | TB-1 | Hash verification, versioned artifacts, deny on mismatch | REQ-FUNC-009, REQ-SAFE-005 | HZ-011, HZ-026 | V-035, V-036 |
@@ -88,6 +88,7 @@ P4 -> P7 (audit events) -> D3 (logs)
 - Spoofing: unauthorized sensor contribution into fused modes.
 - Tampering: forced ladder reordering or fusion weight manipulation.
 - Spoofing: forged front-view frame sources or unsupported rendering mode injection.
+- Tampering: manipulated multi-view stream IDs or stabilization/gimbal metadata to misrepresent scene geometry.
 
 ## Mitigations and Controls
 - Input validation and schema enforcement (REQ-SEC-001, REQ-CFG-001).
@@ -108,8 +109,8 @@ P4 -> P7 (audit events) -> D3 (logs)
 - Ladder ordering and fusion parameters locked to signed configs with audit logging.
 - Test harness input paths are compile-time gated and require explicit runtime enablement.
 - External I/O envelope exports are schema-versioned and only produced after profile suite validation.
-- Front-view display rendering requires valid `front_view.*` config inputs and fails closed on invalid/unsupported mode, source, or spoof parameters.
-- Front-view output includes explicit latency/drop telemetry and denial reason codes for operator recovery.
+- Front-view display rendering requires valid `front_view.*` config inputs and fails closed on invalid/unsupported mode, stream ID, stabilization, gimbal, source, or spoof parameters.
+- Front-view output includes deterministic timestamp/age telemetry, latency breakdown, stream identity, stabilization/gimbal status, and denial reason codes for operator recovery.
 
 ## Required Security Artifacts
 - STIG baseline for target OS.

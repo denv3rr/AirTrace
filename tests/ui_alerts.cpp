@@ -21,6 +21,12 @@ void runAlertsTests()
     assert(denialRecoveryHint("front_view_sensor_unavailable") == "enable front_view.spoof.enabled or connect an approved sensor feed");
     assert(denialRecoveryHint("front_view_mode_invalid") == "verify front_view.display_families and auto_cycle.order values");
     assert(denialRecoveryHint("front_view_spoof_invalid") == "verify front_view.spoof.pattern and front_view.spoof.motion_profile");
+    assert(denialRecoveryHint("front_view_frame_contract_invalid") == "verify front_view.frame.* contract settings and retry");
+    assert(denialRecoveryHint("front_view_stream_invalid") == "verify front_view.multi_view.stream_ids and max_streams settings");
+    assert(denialRecoveryHint("front_view_stabilization_invalid") == "verify front_view.stabilization.* settings");
+    assert(denialRecoveryHint("front_view_gimbal_invalid") == "verify front_view.gimbal.* limits and stabilization settings");
+    assert(denialRecoveryHint("front_view_frame_stale") == "reduce source latency or increase front_view.frame.max_age_ms");
+    assert(denialRecoveryHint("front_view_confidence_low") == "improve source quality or reduce front_view.frame.min_confidence");
     assert(denialRecoveryHint("render_latency_exceeded") == "reduce front-view pipeline load or increase latency budget");
     assert(denialRecoveryHint("unknown_reason") == "review logs and configuration");
 

@@ -171,7 +171,9 @@ void renderStatusBanner(const std::string &context)
               << " adapter_status=" << (status.adapterStatus.empty() ? "unknown" : status.adapterStatus)
               << " adapter_reason=" << (status.adapterReason.empty() ? "none" : status.adapterReason)
               << " front_view_mode=" << (status.frontViewMode.empty() ? "none" : status.frontViewMode)
+              << " front_view_stream=" << (status.frontViewStreamId.empty() ? "none" : status.frontViewStreamId)
               << " front_view_seq=" << status.frontViewSequence
+              << " front_view_ts_ms=" << status.frontViewTimestampMs
               << " front_view_latency_ms=" << status.frontViewLatencyMs
               << " log=" << (status.loggingStatus.empty() ? "unknown" : status.loggingStatus)
               << " sensors=" << (status.sensorStatusSummary.empty() ? "none" : status.sensorStatusSummary)
@@ -203,10 +205,23 @@ void renderStatusBanner(const std::string &context)
         std::cout << "FRONT VIEW: mode=" << status.frontViewMode
                   << " state=" << (status.frontViewViewState.empty() ? "none" : status.frontViewViewState)
                   << " frame=" << (status.frontViewFrameId.empty() ? "none" : status.frontViewFrameId)
+                  << " source=" << (status.frontViewSourceId.empty() ? "none" : status.frontViewSourceId)
                   << " sensor=" << (status.frontViewSensorType.empty() ? "none" : status.frontViewSensorType)
+                  << " stream=" << (status.frontViewStreamId.empty() ? "none" : status.frontViewStreamId)
+                  << " stream_index=" << status.frontViewStreamIndex
+                  << " stream_count=" << status.frontViewStreamCount
+                  << " frame_age_ms=" << status.frontViewFrameAgeMs
+                  << " acquire_ms=" << status.frontViewAcquisitionLatencyMs
+                  << " process_ms=" << status.frontViewProcessingLatencyMs
+                  << " render_ms=" << status.frontViewRenderLatencyMs
                   << " latency_ms=" << status.frontViewLatencyMs
                   << " dropped=" << status.frontViewDroppedFrames
                   << " drop_reason=" << (status.frontViewDropReason.empty() ? "none" : status.frontViewDropReason)
+                  << " stab_mode=" << (status.frontViewStabilizationMode.empty() ? "none" : status.frontViewStabilizationMode)
+                  << " stab_active=" << (status.frontViewStabilizationActive ? "y" : "n")
+                  << " stab_error_deg=" << status.frontViewStabilizationErrorDeg
+                  << " gimbal_yaw_deg=" << status.frontViewGimbalYawDeg
+                  << " gimbal_pitch_deg=" << status.frontViewGimbalPitchDeg
                   << " spoof=" << (status.frontViewSpoofActive ? "y" : "n")
                   << " conf=" << status.frontViewConfidence
                   << "\n";
@@ -532,8 +547,14 @@ void setFrontViewStatusDefaults(const SimConfig &config)
     uiContext.status.frontViewMode = config.frontView.displayFamilies.empty() ? "none" : config.frontView.displayFamilies.front();
     uiContext.status.frontViewViewState = "none";
     uiContext.status.frontViewFrameId.clear();
+    uiContext.status.frontViewSourceId.clear();
     uiContext.status.frontViewSensorType.clear();
     uiContext.status.frontViewSequence = 0;
+    uiContext.status.frontViewTimestampMs = 0;
+    uiContext.status.frontViewFrameAgeMs = 0.0;
+    uiContext.status.frontViewAcquisitionLatencyMs = 0.0;
+    uiContext.status.frontViewProcessingLatencyMs = 0.0;
+    uiContext.status.frontViewRenderLatencyMs = 0.0;
     uiContext.status.frontViewLatencyMs = 0.0;
     uiContext.status.frontViewDroppedFrames = 0;
     uiContext.status.frontViewDropReason.clear();
@@ -541,6 +562,44 @@ void setFrontViewStatusDefaults(const SimConfig &config)
     uiContext.status.frontViewConfidence = 0.0;
     uiContext.status.frontViewProvenance = config.frontView.spoofEnabled ? "simulation" : "unknown";
     uiContext.status.frontViewAuthStatus = config.frontView.enabled ? "authorized" : "not_configured";
+    uiContext.status.frontViewStreamId = config.frontView.streamIds.empty() ? "primary" : config.frontView.streamIds.front();
+    uiContext.status.frontViewStreamIndex = 0;
+    uiContext.status.frontViewStreamCount = 0;
+    uiContext.status.frontViewMaxConcurrentViews = static_cast<unsigned int>(config.frontView.maxConcurrentViews);
+    uiContext.status.frontViewStabilizationMode = config.frontView.stabilizationMode;
+    uiContext.status.frontViewStabilizationActive = config.frontView.stabilizationEnabled;
+    uiContext.status.frontViewStabilizationErrorDeg = 0.0;
+    uiContext.status.frontViewGimbalYawDeg = 0.0;
+    uiContext.status.frontViewGimbalPitchDeg = 0.0;
+    uiContext.status.frontViewGimbalYawRateDegPerSec = 0.0;
+    uiContext.status.frontViewGimbalPitchRateDegPerSec = 0.0;
+    uiContext.status.frontViewStreams.clear();
+}
+
+void upsertFrontViewStreamRecord(const FrontViewFrameResult &frame)
+{
+    ExternalIoFrontViewStreamRecord record;
+    record.streamId = frame.streamId;
+    record.activeMode = frame.activeMode;
+    record.frameId = frame.frameId;
+    record.sensorType = frame.sensorType;
+    record.sequence = frame.sequence;
+    record.timestampMs = frame.timestampMs;
+    record.frameAgeMs = frame.frameAgeMs;
+    record.latencyMs = frame.latencyMs;
+    record.confidence = frame.confidence;
+    record.stabilizationMode = frame.stabilizationMode;
+    record.stabilizationActive = frame.stabilizationActive;
+
+    for (auto &existing : uiContext.status.frontViewStreams)
+    {
+        if (existing.streamId == record.streamId)
+        {
+            existing = record;
+            return;
+        }
+    }
+    uiContext.status.frontViewStreams.push_back(record);
 }
 
 void applyFrontViewFrameResult(const FrontViewFrameResult &frame)
@@ -548,8 +607,14 @@ void applyFrontViewFrameResult(const FrontViewFrameResult &frame)
     uiContext.status.frontViewMode = frame.activeMode;
     uiContext.status.frontViewViewState = frame.viewState;
     uiContext.status.frontViewFrameId = frame.frameId;
+    uiContext.status.frontViewSourceId = frame.sourceId;
     uiContext.status.frontViewSensorType = frame.sensorType;
     uiContext.status.frontViewSequence = frame.sequence;
+    uiContext.status.frontViewTimestampMs = frame.timestampMs;
+    uiContext.status.frontViewFrameAgeMs = frame.frameAgeMs;
+    uiContext.status.frontViewAcquisitionLatencyMs = frame.acquisitionLatencyMs;
+    uiContext.status.frontViewProcessingLatencyMs = frame.processingLatencyMs;
+    uiContext.status.frontViewRenderLatencyMs = frame.renderLatencyMs;
     uiContext.status.frontViewLatencyMs = frame.latencyMs;
     uiContext.status.frontViewDroppedFrames += frame.droppedFrames;
     uiContext.status.frontViewDropReason = frame.dropReason;
@@ -557,6 +622,18 @@ void applyFrontViewFrameResult(const FrontViewFrameResult &frame)
     uiContext.status.frontViewConfidence = frame.confidence;
     uiContext.status.frontViewProvenance = frame.provenance;
     uiContext.status.frontViewAuthStatus = frame.authStatus;
+    uiContext.status.frontViewStreamId = frame.streamId;
+    uiContext.status.frontViewStreamIndex = frame.streamIndex;
+    uiContext.status.frontViewStreamCount = frame.streamCount;
+    uiContext.status.frontViewMaxConcurrentViews = frame.maxConcurrentViews;
+    uiContext.status.frontViewStabilizationMode = frame.stabilizationMode;
+    uiContext.status.frontViewStabilizationActive = frame.stabilizationActive;
+    uiContext.status.frontViewStabilizationErrorDeg = frame.stabilizationErrorDeg;
+    uiContext.status.frontViewGimbalYawDeg = frame.gimbalYawDeg;
+    uiContext.status.frontViewGimbalPitchDeg = frame.gimbalPitchDeg;
+    uiContext.status.frontViewGimbalYawRateDegPerSec = frame.gimbalYawRateDegPerSec;
+    uiContext.status.frontViewGimbalPitchRateDegPerSec = frame.gimbalPitchRateDegPerSec;
+    upsertFrontViewStreamRecord(frame);
 }
 
 void updateStatusFromConfig(const SimConfig &config)
@@ -858,11 +935,14 @@ bool uiRunFrontViewDisplaySuite(bool cycleAllModes, std::string &reason)
         return false;
     }
 
+    uiContext.status.frontViewDroppedFrames = 0;
+    uiContext.status.frontViewDropReason.clear();
+    uiContext.status.frontViewStreams.clear();
     for (const auto &frame : frames)
     {
         applyFrontViewFrameResult(frame);
         setUiActiveSource(frame.activeMode);
-        setUiContributors({frame.sensorType});
+        setUiContributors({frame.sensorType + ":" + frame.streamId});
         setUiModeConfidence(frame.confidence);
         setUiDecisionReason("front_view_cycle");
     }
@@ -938,8 +1018,14 @@ ExternalIoEnvelope uiBuildExternalIoEnvelope()
     envelope.frontView.activeMode = uiContext.status.frontViewMode;
     envelope.frontView.viewState = uiContext.status.frontViewViewState;
     envelope.frontView.frameId = uiContext.status.frontViewFrameId;
+    envelope.frontView.sourceId = uiContext.status.frontViewSourceId;
     envelope.frontView.sensorType = uiContext.status.frontViewSensorType;
     envelope.frontView.sequence = uiContext.status.frontViewSequence;
+    envelope.frontView.timestampMs = uiContext.status.frontViewTimestampMs;
+    envelope.frontView.frameAgeMs = uiContext.status.frontViewFrameAgeMs;
+    envelope.frontView.acquisitionLatencyMs = uiContext.status.frontViewAcquisitionLatencyMs;
+    envelope.frontView.processingLatencyMs = uiContext.status.frontViewProcessingLatencyMs;
+    envelope.frontView.renderLatencyMs = uiContext.status.frontViewRenderLatencyMs;
     envelope.frontView.latencyMs = uiContext.status.frontViewLatencyMs;
     envelope.frontView.droppedFrames = uiContext.status.frontViewDroppedFrames;
     envelope.frontView.dropReason = uiContext.status.frontViewDropReason;
@@ -947,6 +1033,18 @@ ExternalIoEnvelope uiBuildExternalIoEnvelope()
     envelope.frontView.confidence = uiContext.status.frontViewConfidence;
     envelope.frontView.provenance = uiContext.status.frontViewProvenance;
     envelope.frontView.authStatus = uiContext.status.frontViewAuthStatus;
+    envelope.frontView.streamId = uiContext.status.frontViewStreamId;
+    envelope.frontView.streamIndex = uiContext.status.frontViewStreamIndex;
+    envelope.frontView.streamCount = uiContext.status.frontViewStreamCount;
+    envelope.frontView.maxConcurrentViews = uiContext.status.frontViewMaxConcurrentViews;
+    envelope.frontView.stabilizationMode = uiContext.status.frontViewStabilizationMode;
+    envelope.frontView.stabilizationActive = uiContext.status.frontViewStabilizationActive;
+    envelope.frontView.stabilizationErrorDeg = uiContext.status.frontViewStabilizationErrorDeg;
+    envelope.frontView.gimbalYawDeg = uiContext.status.frontViewGimbalYawDeg;
+    envelope.frontView.gimbalPitchDeg = uiContext.status.frontViewGimbalPitchDeg;
+    envelope.frontView.gimbalYawRateDegPerSec = uiContext.status.frontViewGimbalYawRateDegPerSec;
+    envelope.frontView.gimbalPitchRateDegPerSec = uiContext.status.frontViewGimbalPitchRateDegPerSec;
+    envelope.frontViewStreams = uiContext.status.frontViewStreams;
     return envelope;
 }
 
@@ -1005,16 +1103,56 @@ std::string uiBuildExternalIoEnvelopeJson()
     out << "\"active_mode\":\"" << jsonEscape(envelope.frontView.activeMode) << "\",";
     out << "\"view_state\":\"" << jsonEscape(envelope.frontView.viewState) << "\",";
     out << "\"frame_id\":\"" << jsonEscape(envelope.frontView.frameId) << "\",";
+    out << "\"source_id\":\"" << jsonEscape(envelope.frontView.sourceId) << "\",";
     out << "\"sensor_type\":\"" << jsonEscape(envelope.frontView.sensorType) << "\",";
     out << "\"sequence\":" << envelope.frontView.sequence << ",";
+    out << "\"timestamp_ms\":" << envelope.frontView.timestampMs << ",";
+    out << "\"frame_age_ms\":" << std::fixed << std::setprecision(3) << envelope.frontView.frameAgeMs << ",";
+    out << "\"acquisition_latency_ms\":" << std::fixed << std::setprecision(3) << envelope.frontView.acquisitionLatencyMs << ",";
+    out << "\"processing_latency_ms\":" << std::fixed << std::setprecision(3) << envelope.frontView.processingLatencyMs << ",";
+    out << "\"render_latency_ms\":" << std::fixed << std::setprecision(3) << envelope.frontView.renderLatencyMs << ",";
     out << "\"latency_ms\":" << std::fixed << std::setprecision(3) << envelope.frontView.latencyMs << ",";
     out << "\"dropped_frames\":" << envelope.frontView.droppedFrames << ",";
     out << "\"drop_reason\":\"" << jsonEscape(envelope.frontView.dropReason) << "\",";
     out << "\"spoof_active\":" << (envelope.frontView.spoofActive ? "true" : "false") << ",";
     out << "\"confidence\":" << std::fixed << std::setprecision(3) << envelope.frontView.confidence << ",";
     out << "\"provenance\":\"" << jsonEscape(envelope.frontView.provenance) << "\",";
-    out << "\"auth_status\":\"" << jsonEscape(envelope.frontView.authStatus) << "\"";
+    out << "\"auth_status\":\"" << jsonEscape(envelope.frontView.authStatus) << "\",";
+    out << "\"stream_id\":\"" << jsonEscape(envelope.frontView.streamId) << "\",";
+    out << "\"stream_index\":" << envelope.frontView.streamIndex << ",";
+    out << "\"stream_count\":" << envelope.frontView.streamCount << ",";
+    out << "\"max_concurrent_views\":" << envelope.frontView.maxConcurrentViews << ",";
+    out << "\"stabilization_mode\":\"" << jsonEscape(envelope.frontView.stabilizationMode) << "\",";
+    out << "\"stabilization_active\":" << (envelope.frontView.stabilizationActive ? "true" : "false") << ",";
+    out << "\"stabilization_error_deg\":" << std::fixed << std::setprecision(3) << envelope.frontView.stabilizationErrorDeg << ",";
+    out << "\"gimbal_yaw_deg\":" << std::fixed << std::setprecision(3) << envelope.frontView.gimbalYawDeg << ",";
+    out << "\"gimbal_pitch_deg\":" << std::fixed << std::setprecision(3) << envelope.frontView.gimbalPitchDeg << ",";
+    out << "\"gimbal_yaw_rate_deg_s\":" << std::fixed << std::setprecision(3) << envelope.frontView.gimbalYawRateDegPerSec << ",";
+    out << "\"gimbal_pitch_rate_deg_s\":" << std::fixed << std::setprecision(3) << envelope.frontView.gimbalPitchRateDegPerSec;
     out << "},";
+    out << "\"front_view_streams\":[";
+    for (size_t idx = 0; idx < envelope.frontViewStreams.size(); ++idx)
+    {
+        const auto &stream = envelope.frontViewStreams[idx];
+        out << "{";
+        out << "\"stream_id\":\"" << jsonEscape(stream.streamId) << "\",";
+        out << "\"active_mode\":\"" << jsonEscape(stream.activeMode) << "\",";
+        out << "\"frame_id\":\"" << jsonEscape(stream.frameId) << "\",";
+        out << "\"sensor_type\":\"" << jsonEscape(stream.sensorType) << "\",";
+        out << "\"sequence\":" << stream.sequence << ",";
+        out << "\"timestamp_ms\":" << stream.timestampMs << ",";
+        out << "\"frame_age_ms\":" << std::fixed << std::setprecision(3) << stream.frameAgeMs << ",";
+        out << "\"latency_ms\":" << std::fixed << std::setprecision(3) << stream.latencyMs << ",";
+        out << "\"confidence\":" << std::fixed << std::setprecision(3) << stream.confidence << ",";
+        out << "\"stabilization_mode\":\"" << jsonEscape(stream.stabilizationMode) << "\",";
+        out << "\"stabilization_active\":" << (stream.stabilizationActive ? "true" : "false");
+        out << "}";
+        if (idx + 1 < envelope.frontViewStreams.size())
+        {
+            out << ",";
+        }
+    }
+    out << "],";
     out << "\"status\":{";
     out << "\"disqualified_sources\":\"" << jsonEscape(envelope.disqualifiedSources) << "\",";
     out << "\"lockout_status\":\"" << jsonEscape(envelope.lockoutStatus) << "\",";

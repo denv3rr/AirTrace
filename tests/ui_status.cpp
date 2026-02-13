@@ -77,7 +77,18 @@ void runStatusTests()
         "provenance.unknown_action=deny\n"
         "front_view.enabled=true\n"
         "front_view.spoof.enabled=true\n"
-        "front_view.display_families=eo_gray,ir_white_hot,proximity_2d\n");
+        "front_view.display_families=eo_gray,ir_white_hot,proximity_2d\n"
+        "front_view.frame.max_age_ms=500\n"
+        "front_view.frame.min_confidence=0.3\n"
+        "front_view.multi_view.max_streams=2\n"
+        "front_view.multi_view.stream_ids=primary,turret\n"
+        "front_view.stabilization.enabled=true\n"
+        "front_view.stabilization.mode=gimbal_lock\n"
+        "front_view.gimbal.enabled=true\n"
+        "front_view.gimbal.max_yaw_rate_deg_s=220\n"
+        "front_view.gimbal.max_pitch_rate_deg_s=160\n"
+        "front_view.threading.enabled=true\n"
+        "front_view.threading.max_workers=2\n");
     bool loaded = initializeUiContext(configPath.string());
     assert(loaded);
     ModeDecisionDetail detail = sampleDetail();
@@ -151,12 +162,27 @@ void runStatusTests()
     const UiStatus &frontViewStatus = getUiStatus();
     assert(!frontViewStatus.frontViewMode.empty());
     assert(frontViewStatus.frontViewSpoofActive);
+    assert(frontViewStatus.frontViewTimestampMs <= 1000000ULL);
+    assert(frontViewStatus.frontViewFrameAgeMs >= 0.0);
+    assert(!frontViewStatus.frontViewSourceId.empty());
+    assert(!frontViewStatus.frontViewStreamId.empty());
+    assert(frontViewStatus.frontViewStreamCount >= 1);
+    assert(frontViewStatus.frontViewMaxConcurrentViews == 2U);
+    assert(!frontViewStatus.frontViewStreams.empty());
     const ExternalIoEnvelope frontViewEnvelope = uiBuildExternalIoEnvelope();
     assert(!frontViewEnvelope.frontView.activeMode.empty());
     assert(frontViewEnvelope.frontView.spoofActive);
+    assert(!frontViewEnvelope.frontView.sourceId.empty());
+    assert(frontViewEnvelope.frontView.timestampMs <= 1000000ULL);
+    assert(!frontViewEnvelope.frontView.streamId.empty());
+    assert(frontViewEnvelope.frontView.streamCount >= 1);
+    assert(frontViewEnvelope.frontView.maxConcurrentViews == 2U);
+    assert(!frontViewEnvelope.frontViewStreams.empty());
     const std::string frontViewJson = uiBuildExternalIoEnvelopeJson();
     assert(frontViewJson.find("\"front_view\"") != std::string::npos);
     assert(frontViewJson.find("\"active_mode\":\"" + frontViewEnvelope.frontView.activeMode + "\"") != std::string::npos);
+    assert(frontViewJson.find("\"source_id\":\"" + frontViewEnvelope.frontView.sourceId + "\"") != std::string::npos);
+    assert(frontViewJson.find("\"front_view_streams\"") != std::string::npos);
 
     std::filesystem::remove(configPath);
 }

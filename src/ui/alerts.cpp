@@ -68,6 +68,30 @@ std::string denialRecoveryHint(const std::string &denialReason)
     {
         return "set front_view.spoof.rate_hz within allowed range";
     }
+    if (denialReason == "front_view_frame_contract_invalid")
+    {
+        return "verify front_view.frame.* contract settings and retry";
+    }
+    if (denialReason == "front_view_stream_invalid")
+    {
+        return "verify front_view.multi_view.stream_ids and max_streams settings";
+    }
+    if (denialReason == "front_view_stabilization_invalid")
+    {
+        return "verify front_view.stabilization.* settings";
+    }
+    if (denialReason == "front_view_gimbal_invalid")
+    {
+        return "verify front_view.gimbal.* limits and stabilization settings";
+    }
+    if (denialReason == "front_view_frame_stale")
+    {
+        return "reduce source latency or increase front_view.frame.max_age_ms";
+    }
+    if (denialReason == "front_view_confidence_low")
+    {
+        return "improve source quality or reduce front_view.frame.min_confidence";
+    }
     if (denialReason == "render_latency_exceeded")
     {
         return "reduce front-view pipeline load or increase latency budget";

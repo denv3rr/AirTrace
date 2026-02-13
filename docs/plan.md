@@ -380,4 +380,5 @@ Per-Change Exit Criteria:
 - Plugin authorization/signing gate is now enforced through `plugin.*` schema + core validator with fail-closed reason codes for unauthorized, non-allowlisted, or signature-invalid activation attempts.
 - Front-view display architecture draft is now documented in `docs/front_view_display_architecture.md` with EO/IR mode families, deterministic cycling, spoofed-input strategy, and 2D/3D proximity rendering plan.
 - Front-view display scaffolding is now implemented with a dedicated UI module, menu workbench flow, `front_view.*` config validation, and external I/O envelope telemetry fields.
+- Front-view Stage-1 contract hardening is implemented with deterministic frame timestamp/age, latency-stage breakdown, stream identity, stabilization/gimbal metadata, and fail-closed validation for invalid frame/stream/stabilization/gimbal conditions.
 - Remaining gaps still open: platform profile inheritance usage beyond config/UI in broader core workflows, full UI/TUI audit outside the menu/test flows, provenance tagging for sim vs operational inputs, and broader documentation simplification.

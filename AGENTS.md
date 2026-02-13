@@ -82,6 +82,7 @@ Create and maintain these files under `docs/` before adding features:
 - Disagreement lockout count available via `fusion.max_disagreement_count`.
 - Residual alignment window configured via `fusion.max_residual_age_seconds`.
 - Front-view config namespace added under `front_view.*` with spoof/cycle/threading controls.
+- Front-view contract now includes deterministic frame timestamp/age, latency-stage breakdown, stream IDs, and stabilization/gimbal metadata fields.
 - Next session: add sliding per-sensor residual buffers for time-aligned checks.
 - Next session: add edge-case fixtures for GNSS spoofing, IMU bias drift, magnetometer interference.
 - Next session: add live TUI warning banners for denial reasons and recovery steps.

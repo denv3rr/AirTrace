@@ -172,6 +172,15 @@ struct SimConfig
         std::vector<std::string> autoCycleOrder = {"eo_gray", "ir_white_hot", "ir_black_hot", "proximity_2d"};
         double renderLatencyBudgetMs = 120.0;
         double proximityMaxRangeMeters = 2000.0;
+        double frameMaxAgeMs = 250.0;
+        double frameMinConfidence = 0.50;
+        int maxConcurrentViews = 1;
+        std::vector<std::string> streamIds = {"primary"};
+        bool stabilizationEnabled = true;
+        std::string stabilizationMode = "gimbal_lock";
+        bool gimbalEnabled = false;
+        double gimbalMaxYawRateDegPerSec = 180.0;
+        double gimbalMaxPitchRateDegPerSec = 120.0;
 
         bool spoofEnabled = false;
         std::string spoofPattern = "gradient";

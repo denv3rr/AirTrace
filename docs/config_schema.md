@@ -115,7 +115,7 @@ Schema version: 1.0
 
 ## Front-View Display
 - front_view.enabled (bool): optional; default false.
-- front_view.display_families (list): optional; default `eo_gray`.
+- front_view.display_families (list): optional; default `eo_gray,ir_white_hot,ir_black_hot,proximity_2d`.
   - Allowed: eo_gray, ir_white_hot, ir_black_hot, ir_false_color, fusion_overlay, proximity_2d, proximity_3d.
   - Must include at least one family.
 - front_view.auto_cycle.enabled (bool): optional; default false.
@@ -126,6 +126,14 @@ Schema version: 1.0
   - Every entry must also exist in front_view.display_families.
 - front_view.render.latency_budget_ms (milliseconds): optional; default 120; range (0, 5000].
 - front_view.proximity.max_range_m (meters): optional; default 2000; range (0, 1e6].
+- front_view.frame.max_age_ms (milliseconds): optional; default 250; range (0, 10000].
+- front_view.frame.min_confidence (0-1): optional; default 0.50; range [0, 1].
+- front_view.multi_view.max_streams (count): optional; default 1; range [1, 16].
+- front_view.multi_view.stream_ids (list): optional; default `primary`.
+  - Format: comma-separated stream identifiers.
+  - Allowed characters per id: `a-z`, `0-9`, `_`, `-`.
+  - IDs must be unique.
+  - `front_view.multi_view.max_streams` must be less than or equal to the number of configured stream IDs.
 - front_view.spoof.enabled (bool): optional; default false.
   - Requires front_view.enabled=true.
 - front_view.spoof.pattern (string): optional; default gradient.
@@ -135,9 +143,19 @@ Schema version: 1.0
 - front_view.spoof.seed (uint32): optional; default 42; range [0, 4294967295].
 - front_view.spoof.rate_hz (hertz): optional; default 15; range (0, 240].
 - front_view.security.require_signed_assets (bool): optional; default true.
+- front_view.stabilization.enabled (bool): optional; default true.
+- front_view.stabilization.mode (string): optional; default `gimbal_lock`.
+  - Allowed: off, eis, gimbal_lock, hybrid.
+  - Must not be `off` when stabilization is enabled.
+  - Must be `off` when stabilization is disabled.
+- front_view.gimbal.enabled (bool): optional; default false.
+- front_view.gimbal.max_yaw_rate_deg_s (degrees/second): optional; default 180; range (0, 720].
+- front_view.gimbal.max_pitch_rate_deg_s (degrees/second): optional; default 120; range (0, 720].
+  - Gimbal mode requires stabilization enabled.
 - front_view.threading.enabled (bool): optional; default false.
 - front_view.threading.max_workers (count): optional; default 1; range [1, 64].
   - Must be `1` when front_view.threading.enabled=false.
+  - `front_view.multi_view.max_streams` must also be `1` when front_view.threading.enabled=false.
 
 ## External I/O Output Contract (Runtime)
 - The external I/O envelope is a runtime output contract, not a config input.

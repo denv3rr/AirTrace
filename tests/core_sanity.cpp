@@ -437,10 +437,37 @@ int main()
         "front_view.enabled=true\n"
         "front_view.display_families=eo_gray\n"
         "front_view.threading.enabled=false\n"
-        "front_view.threading.max_workers=4\n");
+        "front_view.threading.max_workers=4\n"
+        "front_view.multi_view.max_streams=2\n"
+        "front_view.multi_view.stream_ids=primary,turret\n");
     ConfigResult invalidFrontViewThreadingResult = loadSimConfig(invalidFrontViewThreadingConfig.string());
     assert(!invalidFrontViewThreadingResult.ok);
     std::filesystem::remove(invalidFrontViewThreadingConfig);
+
+    std::filesystem::path invalidFrontViewStabilizationConfig = writeConfigFile(
+        "airtrace_front_view_invalid_stabilization.cfg",
+        "config.version=1.0\n"
+        "front_view.enabled=true\n"
+        "front_view.display_families=eo_gray\n"
+        "front_view.stabilization.enabled=true\n"
+        "front_view.stabilization.mode=off\n");
+    ConfigResult invalidFrontViewStabilizationResult = loadSimConfig(invalidFrontViewStabilizationConfig.string());
+    assert(!invalidFrontViewStabilizationResult.ok);
+    std::filesystem::remove(invalidFrontViewStabilizationConfig);
+
+    std::filesystem::path invalidFrontViewGimbalConfig = writeConfigFile(
+        "airtrace_front_view_invalid_gimbal.cfg",
+        "config.version=1.0\n"
+        "front_view.enabled=true\n"
+        "front_view.display_families=eo_gray\n"
+        "front_view.stabilization.enabled=false\n"
+        "front_view.stabilization.mode=off\n"
+        "front_view.gimbal.enabled=true\n"
+        "front_view.gimbal.max_yaw_rate_deg_s=180\n"
+        "front_view.gimbal.max_pitch_rate_deg_s=120\n");
+    ConfigResult invalidFrontViewGimbalResult = loadSimConfig(invalidFrontViewGimbalConfig.string());
+    assert(!invalidFrontViewGimbalResult.ok);
+    std::filesystem::remove(invalidFrontViewGimbalConfig);
 
     std::filesystem::path validFrontViewConfig = writeConfigFile(
         "airtrace_front_view_valid.cfg",
@@ -452,6 +479,15 @@ int main()
         "front_view.auto_cycle.order=eo_gray,ir_white_hot,proximity_2d\n"
         "front_view.render.latency_budget_ms=120\n"
         "front_view.proximity.max_range_m=1500\n"
+        "front_view.frame.max_age_ms=500\n"
+        "front_view.frame.min_confidence=0.3\n"
+        "front_view.multi_view.max_streams=2\n"
+        "front_view.multi_view.stream_ids=primary,turret\n"
+        "front_view.stabilization.enabled=true\n"
+        "front_view.stabilization.mode=gimbal_lock\n"
+        "front_view.gimbal.enabled=true\n"
+        "front_view.gimbal.max_yaw_rate_deg_s=220\n"
+        "front_view.gimbal.max_pitch_rate_deg_s=160\n"
         "front_view.spoof.enabled=true\n"
         "front_view.spoof.pattern=gradient\n"
         "front_view.spoof.motion_profile=linear\n"

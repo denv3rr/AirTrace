@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <atomic>
+#include <cstdint>
 
 #include "core/Object.h"
 #include "core/external_io_envelope.h"
@@ -51,8 +52,14 @@ struct UiStatus
     std::string frontViewMode;
     std::string frontViewViewState;
     std::string frontViewFrameId;
+    std::string frontViewSourceId;
     std::string frontViewSensorType;
     unsigned int frontViewSequence = 0;
+    std::uint64_t frontViewTimestampMs = 0;
+    double frontViewFrameAgeMs = 0.0;
+    double frontViewAcquisitionLatencyMs = 0.0;
+    double frontViewProcessingLatencyMs = 0.0;
+    double frontViewRenderLatencyMs = 0.0;
     double frontViewLatencyMs = 0.0;
     int frontViewDroppedFrames = 0;
     std::string frontViewDropReason;
@@ -60,6 +67,18 @@ struct UiStatus
     double frontViewConfidence = 0.0;
     std::string frontViewProvenance;
     std::string frontViewAuthStatus;
+    std::string frontViewStreamId;
+    unsigned int frontViewStreamIndex = 0;
+    unsigned int frontViewStreamCount = 0;
+    unsigned int frontViewMaxConcurrentViews = 0;
+    std::string frontViewStabilizationMode;
+    bool frontViewStabilizationActive = false;
+    double frontViewStabilizationErrorDeg = 0.0;
+    double frontViewGimbalYawDeg = 0.0;
+    double frontViewGimbalPitchDeg = 0.0;
+    double frontViewGimbalYawRateDegPerSec = 0.0;
+    double frontViewGimbalPitchRateDegPerSec = 0.0;
+    std::vector<ExternalIoFrontViewStreamRecord> frontViewStreams;
     unsigned int seed = 0;
     bool deterministic = true;
 };

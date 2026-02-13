@@ -28,7 +28,8 @@
 - Multi-mode visualization may present multiple eligible modes concurrently when configured.
 - Platform workbench provides operator-invoked profile selection and optional profile cycling from a single UI session.
 - Front-view workbench provides EO/IR/proximity display families with deterministic spoof-input support when physical sensors are unavailable.
-- Front-view runs support both single-mode rendering and cycle-all rendering from one session.
+- Front-view runs support both single-mode rendering and cycle-all rendering from one session, including concurrent multi-view streams when configured.
+- Front-view displays support stabilized/swiveling camera contexts using explicit stabilization and gimbal metadata.
 
 ## Modularity and Interface Contracts
 - Core, tools, UI, and platform adapters are modular and independently deployable.
@@ -67,7 +68,7 @@
 - Lockout state with remaining steps and reason code.
 - Provenance status and policy authorization state.
 - Visual mode cycle status, including the current visual mode and its mapping to evaluated tracking modes.
-- Front-view status: active display family, view state (front/2d/3d), frame ID, sensor type, latency (ms), dropped-frame count, and drop reason.
+- Front-view status: active display family, view state (front/2d/3d), frame ID, source ID, stream ID/index/count, deterministic timestamp (ms), frame age (ms), acquisition/processing/render latency (ms), dropped-frame count, drop reason, stabilization state, and gimbal orientation/rates.
 - External I/O envelope status with version, platform profile, adapter status, and deterministic metadata fields.
 
 ## Concurrent Pipeline Operation
