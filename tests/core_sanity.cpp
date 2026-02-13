@@ -421,6 +421,49 @@ int main()
     assert(validPluginResult.ok);
     std::filesystem::remove(validPluginConfig);
 
+    std::filesystem::path invalidFrontViewModeConfig = writeConfigFile(
+        "airtrace_front_view_invalid_mode.cfg",
+        "config.version=1.0\n"
+        "front_view.enabled=true\n"
+        "front_view.display_families=eo_gray,invalid_mode\n"
+        "front_view.spoof.enabled=true\n");
+    ConfigResult invalidFrontViewModeResult = loadSimConfig(invalidFrontViewModeConfig.string());
+    assert(!invalidFrontViewModeResult.ok);
+    std::filesystem::remove(invalidFrontViewModeConfig);
+
+    std::filesystem::path invalidFrontViewThreadingConfig = writeConfigFile(
+        "airtrace_front_view_invalid_threading.cfg",
+        "config.version=1.0\n"
+        "front_view.enabled=true\n"
+        "front_view.display_families=eo_gray\n"
+        "front_view.threading.enabled=false\n"
+        "front_view.threading.max_workers=4\n");
+    ConfigResult invalidFrontViewThreadingResult = loadSimConfig(invalidFrontViewThreadingConfig.string());
+    assert(!invalidFrontViewThreadingResult.ok);
+    std::filesystem::remove(invalidFrontViewThreadingConfig);
+
+    std::filesystem::path validFrontViewConfig = writeConfigFile(
+        "airtrace_front_view_valid.cfg",
+        "config.version=1.0\n"
+        "front_view.enabled=true\n"
+        "front_view.display_families=eo_gray,ir_white_hot,proximity_2d\n"
+        "front_view.auto_cycle.enabled=true\n"
+        "front_view.auto_cycle.interval_ms=1000\n"
+        "front_view.auto_cycle.order=eo_gray,ir_white_hot,proximity_2d\n"
+        "front_view.render.latency_budget_ms=120\n"
+        "front_view.proximity.max_range_m=1500\n"
+        "front_view.spoof.enabled=true\n"
+        "front_view.spoof.pattern=gradient\n"
+        "front_view.spoof.motion_profile=linear\n"
+        "front_view.spoof.seed=42\n"
+        "front_view.spoof.rate_hz=20\n"
+        "front_view.security.require_signed_assets=true\n"
+        "front_view.threading.enabled=true\n"
+        "front_view.threading.max_workers=2\n");
+    ConfigResult validFrontViewResult = loadSimConfig(validFrontViewConfig.string());
+    assert(validFrontViewResult.ok);
+    std::filesystem::remove(validFrontViewConfig);
+
     const std::string manifestContent =
         "{\n"
         "  \"adapter.id\": \"custom_adapter\",\n"

@@ -5,7 +5,7 @@
 
 #include "core/Object.h"
 
-std::vector<Object> generateTargets(int count = 5, int maxCoord = 100);
+std::vector<Object> generateTargets(int count = 5, int maxCoord = 100, unsigned int seed = 42);
 float calculateHeatSignature(const Object &source, const Object &target);
 
 #endif // SIMULATION_UTILS_H

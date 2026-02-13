@@ -1,130 +1,92 @@
 # AirTrace
 
-[Overview](#overview) | [Safety](#safety-and-fail-closed-behavior) | [Quick Start](#quick-start) | [Build and Run](#build-and-run) | [Config](#configuration-notes) | [Documentation](#documentation) | [Sources](https://github.com/denv3rr/AirTrace/blob/main/sources_menu.md) | [seperet.com](https://seperet.com)
+Deterministic tracking and platform-interface validation tool with a fail-closed safety posture.
 
-## Overview
-AirTrace is a deterministic evaluation tool for mode switching logic with
-console interfaces, tests, and audit logging. It evaluates tracking behavior
-across platform contexts (air, ground, maritime, etc.).
+AirTrace is built for teams that need one operator surface to test platform behavior, adapter compatibility, mode decisions, and integration outputs across multiple profiles (air, ground, maritime, space, handheld, fixed-site, subsea).
 
-Simulation and test modes are used strictly for verification and training and
-are explicitly gated.
+## Who This Is For
+- Engineers validating sensor/mode logic under deterministic conditions.
+- Operators/test teams running repeatable platform workbench checks.
+- Integrators consuming a stable machine-readable output envelope.
 
-The system is modular by design: core, tools, UI, and adapters are separated.
-Core and tools are implemented as reusable library targets; UI is a thin app
-layer. Adapter contracts and SDK skeletons are defined, with official adapter
-implementations planned.
+If you have never coded before: start with **Quick Start** below, then use the **Main Menu** in the app. You do not need to modify source code to run baseline checks.
 
-Supported platforms: Windows, Linux, macOS
+## Project Stack
+- Language: C++17
+- Build system: CMake (3.10+)
+- Runtime UI: terminal UI (TUI)
+- Modules:
+  - `airtrace_core`: deterministic algorithms and mode logic
+  - `airtrace_tools`: config parsing, policy gates, audit logging, adapter registry loading
+  - `AirTrace`: operator-facing UI app
 
-Build tools: C++17, CMake 3.10+
+## Core Capabilities
+- Deterministic simulation and test execution (seeded RNG + fixed timestep).
+- Mode and fallback ladder evaluation with explicit deny reasons.
+- Platform workbench: single session validation for selected/all platform profiles.
+- Front-view display workbench scaffolding:
+  - EO/IR/proximity display families
+  - deterministic spoofed input path for test environments without physical sensors
+  - single-mode and cycle-all execution
+  - front-view telemetry exported in the external I/O envelope
+- Adapter manifest/allowlist validation.
+- Versioned external I/O envelope for cross-system integration.
 
-Core behavior:
-- Deterministic simulation with seeded RNG and fixed timesteps.
-- Mode management with a fallback ladder and safe-state behavior.
-- Sensor modeling for GNSS, IMU, radar, thermal, vision, lidar, magnetometer, baro, and celestial.
-- Platform profiles with controlled sensor permissions and dataset tiers.
-- Audit logging for mode/config changes with integrity chaining, health status reporting, and run/config identifiers.
-
-## Adapters and Modules
-Current build targets:
-- `airtrace_core` (core library)
-- `airtrace_tools` (config + audit logging I/O)
-- `AirTrace` (TUI application)
-
-Planned build targets:
-- `airtrace_ui` (UI library target)
-- `airtrace_adapter_<platform>` (official adapter modules)
-
-Official adapter profiles (initial set):
-- air
-- ground
-- maritime
-- space
-- handheld
-- fixed_site
-- subsea
-
-Adapter SDK skeleton: `adapters/sdk`
-Official adapter manifests + allowlist: `adapters/official` and `adapters/allowlist.json`.
-
-Official adapter implementations are planned; design notes live in `docs/adapters/`.
-Third-party adapters are accepted only when they pass contract validation,
-safety checks, and security authorization.
-
-## Safety and Fail-Closed Behavior
-- Invalid configs or missing datasets force hold mode.
-- Mode transitions enforce guard conditions and dwell times.
-- Degraded or conflicting inputs downgrade to safer sources.
-- Audit logging is required for operational runs; failure to initialize audit logging forces a safe exit.
+## Safety and Security Model
+- Fail closed by default on invalid/missing data.
+- External inputs are validated and schema-checked.
+- Authorization/provenance/policy denials are surfaced with recovery guidance.
+- Audit logging is required for operationally relevant actions.
 
 ## Quick Start
-- Clone with submodules: `git clone --recurse-submodules https://github.com/denv3rr/AirTrace`
-- Build: `./scripts/build.sh` (macOS/Linux) or `.\scripts\build.ps1` (Windows)
-- Run TUI: `./build/AirTrace` (Windows: `.\build\AirTrace.exe`)
+1. Clone with submodules:
+   - `git clone --recurse-submodules https://github.com/denv3rr/AirTrace`
+2. Build:
+   - Windows: `.\scripts\build.ps1`
+   - Linux/macOS: `./scripts/build.sh`
+3. Run:
+   - Windows: `.\build\AirTrace.exe`
+   - Linux/macOS: `./build/AirTrace`
+4. Run tests:
+   - Windows: `.\scripts\test.ps1`
+   - Linux/macOS: `./scripts/test.sh`
 
-## Build and Run
-Clone and update:
-- `git clone --recurse-submodules https://github.com/denv3rr/AirTrace`
-- `git submodule update --init --recursive`
-- Pull updates: `git pull --recurse-submodules`
+## Menu Guide (Operator View)
+- `Scenario Mode`: run operational-style flow checks.
+- `Test Mode`: run deterministic mode-specific tests.
+- `Platform Workbench`: validate one/all platform profiles and adapter status from one UI.
+- `Front-View Display Workbench`: validate EO/IR/proximity display modes with spoofed data and export front-view telemetry.
 
-Build:
-- `./scripts/build.sh` (macOS/Linux)
-- `.\scripts\build.ps1` (Windows)
+## Where To Go In The Repo
+- Core logic: `src/core/`, headers in `include/core/`
+- Tools/parsing/audit: `src/tools/`, headers in `include/tools/`
+- UI/TUI flows: `src/ui/`, headers in `include/ui/`
+- Tests: `tests/`
+- Design and compliance docs: `docs/`
 
-Run:
-- Main TUI: `./build/AirTrace` (Windows: `.\build\AirTrace.exe`)
-- CLI demo: `./build/AirTraceExample` (Windows: `.\build\AirTraceExample.exe`)
-- 3D sim demo: `./build/AirTraceSimExample configs/sim_default.cfg`
-
-Tests:
-- `./scripts/test.sh` (macOS/Linux)
-- `.\scripts\test.ps1` (Windows)
-
-Test harness (non-interactive, test-only):
-- Build runner: `.\build\AirTraceHarnessRunner.exe` (Windows) or `./build/AirTraceHarnessRunner` (macOS/Linux)
-- Enable: `AIRTRACE_TEST_HARNESS=1`
-- Command file: `AIRTRACE_HARNESS_COMMANDS=configs/harness_commands.txt`
-- Example commands: `docs/harness_commands.example.txt`
-- Audit logs: `audit_log.jsonl` (operational) and `audit_log_test.jsonl` (test harness) are generated locally and gitignored.
-
-TUI controls:
-- Up/Down to move, Space/Enter to select, Esc to go back/exit.
-- During active runs, type `x` then Enter to abort safely.
-
-## Configuration Notes
-- Configs are schema-validated and versioned; unknown keys are errors.
-- Policy defaults to deny network aids unless explicitly allowed.
-- Dataset tiers constrain celestial data size by platform profile.
-- Mode selection and scheduling use `mode.*`, `fusion.*`, and `scheduler.*` settings.
-- Lockout behavior uses `mode.max_stale_count`, `mode.max_low_confidence_count`, and `mode.lockout_steps`.
-- Residual checks use `fusion.disagreement_threshold`, `fusion.max_disagreement_count`, and `fusion.max_residual_age_seconds`.
-- Trend evaluation windows use `mode.history_window`.
-- Role permissions gate test modes, history viewing, and destructive actions.
-- Provenance policy keys configure allowed inputs and mixed-input handling (see `docs/config_schema.md`).
-- Adapter selection and UI surface keys are defined in `docs/config_schema.md`.
-- Adapter registry enforcement uses `adapter.manifest_path` and `adapter.allowlist_path` (defaults to `adapters/official/<id>/manifest.json` and `adapters/allowlist.json`).
-
-## Documentation
-- Architecture: `docs/architecture.md`
-- Adapter architecture: `docs/adapter_architecture.md`
-- Adapter contract: `docs/adapter_contract.md`
-- Adapter notes: `docs/adapters/README.md`
-- Module contracts: `docs/module_contracts.md`
+## Key Documentation
 - Requirements: `docs/requirements.md`
 - Verification plan: `docs/verification_plan.md`
-- Traceability: `docs/traceability.md`
+- Traceability matrix: `docs/traceability.md`
 - Hazard log: `docs/hazard_log.md`
 - Security threat model: `docs/security_threat_model.md`
-- Waivers: `docs/waivers.md`
-- Config schema: `docs/config_schema.md`
+- Configuration schema: `docs/config_schema.md`
 - Operational concepts: `docs/operational_concepts.md`
-- Navigation fallbacks: `docs/navigation_fallbacks.md`
-- Multi-modal switching design: `docs/multi_modal_switching_design.md`
-- Multi-modal switching implementation plan: `docs/multi_modal_switching_implementation_plan.md`
-- Edge case catalog: `docs/edge_case_catalog.md`
-- UI/TUI standards: `docs/ui_standards.md`
-- Test harness: `docs/test_harness.md`
-- Harness command example: `docs/harness_commands.example.txt`
-- Sources: `sources_menu.md`
+- UI standards: `docs/ui_standards.md`
+- Front-view architecture: `docs/front_view_display_architecture.md`
+- Plan and sequencing: `docs/plan.md`
+
+## Configuration Notes
+- Main config keys are documented in `docs/config_schema.md`.
+- Front-view scaffolding keys use the `front_view.*` namespace.
+- Unknown keys or invalid values are rejected.
+
+## Test Harness (Non-Interactive)
+- Enable harness:
+  - `AIRTRACE_TEST_HARNESS=1`
+  - `AIRTRACE_HARNESS_COMMANDS=configs/harness_commands.txt`
+- Example command format: `docs/harness_commands.example.txt`
+
+## External Sources and Standards
+- Standards and references list: `sources_menu.md`
+- Public project site: https://seperet.com

@@ -32,6 +32,10 @@ university sources with unclassified guidance.
 17) Scenario/test flows auto-cycle through visual modes aligned to evaluated tracking modes for rapid operator validation.
 18) Multi-mode visualization supports concurrent views with consistent labels and reason codes.
 19) UI interface contracts are versioned and backward-compatible; updates preserve semantics and layout invariants.
+20) A single UI surface provides an operator-invoked platform workbench for profile-specific validation; profile cycling is optional per run.
+21) External integration outputs use a machine-readable, versioned envelope with stable field semantics and reason codes.
+22) Front-view display workbench provides deterministic mode rendering and cycle behavior with explicit mode/state/latency/drop indicators.
+23) Front-view denials (invalid mode/source/spoof config) must be fail-closed with explicit recovery guidance.
 
 ## Implementation Notes
 - Menus must show platform profile, active source, and authorization
@@ -48,12 +52,22 @@ university sources with unclassified guidance.
   why higher-ranked sources are disqualified (policy, health, freshness).
 - Scenario and test flows must auto-switch visual mode panels to reflect
   the active or evaluated tracking modes in a deterministic sequence.
+- Platform workbench mode must allow both: selected-profile validation and
+  all-profile cycle validation from one UI session.
+- Platform workbench profile changes are operator-invoked; automatic cycling
+  is optional and should not be forced for every run.
+- Front-view workbench mode must allow both: single selected display rendering
+  and cycle-all display rendering from one UI session.
+- Front-view displays must expose textual mode/palette labels and latency/drop
+  telemetry; no color-only interpretation is permitted.
 - When multi-mode visualization is enabled, show each mode with its
   contributors, confidence, and denial reasons.
 - Adapter-defined UI extensions must follow the same validation, units,
   and recovery guidance rules as baseline fields.
 - UI interface contracts (fields, labels, layout invariants) must be
   versioned and remain backward-compatible to prevent breaking updates.
+- External I/O envelopes exported for integration must preserve a stable
+  schema version and deterministic metadata fields.
 - Inputs must be validated with bounds and handled safely on EOF or
   stream failure, including a logged exit when menu selection is unavailable.
 - Denial warnings should be visible in the main menu status area.

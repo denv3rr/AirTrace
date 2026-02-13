@@ -26,6 +26,10 @@ struct AdapterUiSnapshot
     std::string surface;
     std::string status;
     std::string reason;
+    std::string approvedBy;
+    std::string approvalDate;
+    std::string signatureAlgorithm;
+    std::string contextVersionSummary;
     std::vector<AdapterUiField> fields;
 };
 

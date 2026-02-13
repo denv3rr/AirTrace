@@ -2,7 +2,7 @@
 
 namespace
 {
-constexpr size_t kMainMenuOptionCount = 5;
+constexpr size_t kMainMenuOptionCount = 7;
 constexpr size_t kTestMenuOptionCount = 3;
 } // namespace
 
@@ -30,10 +30,14 @@ MainMenuAction resolveMainMenuAction(int selectedIndex, size_t optionCount)
     case 1:
         return MainMenuAction::TestMenu;
     case 2:
-        return MainMenuAction::ViewHistory;
+        return MainMenuAction::PlatformWorkbench;
     case 3:
-        return MainMenuAction::DeleteHistory;
+        return MainMenuAction::FrontViewWorkbench;
     case 4:
+        return MainMenuAction::ViewHistory;
+    case 5:
+        return MainMenuAction::DeleteHistory;
+    case 6:
         return MainMenuAction::Exit;
     default:
         return MainMenuAction::InputError;

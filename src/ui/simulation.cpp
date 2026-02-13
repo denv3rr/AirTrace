@@ -7,6 +7,7 @@
 #include "ui/tui.h"
 #include "ui/alerts.h"
 #include "ui/adapter_ui_mapping.h"
+#include "ui/front_view.h"
 #include "tools/audit_log.h"
 #include "tools/adapter_registry_loader.h"
 #include "tools/sim_config_loader.h"
@@ -16,12 +17,14 @@
 #include <iomanip>
 #include <thread>
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <random>
 #include <cctype>
 #include <algorithm>
+#include <set>
 #include <unordered_map>
 
 // Global vector to store simulation history
@@ -40,6 +43,7 @@ struct UiContext
     unsigned int seed = 42;
     std::mt19937 rng{seed};
     UiStatus status{};
+    std::vector<SensorUiSnapshot> lastSensors{};
 };
 
 UiContext uiContext{};
@@ -47,7 +51,8 @@ UiContext uiContext{};
 bool hasPermission(const std::string &permission)
 {
 #if defined(AIRTRACE_TEST_HARNESS)
-    if (permission == "test_mode" || permission == "simulation_history" || permission == "simulation_delete")
+    if (permission == "test_mode" || permission == "simulation_history" || permission == "simulation_delete" ||
+        permission == "platform_workbench" || permission == "front_view_workbench")
     {
         return true;
     }
@@ -164,6 +169,10 @@ void renderStatusBanner(const std::string &context)
               << " adapter=" << adapterLabel
               << " surface=" << (status.adapterSurface.empty() ? "tui" : status.adapterSurface)
               << " adapter_status=" << (status.adapterStatus.empty() ? "unknown" : status.adapterStatus)
+              << " adapter_reason=" << (status.adapterReason.empty() ? "none" : status.adapterReason)
+              << " front_view_mode=" << (status.frontViewMode.empty() ? "none" : status.frontViewMode)
+              << " front_view_seq=" << status.frontViewSequence
+              << " front_view_latency_ms=" << status.frontViewLatencyMs
               << " log=" << (status.loggingStatus.empty() ? "unknown" : status.loggingStatus)
               << " sensors=" << (status.sensorStatusSummary.empty() ? "none" : status.sensorStatusSummary)
               << " seed=" << status.seed
@@ -180,6 +189,27 @@ void renderStatusBanner(const std::string &context)
     if (!status.adapterFields.empty())
     {
         std::cout << "ADAPTER FIELDS: " << status.adapterFields << "\n";
+    }
+    if (!status.adapterApproval.empty())
+    {
+        std::cout << "ADAPTER APPROVAL: " << status.adapterApproval << "\n";
+    }
+    if (!status.adapterContext.empty())
+    {
+        std::cout << "ADAPTER CONTEXT: " << status.adapterContext << "\n";
+    }
+    if (!status.frontViewMode.empty() && status.frontViewMode != "none")
+    {
+        std::cout << "FRONT VIEW: mode=" << status.frontViewMode
+                  << " state=" << (status.frontViewViewState.empty() ? "none" : status.frontViewViewState)
+                  << " frame=" << (status.frontViewFrameId.empty() ? "none" : status.frontViewFrameId)
+                  << " sensor=" << (status.frontViewSensorType.empty() ? "none" : status.frontViewSensorType)
+                  << " latency_ms=" << status.frontViewLatencyMs
+                  << " dropped=" << status.frontViewDroppedFrames
+                  << " drop_reason=" << (status.frontViewDropReason.empty() ? "none" : status.frontViewDropReason)
+                  << " spoof=" << (status.frontViewSpoofActive ? "y" : "n")
+                  << " conf=" << status.frontViewConfidence
+                  << "\n";
     }
     if (!status.denialReason.empty())
     {
@@ -233,6 +263,162 @@ std::string profileName(SimConfig::PlatformProfile profile)
     default:
         return "base";
     }
+}
+
+bool profileFromName(const std::string &name, SimConfig::PlatformProfile &profile)
+{
+    std::string lowered = name;
+    std::transform(lowered.begin(), lowered.end(), lowered.begin(), [](unsigned char ch)
+    {
+        return static_cast<char>(std::tolower(ch));
+    });
+    if (lowered == "base")
+    {
+        profile = SimConfig::PlatformProfile::Base;
+        return true;
+    }
+    if (lowered == "air")
+    {
+        profile = SimConfig::PlatformProfile::Air;
+        return true;
+    }
+    if (lowered == "ground")
+    {
+        profile = SimConfig::PlatformProfile::Ground;
+        return true;
+    }
+    if (lowered == "maritime")
+    {
+        profile = SimConfig::PlatformProfile::Maritime;
+        return true;
+    }
+    if (lowered == "space")
+    {
+        profile = SimConfig::PlatformProfile::Space;
+        return true;
+    }
+    if (lowered == "handheld")
+    {
+        profile = SimConfig::PlatformProfile::Handheld;
+        return true;
+    }
+    if (lowered == "fixed_site")
+    {
+        profile = SimConfig::PlatformProfile::FixedSite;
+        return true;
+    }
+    if (lowered == "subsea")
+    {
+        profile = SimConfig::PlatformProfile::Subsea;
+        return true;
+    }
+    return false;
+}
+
+std::vector<std::string> defaultSensorsForProfile(SimConfig::PlatformProfile profile)
+{
+    switch (profile)
+    {
+    case SimConfig::PlatformProfile::Air:
+        return {"gps", "imu", "baro", "magnetometer", "radar", "thermal", "vision", "lidar", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Ground:
+        return {"gps", "imu", "vision", "lidar", "radar", "thermal", "magnetometer", "baro", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Maritime:
+        return {"gps", "imu", "radar", "magnetometer", "baro", "vision", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Space:
+        return {"gps", "imu", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Handheld:
+        return {"gps", "imu", "magnetometer", "baro", "vision", "celestial", "dead_reckoning"};
+    case SimConfig::PlatformProfile::FixedSite:
+        return {"gps", "imu", "celestial"};
+    case SimConfig::PlatformProfile::Subsea:
+        return {"imu", "baro", "magnetometer", "dead_reckoning"};
+    case SimConfig::PlatformProfile::Base:
+    default:
+        return {"gps", "imu", "thermal", "radar", "dead_reckoning"};
+    }
+}
+
+std::vector<std::string> supportedPlatformProfiles()
+{
+    return {"base", "air", "ground", "maritime", "space", "handheld", "fixed_site", "subsea"};
+}
+
+bool isOfficialAdapterProfile(const std::string &profile)
+{
+    return profile == "air" || profile == "ground" || profile == "maritime" ||
+           profile == "space" || profile == "handheld" || profile == "fixed_site" ||
+           profile == "subsea";
+}
+
+std::string resolveProjectPath(const std::string &relativePath)
+{
+    namespace fs = std::filesystem;
+    fs::path cursor = fs::current_path();
+    for (int depth = 0; depth < 8; ++depth)
+    {
+        fs::path candidate = cursor / relativePath;
+        std::error_code ec;
+        if (fs::exists(candidate, ec))
+        {
+            return candidate.lexically_normal().string();
+        }
+        if (!cursor.has_parent_path())
+        {
+            break;
+        }
+        cursor = cursor.parent_path();
+    }
+    return "";
+}
+
+std::vector<SensorUiSnapshot> buildProfileSensors(const std::vector<std::string> &permittedSensors)
+{
+    std::vector<SensorUiSnapshot> sensors;
+    sensors.reserve(permittedSensors.size());
+    for (const auto &name : permittedSensors)
+    {
+        SensorUiSnapshot snapshot;
+        snapshot.name = name;
+        snapshot.available = true;
+        snapshot.healthy = true;
+        snapshot.hasMeasurement = true;
+        snapshot.timeSinceLastValid = 0.0;
+        snapshot.confidence = 1.0;
+        snapshot.lastError = "";
+        sensors.push_back(snapshot);
+    }
+    return sensors;
+}
+
+std::string jsonEscape(const std::string &value)
+{
+    std::ostringstream out;
+    for (char ch : value)
+    {
+        switch (ch)
+        {
+        case '\\':
+            out << "\\\\";
+            break;
+        case '"':
+            out << "\\\"";
+            break;
+        case '\n':
+            out << "\\n";
+            break;
+        case '\r':
+            out << "\\r";
+            break;
+        case '\t':
+            out << "\\t";
+            break;
+        default:
+            out << ch;
+            break;
+        }
+    }
+    return out.str();
 }
 
 std::string networkAidModeName(SimConfig::NetworkAidMode mode)
@@ -341,6 +527,38 @@ std::string buildProvenanceStatus(const SimConfig &config)
     return out.str();
 }
 
+void setFrontViewStatusDefaults(const SimConfig &config)
+{
+    uiContext.status.frontViewMode = config.frontView.displayFamilies.empty() ? "none" : config.frontView.displayFamilies.front();
+    uiContext.status.frontViewViewState = "none";
+    uiContext.status.frontViewFrameId.clear();
+    uiContext.status.frontViewSensorType.clear();
+    uiContext.status.frontViewSequence = 0;
+    uiContext.status.frontViewLatencyMs = 0.0;
+    uiContext.status.frontViewDroppedFrames = 0;
+    uiContext.status.frontViewDropReason.clear();
+    uiContext.status.frontViewSpoofActive = false;
+    uiContext.status.frontViewConfidence = 0.0;
+    uiContext.status.frontViewProvenance = config.frontView.spoofEnabled ? "simulation" : "unknown";
+    uiContext.status.frontViewAuthStatus = config.frontView.enabled ? "authorized" : "not_configured";
+}
+
+void applyFrontViewFrameResult(const FrontViewFrameResult &frame)
+{
+    uiContext.status.frontViewMode = frame.activeMode;
+    uiContext.status.frontViewViewState = frame.viewState;
+    uiContext.status.frontViewFrameId = frame.frameId;
+    uiContext.status.frontViewSensorType = frame.sensorType;
+    uiContext.status.frontViewSequence = frame.sequence;
+    uiContext.status.frontViewLatencyMs = frame.latencyMs;
+    uiContext.status.frontViewDroppedFrames += frame.droppedFrames;
+    uiContext.status.frontViewDropReason = frame.dropReason;
+    uiContext.status.frontViewSpoofActive = frame.spoofActive;
+    uiContext.status.frontViewConfidence = frame.confidence;
+    uiContext.status.frontViewProvenance = frame.provenance;
+    uiContext.status.frontViewAuthStatus = frame.authStatus;
+}
+
 void updateStatusFromConfig(const SimConfig &config)
 {
     uiContext.status.platformProfile = profileName(config.platformProfile);
@@ -352,6 +570,9 @@ void updateStatusFromConfig(const SimConfig &config)
     uiContext.status.adapterVersion = config.adapter.version;
     uiContext.status.adapterSurface = config.adapter.uiSurface.empty() ? "tui" : config.adapter.uiSurface;
     uiContext.status.adapterStatus = config.adapter.id.empty() ? "none" : "unverified";
+    uiContext.status.adapterReason = "";
+    uiContext.status.adapterApproval = "";
+    uiContext.status.adapterContext = "";
     uiContext.status.adapterFields = "";
     if (uiContext.status.loggingStatus.empty())
     {
@@ -365,13 +586,85 @@ void updateStatusFromConfig(const SimConfig &config)
     uiContext.status.lockoutStatus = "";
     uiContext.status.ladderStatus = "";
     uiContext.status.sensorStatusSummary = "";
-    uiContext.status.concurrencyStatus = "none";
+    uiContext.status.concurrencyStatus = config.frontView.threadingEnabled
+                                             ? ("front_view_threads=" + std::to_string(config.frontView.threadingMaxWorkers))
+                                             : "none";
     uiContext.status.decisionReason = "";
     uiContext.status.denialReason = "";
+    setFrontViewStatusDefaults(config);
     if (uiContext.status.activeSource.empty())
     {
         uiContext.status.activeSource = "none";
     }
+    uiContext.lastSensors.clear();
+}
+
+bool applyPlatformProfile(SimConfig::PlatformProfile profile, std::string &reason)
+{
+    if (!uiContext.configLoaded)
+    {
+        reason = "config_invalid";
+        return false;
+    }
+
+    SimConfig updated = uiContext.config;
+    updated.platformProfile = profile;
+    updated.hasParentProfile = false;
+    updated.parentProfile = SimConfig::PlatformProfile::Base;
+    updated.childModules.clear();
+    updated.permittedSensors = defaultSensorsForProfile(profile);
+
+    const std::string profileLabel = profileName(profile);
+    if (isOfficialAdapterProfile(profileLabel))
+    {
+        updated.adapter.id = profileLabel;
+        updated.adapter.version = "1.0.0";
+        if (updated.adapter.uiSurface.empty())
+        {
+            updated.adapter.uiSurface = "tui";
+        }
+        if (updated.adapter.manifestPath.empty())
+        {
+            updated.adapter.manifestPath = resolveProjectPath("adapters/official/" + profileLabel + "/manifest.json");
+        }
+        if (updated.adapter.allowlistPath.empty())
+        {
+            updated.adapter.allowlistPath = resolveProjectPath("adapters/allowlist.json");
+        }
+    }
+    else
+    {
+        updated.adapter.id.clear();
+        updated.adapter.version.clear();
+        updated.adapter.manifestPath.clear();
+        updated.adapter.allowlistPath.clear();
+    }
+
+    uiContext.config = updated;
+    uiContext.seed = updated.seed;
+    uiContext.rng.seed(uiContext.seed);
+    updateStatusFromConfig(updated);
+
+    tools::AdapterUiSnapshot snapshot = tools::loadAdapterUiSnapshot(updated);
+    uiContext.status.adapterId = snapshot.adapterId;
+    uiContext.status.adapterVersion = snapshot.adapterVersion;
+    uiContext.status.adapterSurface = snapshot.surface.empty() ? "tui" : snapshot.surface;
+    uiContext.status.adapterStatus = snapshot.status;
+    uiContext.status.adapterReason = snapshot.reason;
+    uiContext.status.adapterApproval = snapshot.approvedBy.empty() ? "" : (snapshot.approvedBy + "@" + snapshot.approvalDate + " sig=" + snapshot.signatureAlgorithm);
+    uiContext.status.adapterContext = snapshot.contextVersionSummary;
+    uiContext.status.adapterFields = ui::formatAdapterFieldSummary(snapshot.fields);
+
+    if (snapshot.status != "ok" && snapshot.status != "none")
+    {
+        uiContext.status.denialReason = snapshot.reason;
+        reason = snapshot.reason;
+        return false;
+    }
+
+    uiContext.status.denialReason.clear();
+    reason = "ok";
+    return true;
 }
 } // namespace
 
@@ -396,11 +689,32 @@ bool initializeUiContext(const std::string &configPath)
     if (!loaded.ok)
     {
         uiContext.configLoaded = false;
+        uiContext.lastSensors.clear();
         uiContext.status.platformProfile = "base";
         uiContext.status.parentProfile = "none";
         uiContext.status.childModules = "none";
         uiContext.status.authStatus = "config_invalid";
         uiContext.status.denialReason = "config_invalid";
+        uiContext.status.adapterId = "";
+        uiContext.status.adapterVersion = "";
+        uiContext.status.adapterSurface = "tui";
+        uiContext.status.adapterStatus = "none";
+        uiContext.status.adapterReason = "";
+        uiContext.status.adapterApproval = "";
+        uiContext.status.adapterContext = "";
+        uiContext.status.adapterFields = "";
+        uiContext.status.frontViewMode = "none";
+        uiContext.status.frontViewViewState = "none";
+        uiContext.status.frontViewFrameId = "";
+        uiContext.status.frontViewSensorType = "";
+        uiContext.status.frontViewSequence = 0;
+        uiContext.status.frontViewLatencyMs = 0.0;
+        uiContext.status.frontViewDroppedFrames = 0;
+        uiContext.status.frontViewDropReason = "";
+        uiContext.status.frontViewSpoofActive = false;
+        uiContext.status.frontViewConfidence = 0.0;
+        uiContext.status.frontViewProvenance = "unknown";
+        uiContext.status.frontViewAuthStatus = "not_configured";
         uiContext.status.seed = uiContext.seed;
         uiContext.status.deterministic = true;
         if (uiContext.status.activeSource.empty())
@@ -421,7 +735,14 @@ bool initializeUiContext(const std::string &configPath)
         uiContext.status.adapterVersion = snapshot.adapterVersion;
         uiContext.status.adapterSurface = snapshot.surface.empty() ? "tui" : snapshot.surface;
         uiContext.status.adapterStatus = snapshot.status;
+        uiContext.status.adapterReason = snapshot.reason;
+        uiContext.status.adapterApproval = snapshot.approvedBy.empty() ? "" : (snapshot.approvedBy + "@" + snapshot.approvalDate + " sig=" + snapshot.signatureAlgorithm);
+        uiContext.status.adapterContext = snapshot.contextVersionSummary;
         uiContext.status.adapterFields = ui::formatAdapterFieldSummary(snapshot.fields);
+        if (snapshot.status != "ok" && snapshot.status != "none")
+        {
+            uiContext.status.denialReason = snapshot.reason;
+        }
     }
     tools::setAuditRunContext("", loaded.config.version, loaded.config.seed);
     return true;
@@ -430,6 +751,282 @@ bool initializeUiContext(const std::string &configPath)
 const UiStatus &getUiStatus()
 {
     return uiContext.status;
+}
+
+std::vector<std::string> uiListPlatformProfiles()
+{
+    return supportedPlatformProfiles();
+}
+
+PlatformSuiteResult uiRunPlatformSuite(const std::string &profileNameValue)
+{
+    PlatformSuiteResult result;
+    result.profile = profileNameValue;
+
+    SimConfig::PlatformProfile profile = SimConfig::PlatformProfile::Base;
+    if (!profileFromName(profileNameValue, profile))
+    {
+        result.reason = "platform_profile_invalid";
+        setUiDenialReason(result.reason);
+        return result;
+    }
+
+    result.profile = profileName(profile);
+    std::string applyReason;
+    if (!applyPlatformProfile(profile, applyReason))
+    {
+        result.reason = applyReason.empty() ? "platform_profile_invalid" : applyReason;
+        setUiDenialReason(result.reason);
+        return result;
+    }
+
+    result.sensorsValidated = !uiContext.config.permittedSensors.empty();
+
+    ModeDecisionDetail detail;
+    detail.selectedMode = result.sensorsValidated ? uiContext.config.permittedSensors.front() : "hold";
+    detail.contributors = {detail.selectedMode};
+    detail.confidence = 1.0;
+    detail.reason = "platform_suite";
+    detail.downgradeReason = "";
+
+    std::vector<SensorUiSnapshot> sensors = buildProfileSensors(uiContext.config.permittedSensors);
+    setUiDenialReason("");
+    updateUiFromModeDecision(detail, sensors);
+
+    result.modeOutputValidated = !uiContext.status.ladderStatus.empty() && !uiContext.status.sensorStatusSummary.empty();
+    result.adapterValidated = (uiContext.status.adapterStatus == "ok" || uiContext.status.adapterStatus == "none");
+    result.pass = result.sensorsValidated && result.adapterValidated && result.modeOutputValidated;
+    if (result.pass)
+    {
+        result.reason = "ok";
+        setUiDenialReason("");
+    }
+    else if (!result.adapterValidated)
+    {
+        result.reason = uiContext.status.adapterReason.empty() ? "adapter_invalid" : uiContext.status.adapterReason;
+        setUiDenialReason(result.reason);
+    }
+    else if (!result.sensorsValidated)
+    {
+        result.reason = "platform_sensors_invalid";
+        setUiDenialReason(result.reason);
+    }
+    else
+    {
+        result.reason = "platform_mode_output_invalid";
+        setUiDenialReason(result.reason);
+    }
+
+    return result;
+}
+
+std::vector<PlatformSuiteResult> uiRunAllPlatformSuites()
+{
+    std::vector<PlatformSuiteResult> results;
+    for (const auto &profile : supportedPlatformProfiles())
+    {
+        results.push_back(uiRunPlatformSuite(profile));
+    }
+    return results;
+}
+
+std::vector<std::string> uiListFrontViewDisplayModes()
+{
+    return frontViewSupportedModes();
+}
+
+bool uiRunFrontViewDisplaySuite(bool cycleAllModes, std::string &reason)
+{
+    if (!uiContext.configLoaded)
+    {
+        reason = "config_invalid";
+        setUiDenialReason(reason);
+        return false;
+    }
+
+    std::mt19937 frontViewRng(uiContext.config.frontView.spoofSeed);
+    std::vector<FrontViewFrameResult> frames;
+    if (!frontViewCycleFrames(uiContext.config.frontView, cycleAllModes, frontViewRng, frames, reason))
+    {
+        setUiDenialReason(reason);
+        return false;
+    }
+    if (frames.empty())
+    {
+        reason = "front_view_cycle_empty";
+        setUiDenialReason(reason);
+        return false;
+    }
+
+    for (const auto &frame : frames)
+    {
+        applyFrontViewFrameResult(frame);
+        setUiActiveSource(frame.activeMode);
+        setUiContributors({frame.sensorType});
+        setUiModeConfidence(frame.confidence);
+        setUiDecisionReason("front_view_cycle");
+    }
+
+    if (uiContext.status.frontViewDropReason.empty())
+    {
+        setUiDenialReason("");
+        reason = "ok";
+    }
+    else
+    {
+        setUiDenialReason(uiContext.status.frontViewDropReason);
+        reason = uiContext.status.frontViewDropReason;
+    }
+    return true;
+}
+
+ExternalIoEnvelope uiBuildExternalIoEnvelope()
+{
+    ExternalIoEnvelope envelope;
+    envelope.metadata.schemaVersion = "1.0.0";
+    envelope.metadata.interfaceId = "airtrace.external_io";
+    envelope.metadata.platformProfile = uiContext.status.platformProfile;
+    envelope.metadata.adapterId = uiContext.status.adapterId;
+    envelope.metadata.adapterVersion = uiContext.status.adapterVersion;
+    envelope.metadata.uiSurface = uiContext.status.adapterSurface.empty() ? "tui" : uiContext.status.adapterSurface;
+    envelope.metadata.seed = uiContext.status.seed;
+    envelope.metadata.deterministic = uiContext.status.deterministic;
+
+    std::vector<SensorUiSnapshot> sensors = uiContext.lastSensors;
+    if (sensors.empty())
+    {
+        sensors = buildProfileSensors(uiContext.config.permittedSensors);
+    }
+    for (const auto &sensor : sensors)
+    {
+        ExternalIoSensorRecord record;
+        record.sensorId = sensor.name;
+        record.available = sensor.available;
+        record.healthy = sensor.healthy;
+        record.hasMeasurement = sensor.hasMeasurement;
+        record.freshnessSeconds = sensor.timeSinceLastValid;
+        record.confidence = sensor.confidence;
+        record.lastError = sensor.lastError;
+        envelope.sensors.push_back(record);
+    }
+
+    envelope.mode.activeMode = uiContext.status.activeSource;
+    if (!uiContext.status.contributors.empty())
+    {
+        std::stringstream stream(uiContext.status.contributors);
+        std::string contributor;
+        while (std::getline(stream, contributor, ','))
+        {
+            if (!contributor.empty())
+            {
+                envelope.mode.contributors.push_back(contributor);
+            }
+        }
+    }
+    envelope.mode.confidence = uiContext.status.modeConfidence;
+    envelope.mode.decisionReason = uiContext.status.decisionReason;
+    envelope.mode.denialReason = uiContext.status.denialReason;
+    envelope.mode.ladderStatus = uiContext.status.ladderStatus;
+    envelope.disqualifiedSources = uiContext.status.disqualifiedSources;
+    envelope.lockoutStatus = uiContext.status.lockoutStatus;
+    envelope.authStatus = uiContext.status.authStatus;
+    envelope.provenanceStatus = uiContext.status.provenanceStatus;
+    envelope.loggingStatus = uiContext.status.loggingStatus;
+    envelope.adapterStatus = uiContext.status.adapterStatus;
+    envelope.adapterReason = uiContext.status.adapterReason;
+    envelope.adapterFields = uiContext.status.adapterFields;
+    envelope.frontView.activeMode = uiContext.status.frontViewMode;
+    envelope.frontView.viewState = uiContext.status.frontViewViewState;
+    envelope.frontView.frameId = uiContext.status.frontViewFrameId;
+    envelope.frontView.sensorType = uiContext.status.frontViewSensorType;
+    envelope.frontView.sequence = uiContext.status.frontViewSequence;
+    envelope.frontView.latencyMs = uiContext.status.frontViewLatencyMs;
+    envelope.frontView.droppedFrames = uiContext.status.frontViewDroppedFrames;
+    envelope.frontView.dropReason = uiContext.status.frontViewDropReason;
+    envelope.frontView.spoofActive = uiContext.status.frontViewSpoofActive;
+    envelope.frontView.confidence = uiContext.status.frontViewConfidence;
+    envelope.frontView.provenance = uiContext.status.frontViewProvenance;
+    envelope.frontView.authStatus = uiContext.status.frontViewAuthStatus;
+    return envelope;
+}
+
+std::string uiBuildExternalIoEnvelopeJson()
+{
+    const ExternalIoEnvelope envelope = uiBuildExternalIoEnvelope();
+    std::ostringstream out;
+    out << "{";
+    out << "\"schema_version\":\"" << jsonEscape(envelope.metadata.schemaVersion) << "\",";
+    out << "\"interface_id\":\"" << jsonEscape(envelope.metadata.interfaceId) << "\",";
+    out << "\"metadata\":{";
+    out << "\"platform_profile\":\"" << jsonEscape(envelope.metadata.platformProfile) << "\",";
+    out << "\"adapter_id\":\"" << jsonEscape(envelope.metadata.adapterId) << "\",";
+    out << "\"adapter_version\":\"" << jsonEscape(envelope.metadata.adapterVersion) << "\",";
+    out << "\"ui_surface\":\"" << jsonEscape(envelope.metadata.uiSurface) << "\",";
+    out << "\"seed\":" << envelope.metadata.seed << ",";
+    out << "\"deterministic\":" << (envelope.metadata.deterministic ? "true" : "false");
+    out << "},";
+    out << "\"mode\":{";
+    out << "\"active\":\"" << jsonEscape(envelope.mode.activeMode) << "\",";
+    out << "\"confidence\":" << std::fixed << std::setprecision(3) << envelope.mode.confidence << ",";
+    out << "\"decision_reason\":\"" << jsonEscape(envelope.mode.decisionReason) << "\",";
+    out << "\"denial_reason\":\"" << jsonEscape(envelope.mode.denialReason) << "\",";
+    out << "\"ladder_status\":\"" << jsonEscape(envelope.mode.ladderStatus) << "\",";
+    out << "\"contributors\":[";
+    for (size_t idx = 0; idx < envelope.mode.contributors.size(); ++idx)
+    {
+        out << "\"" << jsonEscape(envelope.mode.contributors[idx]) << "\"";
+        if (idx + 1 < envelope.mode.contributors.size())
+        {
+            out << ",";
+        }
+    }
+    out << "]";
+    out << "},";
+    out << "\"sensors\":[";
+    for (size_t idx = 0; idx < envelope.sensors.size(); ++idx)
+    {
+        const auto &sensor = envelope.sensors[idx];
+        out << "{";
+        out << "\"id\":\"" << jsonEscape(sensor.sensorId) << "\",";
+        out << "\"available\":" << (sensor.available ? "true" : "false") << ",";
+        out << "\"healthy\":" << (sensor.healthy ? "true" : "false") << ",";
+        out << "\"has_measurement\":" << (sensor.hasMeasurement ? "true" : "false") << ",";
+        out << "\"freshness_seconds\":" << std::fixed << std::setprecision(3) << sensor.freshnessSeconds << ",";
+        out << "\"confidence\":" << std::fixed << std::setprecision(3) << sensor.confidence << ",";
+        out << "\"last_error\":\"" << jsonEscape(sensor.lastError) << "\"";
+        out << "}";
+        if (idx + 1 < envelope.sensors.size())
+        {
+            out << ",";
+        }
+    }
+    out << "],";
+    out << "\"front_view\":{";
+    out << "\"active_mode\":\"" << jsonEscape(envelope.frontView.activeMode) << "\",";
+    out << "\"view_state\":\"" << jsonEscape(envelope.frontView.viewState) << "\",";
+    out << "\"frame_id\":\"" << jsonEscape(envelope.frontView.frameId) << "\",";
+    out << "\"sensor_type\":\"" << jsonEscape(envelope.frontView.sensorType) << "\",";
+    out << "\"sequence\":" << envelope.frontView.sequence << ",";
+    out << "\"latency_ms\":" << std::fixed << std::setprecision(3) << envelope.frontView.latencyMs << ",";
+    out << "\"dropped_frames\":" << envelope.frontView.droppedFrames << ",";
+    out << "\"drop_reason\":\"" << jsonEscape(envelope.frontView.dropReason) << "\",";
+    out << "\"spoof_active\":" << (envelope.frontView.spoofActive ? "true" : "false") << ",";
+    out << "\"confidence\":" << std::fixed << std::setprecision(3) << envelope.frontView.confidence << ",";
+    out << "\"provenance\":\"" << jsonEscape(envelope.frontView.provenance) << "\",";
+    out << "\"auth_status\":\"" << jsonEscape(envelope.frontView.authStatus) << "\"";
+    out << "},";
+    out << "\"status\":{";
+    out << "\"disqualified_sources\":\"" << jsonEscape(envelope.disqualifiedSources) << "\",";
+    out << "\"lockout_status\":\"" << jsonEscape(envelope.lockoutStatus) << "\",";
+    out << "\"auth_status\":\"" << jsonEscape(envelope.authStatus) << "\",";
+    out << "\"provenance_status\":\"" << jsonEscape(envelope.provenanceStatus) << "\",";
+    out << "\"logging_status\":\"" << jsonEscape(envelope.loggingStatus) << "\",";
+    out << "\"adapter_status\":\"" << jsonEscape(envelope.adapterStatus) << "\",";
+    out << "\"adapter_reason\":\"" << jsonEscape(envelope.adapterReason) << "\",";
+    out << "\"adapter_fields\":\"" << jsonEscape(envelope.adapterFields) << "\"";
+    out << "}";
+    out << "}";
+    return out.str();
 }
 
 void setUiActiveSource(const std::string &source)
@@ -687,6 +1284,7 @@ void updateUiFromModeDecision(const ModeDecisionDetail &detail, const std::vecto
         setUiLadderStatus(formatLadderStatus(configuredLadder, detail));
     }
     setUiSensorStatusSummary(formatSensorSummary(sensors, detail.lockouts));
+    uiContext.lastSensors = sensors;
 }
 
 void setUiLoggingStatus(const std::string &status)

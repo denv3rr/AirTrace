@@ -113,6 +113,32 @@ Schema version: 1.0
   - Must be true when plugin.id is set or activation is denied.
 - plugin.device_driver (bool): optional; default false.
 
+## Front-View Display
+- front_view.enabled (bool): optional; default false.
+- front_view.display_families (list): optional; default `eo_gray`.
+  - Allowed: eo_gray, ir_white_hot, ir_black_hot, ir_false_color, fusion_overlay, proximity_2d, proximity_3d.
+  - Must include at least one family.
+- front_view.auto_cycle.enabled (bool): optional; default false.
+  - Requires front_view.enabled=true.
+- front_view.auto_cycle.interval_ms (milliseconds): optional; default 1000; range [100, 60000].
+- front_view.auto_cycle.order (list): optional; default `eo_gray,ir_white_hot,ir_black_hot,proximity_2d`.
+  - Must include at least one allowed family.
+  - Every entry must also exist in front_view.display_families.
+- front_view.render.latency_budget_ms (milliseconds): optional; default 120; range (0, 5000].
+- front_view.proximity.max_range_m (meters): optional; default 2000; range (0, 1e6].
+- front_view.spoof.enabled (bool): optional; default false.
+  - Requires front_view.enabled=true.
+- front_view.spoof.pattern (string): optional; default gradient.
+  - Allowed: gradient, hotspot, noise, sweep.
+- front_view.spoof.motion_profile (string): optional; default linear.
+  - Allowed: linear, orbit, jitter, static.
+- front_view.spoof.seed (uint32): optional; default 42; range [0, 4294967295].
+- front_view.spoof.rate_hz (hertz): optional; default 15; range (0, 240].
+- front_view.security.require_signed_assets (bool): optional; default true.
+- front_view.threading.enabled (bool): optional; default false.
+- front_view.threading.max_workers (count): optional; default 1; range [1, 64].
+  - Must be `1` when front_view.threading.enabled=false.
+
 ## External I/O Output Contract (Runtime)
 - The external I/O envelope is a runtime output contract, not a config input.
 - schema_version (semver): fixed by implementation; current "1.0.0".

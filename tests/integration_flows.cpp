@@ -258,14 +258,25 @@ int main()
         "airtrace_ui_harness.txt",
         "select|AirTrace - Main Menu|1\n"
         "select|AirTrace - Test Menu|2\n"
-        "select|AirTrace - Main Menu|4\n");
+        "select|AirTrace - Main Menu|2\n"
+        "select|AirTrace - Platform Workbench|0\n"
+        "select|AirTrace - Platform Profile|1\n"
+        "select|AirTrace - Platform Workbench|1\n"
+        "select|AirTrace - Platform Workbench|3\n"
+        "select|AirTrace - Main Menu|3\n"
+        "select|AirTrace - Front-View Workbench|0\n"
+        "select|AirTrace - Front-View Workbench|3\n"
+        "select|AirTrace - Main Menu|6\n");
 
     std::filesystem::path profileConfig = writeConfigFile(
         "airtrace_ui_profile.cfg",
         "config.version=1.0\n"
         "platform.profile=ground\n"
         "platform.profile_parent=space\n"
-        "platform.child_modules=imu_stack,radar_frontend\n");
+        "platform.child_modules=imu_stack,radar_frontend\n"
+        "front_view.enabled=true\n"
+        "front_view.spoof.enabled=true\n"
+        "front_view.display_families=eo_gray,ir_white_hot,proximity_2d\n");
 
     setEnvVar("AIRTRACE_TEST_HARNESS", "1");
     setEnvVar("AIRTRACE_HARNESS_COMMANDS", harnessCommands.string());
@@ -279,6 +290,9 @@ int main()
     assert(status.childModules == "imu_stack,radar_frontend");
     bool menuResult = showMainMenu();
     assert(menuResult);
+    assert(getUiStatus().platformProfile == "subsea");
+    assert(!getUiStatus().frontViewMode.empty());
+    assert(getUiStatus().frontViewSpoofActive);
 
     ui::setInputHarness(nullptr);
     unsetEnvVar("AIRTRACE_TEST_HARNESS");

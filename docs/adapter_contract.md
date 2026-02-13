@@ -58,6 +58,11 @@ Required fields:
 - approval_date
 - allowed_surfaces
 
+Approval constraints:
+- approval_date must use `YYYY-MM-DD`.
+- approval_date must not be in the future.
+- approval_date must be within `adapter.allowlist_max_age_days` from config.
+
 ## Validation Steps (Fail Closed)
 1) Verify signature on adapter manifest.
 2) Verify allowlist contains adapter.id and version.
@@ -78,6 +83,7 @@ Required fields:
 - adapter_manifest_invalid
 - adapter_allowlist_missing
 - adapter_allowlist_invalid
+- adapter_allowlist_stale
 
 ## Security and Safety
 - No dynamic loading or network access without explicit authorization.

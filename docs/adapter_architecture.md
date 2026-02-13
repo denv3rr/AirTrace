@@ -112,6 +112,12 @@ Config keys are defined in `docs/config_schema.md`:
 - adapter.version (string)
 - adapter.manifest_path (string)
 - adapter.allowlist_path (string)
+- adapter.core_version (semver context)
+- adapter.tools_version (semver context)
+- adapter.ui_version (semver context)
+- adapter.contract_version (semver context)
+- ui.contract_version (semver context)
+- adapter.allowlist_max_age_days (approval freshness)
 - ui.surface (string)
 
 Parser enforcement, registry validation, and allowlist checks are implemented in the tools layer.

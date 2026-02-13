@@ -5,6 +5,7 @@
 #include "ui/scenario.h"
 #include "ui/tui.h"
 #include "ui/inputValidation.h"
+#include "tools/audit_log.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -28,6 +29,9 @@ std::string buildHelp(const std::string &baseHelp)
         << " decision=" << (status.decisionReason.empty() ? "none" : status.decisionReason)
         << " denial=" << (status.denialReason.empty() ? "none" : status.denialReason)
         << " auth=" << status.authStatus
+        << " fv_mode=" << (status.frontViewMode.empty() ? "none" : status.frontViewMode)
+        << " fv_latency_ms=" << status.frontViewLatencyMs
+        << " fv_drop=" << status.frontViewDroppedFrames
         << " log=" << (status.loggingStatus.empty() ? "unknown" : status.loggingStatus)
         << " sensors=" << (status.sensorStatusSummary.empty() ? "none" : status.sensorStatusSummary)
         << " seed=" << status.seed
@@ -45,6 +49,8 @@ bool showMainMenu()
     const std::vector<std::string> options = {
         "Scenario Mode",
         "Test Mode",
+        "Platform Workbench",
+        "Front-View Display Workbench",
         "View and Rerun Previous Simulations",
         "Delete a Previous Simulation",
         "Exit"};
@@ -109,6 +115,18 @@ bool showMainMenu()
                 return false;
             }
             if (!showTestMenu())
+            {
+                return false;
+            }
+            break;
+        case ui::MainMenuAction::PlatformWorkbench:
+            if (!showPlatformWorkbench())
+            {
+                return false;
+            }
+            break;
+        case ui::MainMenuAction::FrontViewWorkbench:
+            if (!showFrontViewWorkbench())
             {
                 return false;
             }
@@ -198,6 +216,191 @@ bool showTestMenu()
         default:
             setUiDenialReason("menu_selection_invalid");
             std::cerr << "Menu selection failed. Exiting.\n";
+            return false;
+        }
+    }
+}
+
+bool showFrontViewWorkbench()
+{
+    if (!uiEnsureAuditHealthy("front_view_workbench"))
+    {
+        return false;
+    }
+    if (!uiHasPermission("front_view_workbench") && !uiHasPermission("test_mode"))
+    {
+        setUiDenialReason("sim_not_authorized");
+        std::cerr << "Front-view workbench not authorized. Recovery: update role permissions and retry.\n";
+        return false;
+    }
+
+    const std::vector<std::string> options = {
+        "Render Current Front-View Mode",
+        "Cycle All Front-View Modes",
+        "Export Current External I/O",
+        "Back to Main Menu"};
+    const std::string helpBase = "Use Up/Down to move, Space or Enter to select, Esc to return.";
+
+    while (true)
+    {
+        int choice = tui::selectSingle("AirTrace - Front-View Workbench", options, buildHelp(helpBase));
+        if (choice < 0 || choice == 3)
+        {
+            return true;
+        }
+        if (choice < 0 || choice >= static_cast<int>(options.size()))
+        {
+            setUiDenialReason("menu_selection_invalid");
+            std::cerr << "Menu selection failed. Exiting.\n";
+            return false;
+        }
+
+        if (choice == 0 || choice == 1)
+        {
+            std::string reason;
+            const bool cycleAll = (choice == 1);
+            if (!uiRunFrontViewDisplaySuite(cycleAll, reason))
+            {
+                std::cout << "FRONT VIEW RESULT: pass=no reason=" << reason << "\n";
+                std::cout << ui::buildDenialBanner(reason) << "\n";
+                if (!tools::logAuditEvent("front_view_suite_run", "front-view suite failed", reason))
+                {
+                    setUiDenialReason("audit_unavailable");
+                    std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
+                    return false;
+                }
+                continue;
+            }
+            std::cout << "FRONT VIEW RESULT: pass=yes reason=" << reason << "\n";
+            std::cout << "EXTERNAL IO ENVELOPE: " << uiBuildExternalIoEnvelopeJson() << "\n";
+            if (!tools::logAuditEvent("front_view_suite_run", "front-view suite executed", cycleAll ? "cycle_all" : "single_mode"))
+            {
+                setUiDenialReason("audit_unavailable");
+                std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
+                return false;
+            }
+            continue;
+        }
+
+        std::cout << "EXTERNAL IO ENVELOPE: " << uiBuildExternalIoEnvelopeJson() << "\n";
+        if (!tools::logAuditEvent("external_io_export", "exported external io envelope", "front_view"))
+        {
+            setUiDenialReason("audit_unavailable");
+            std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
+            return false;
+        }
+    }
+}
+
+bool showPlatformWorkbench()
+{
+    if (!uiEnsureAuditHealthy("platform_workbench"))
+    {
+        return false;
+    }
+    if (!uiHasPermission("platform_workbench") && !uiHasPermission("test_mode"))
+    {
+        setUiDenialReason("sim_not_authorized");
+        std::cerr << "Platform workbench not authorized. Recovery: update role permissions and retry.\n";
+        return false;
+    }
+
+    const std::vector<std::string> options = {
+        "Run Selected Platform Suite",
+        "Run All Platform Suites",
+        "Export Current External I/O",
+        "Back to Main Menu"};
+    const std::string helpBase = "Use Up/Down to move, Space or Enter to select, Esc to return.";
+
+    while (true)
+    {
+        int choice = tui::selectSingle("AirTrace - Platform Workbench", options, buildHelp(helpBase));
+        if (choice < 0 || choice == 3)
+        {
+            return true;
+        }
+        if (choice < 0 || choice >= static_cast<int>(options.size()))
+        {
+            setUiDenialReason("menu_selection_invalid");
+            std::cerr << "Menu selection failed. Exiting.\n";
+            return false;
+        }
+
+        if (choice == 0)
+        {
+            const std::vector<std::string> profiles = uiListPlatformProfiles();
+            int profileChoice = tui::selectSingle("AirTrace - Platform Profile", profiles, buildHelp(helpBase));
+            if (profileChoice < 0)
+            {
+                continue;
+            }
+            if (profileChoice >= static_cast<int>(profiles.size()))
+            {
+                setUiDenialReason("menu_selection_invalid");
+                std::cerr << "Profile selection failed. Returning to workbench.\n";
+                continue;
+            }
+            const PlatformSuiteResult result = uiRunPlatformSuite(profiles[profileChoice]);
+            std::cout << "PLATFORM SUITE RESULT: profile=" << result.profile
+                      << " pass=" << (result.pass ? "yes" : "no")
+                      << " sensors=" << (result.sensorsValidated ? "ok" : "fail")
+                      << " adapter=" << (result.adapterValidated ? "ok" : "fail")
+                      << " mode=" << (result.modeOutputValidated ? "ok" : "fail")
+                      << " reason=" << (result.reason.empty() ? "none" : result.reason)
+                      << "\n";
+            std::cout << "EXTERNAL IO ENVELOPE: " << uiBuildExternalIoEnvelopeJson() << "\n";
+            if (!tools::logAuditEvent("platform_suite_run", "platform suite executed", result.profile))
+            {
+                setUiDenialReason("audit_unavailable");
+                std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
+                return false;
+            }
+            if (!result.pass)
+            {
+                setUiDenialReason(result.reason);
+                std::cout << ui::buildDenialBanner(result.reason) << "\n";
+            }
+            continue;
+        }
+
+        if (choice == 1)
+        {
+            const std::vector<PlatformSuiteResult> results = uiRunAllPlatformSuites();
+            bool allPassed = true;
+            for (const auto &entry : results)
+            {
+                std::cout << "PLATFORM SUITE RESULT: profile=" << entry.profile
+                          << " pass=" << (entry.pass ? "yes" : "no")
+                          << " sensors=" << (entry.sensorsValidated ? "ok" : "fail")
+                          << " adapter=" << (entry.adapterValidated ? "ok" : "fail")
+                          << " mode=" << (entry.modeOutputValidated ? "ok" : "fail")
+                          << " reason=" << (entry.reason.empty() ? "none" : entry.reason)
+                          << "\n";
+                if (!entry.pass)
+                {
+                    allPassed = false;
+                }
+            }
+            std::cout << "EXTERNAL IO ENVELOPE: " << uiBuildExternalIoEnvelopeJson() << "\n";
+            if (!tools::logAuditEvent("platform_suite_cycle", "all platform suites executed", allPassed ? "pass" : "fail"))
+            {
+                setUiDenialReason("audit_unavailable");
+                std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
+                return false;
+            }
+            if (!allPassed)
+            {
+                setUiDenialReason("platform_suite_failed");
+                std::cout << ui::buildDenialBanner("platform_suite_failed") << "\n";
+            }
+            continue;
+        }
+
+        std::cout << "EXTERNAL IO ENVELOPE: " << uiBuildExternalIoEnvelopeJson() << "\n";
+        if (!tools::logAuditEvent("external_io_export", "exported external io envelope", getUiStatus().platformProfile))
+        {
+            setUiDenialReason("audit_unavailable");
+            std::cerr << "Audit logging unavailable. Recovery: verify audit log sink and retry.\n";
             return false;
         }
     }

@@ -9,6 +9,12 @@ bool showMainMenu();
 // Displays the test menu with options specific to test mode
 bool showTestMenu();
 
+// Displays the platform workbench menu for profile and interface validation
+bool showPlatformWorkbench();
+
+// Displays the front-view display workbench for deterministic EO/IR/proximity output checks
+bool showFrontViewWorkbench();
+
 // Displays the test logs
 void viewTestLogs();
 

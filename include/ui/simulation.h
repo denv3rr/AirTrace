@@ -7,6 +7,7 @@
 #include <atomic>
 
 #include "core/Object.h"
+#include "core/external_io_envelope.h"
 #include "core/multi_modal_types.h"
 #include "core/sim_config.h"
 
@@ -43,7 +44,22 @@ struct UiStatus
     std::string adapterVersion;
     std::string adapterSurface;
     std::string adapterStatus;
+    std::string adapterReason;
+    std::string adapterApproval;
+    std::string adapterContext;
     std::string adapterFields;
+    std::string frontViewMode;
+    std::string frontViewViewState;
+    std::string frontViewFrameId;
+    std::string frontViewSensorType;
+    unsigned int frontViewSequence = 0;
+    double frontViewLatencyMs = 0.0;
+    int frontViewDroppedFrames = 0;
+    std::string frontViewDropReason;
+    bool frontViewSpoofActive = false;
+    double frontViewConfidence = 0.0;
+    std::string frontViewProvenance;
+    std::string frontViewAuthStatus;
     unsigned int seed = 0;
     bool deterministic = true;
 };
@@ -57,6 +73,16 @@ struct SensorUiSnapshot
     double timeSinceLastValid = 0.0;
     double confidence = 0.0;
     std::string lastError;
+};
+
+struct PlatformSuiteResult
+{
+    std::string profile;
+    bool pass = false;
+    bool sensorsValidated = false;
+    bool adapterValidated = false;
+    bool modeOutputValidated = false;
+    std::string reason;
 };
 
 bool initializeUiContext(const std::string &configPath);
@@ -73,6 +99,13 @@ void setUiLadderStatus(const std::string &summary);
 void setUiSensorStatusSummary(const std::string &summary);
 void setUiLoggingStatus(const std::string &status);
 void updateUiFromModeDecision(const ModeDecisionDetail &detail, const std::vector<SensorUiSnapshot> &sensors);
+std::vector<std::string> uiListPlatformProfiles();
+PlatformSuiteResult uiRunPlatformSuite(const std::string &profileName);
+std::vector<PlatformSuiteResult> uiRunAllPlatformSuites();
+std::vector<std::string> uiListFrontViewDisplayModes();
+bool uiRunFrontViewDisplaySuite(bool cycleAllModes, std::string &reason);
+ExternalIoEnvelope uiBuildExternalIoEnvelope();
+std::string uiBuildExternalIoEnvelopeJson();
 bool uiEnsureAuditHealthy(const std::string &context);
 bool uiHasPermission(const std::string &permission);
 void uiRenderStatusBanner(const std::string &context);

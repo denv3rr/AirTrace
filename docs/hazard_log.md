@@ -39,6 +39,7 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-033 | Stale or unverifiable authorization policy yields incorrect eligibility decisions. | Critical | Occasional | Policy provenance verification, version gating, deny-by-default. | V-097, V-099 |
 | HZ-034 | Operator cannot interpret eligibility denial causes, leading to unsafe manual override attempts. | Critical | Occasional | Explicit reason codes and recovery guidance in UI/TUI. | V-100 |
 | HZ-035 | Adapter malfunction or incompatible interface yields unsafe data or UI ambiguity. | Critical | Occasional | Signed allowlisted adapters, versioned contracts, safe-state on adapter failure, explicit UI validation. | V-111, V-113 |
+| HZ-036 | Front-view display renders stale, invalid, or unauthorized imagery and misleads operator decisions. | Critical | Occasional | Front-view frame contract validation, spoof/config validation, fail-closed denial banners, and explicit latency/drop telemetry. | V-125, V-126, V-127 |
 
 ## Requirement and Control Crosswalk
 | Hazard ID | Requirement Links | Security/Interface Control Links |
@@ -78,3 +79,4 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-033 | REQ-SEC-011; REQ-CFG-009; REQ-SAFE-011 | Authorization Bundle controls |
 | HZ-034 | REQ-INT-017; REQ-INT-018; REQ-INT-019; REQ-INT-020 | UI/TUI denial messaging |
 | HZ-035 | REQ-SEC-012; REQ-SEC-013; REQ-SAFE-012; REQ-INT-024; REQ-INT-027; REQ-MOD-004 | Adapter Registry + Allowlist + UI surface controls |
+| HZ-036 | REQ-INT-028; REQ-INT-029; REQ-CFG-013 | Front-view display contract + spoof/cycle validation controls |

@@ -3,6 +3,13 @@ param(
     [string]$BuildType = $env:BUILD_TYPE
 )
 
+function Assert-LastExitCode([string]$Context) {
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "$Context failed with exit code $LASTEXITCODE."
+        exit $LASTEXITCODE
+    }
+}
+
 if (-not $BuildDir) {
     $BuildDir = ""
 }
@@ -60,7 +67,9 @@ if ($resetBuildType) {
 }
 
 cmake @cmakeArgs
+Assert-LastExitCode "CMake configure"
 cmake --build $BuildDir --target AirTraceCoreTests AirTraceEdgeCaseTests AirTraceUiTests AirTraceHarnessTests AirTraceIntegrationTests
+Assert-LastExitCode "CMake build"
 
 Push-Location $BuildDir
 try {

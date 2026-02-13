@@ -9,6 +9,8 @@ enum class MainMenuAction
 {
     Scenario,
     TestMenu,
+    PlatformWorkbench,
+    FrontViewWorkbench,
     ViewHistory,
     DeleteHistory,
     Exit,

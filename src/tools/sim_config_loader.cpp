@@ -307,6 +307,33 @@ bool toUiSurface(const std::string &value, std::string &out)
     return false;
 }
 
+bool isValidFrontViewFamily(const std::string &value)
+{
+    return value == "eo_gray" ||
+           value == "ir_white_hot" ||
+           value == "ir_black_hot" ||
+           value == "ir_false_color" ||
+           value == "fusion_overlay" ||
+           value == "proximity_2d" ||
+           value == "proximity_3d";
+}
+
+bool isValidFrontViewPattern(const std::string &value)
+{
+    return value == "gradient" ||
+           value == "hotspot" ||
+           value == "noise" ||
+           value == "sweep";
+}
+
+bool isValidFrontViewMotion(const std::string &value)
+{
+    return value == "linear" ||
+           value == "orbit" ||
+           value == "jitter" ||
+           value == "static";
+}
+
 void setIssue(ConfigResult &result, const std::string &key, const std::string &message)
 {
     result.ok = false;
@@ -494,6 +521,21 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "plugin.authorization_required" && toBool(value, bval)) config.plugin.authorizationRequired = bval;
     else if (key == "plugin.authorization_granted" && toBool(value, bval)) config.plugin.authorizationGranted = bval;
     else if (key == "plugin.device_driver" && toBool(value, bval)) config.plugin.deviceDriver = bval;
+    else if (key == "front_view.enabled" && toBool(value, bval)) config.frontView.enabled = bval;
+    else if (key == "front_view.display_families") config.frontView.displayFamilies = splitList(value);
+    else if (key == "front_view.auto_cycle.enabled" && toBool(value, bval)) config.frontView.autoCycleEnabled = bval;
+    else if (key == "front_view.auto_cycle.interval_ms" && toInt(value, ival)) config.frontView.autoCycleIntervalMs = ival;
+    else if (key == "front_view.auto_cycle.order") config.frontView.autoCycleOrder = splitList(value);
+    else if (key == "front_view.render.latency_budget_ms" && toDouble(value, dval)) config.frontView.renderLatencyBudgetMs = dval;
+    else if (key == "front_view.proximity.max_range_m" && toDouble(value, dval)) config.frontView.proximityMaxRangeMeters = dval;
+    else if (key == "front_view.spoof.enabled" && toBool(value, bval)) config.frontView.spoofEnabled = bval;
+    else if (key == "front_view.spoof.pattern") config.frontView.spoofPattern = toLower(trim(value));
+    else if (key == "front_view.spoof.motion_profile") config.frontView.spoofMotionProfile = toLower(trim(value));
+    else if (key == "front_view.spoof.seed" && toUnsigned(value, uval)) config.frontView.spoofSeed = uval;
+    else if (key == "front_view.spoof.rate_hz" && toDouble(value, dval)) config.frontView.spoofRateHz = dval;
+    else if (key == "front_view.security.require_signed_assets" && toBool(value, bval)) config.frontView.requireSignedAssets = bval;
+    else if (key == "front_view.threading.enabled" && toBool(value, bval)) config.frontView.threadingEnabled = bval;
+    else if (key == "front_view.threading.max_workers" && toInt(value, ival)) config.frontView.threadingMaxWorkers = ival;
     else if (key == "mode.ladder_order") config.mode.ladderOrder = splitList(value);
     else if (key == "mode.min_healthy_count" && toInt(value, ival)) config.mode.minHealthyCount = ival;
     else if (key == "mode.min_dwell_steps" && toInt(value, ival)) config.mode.minDwellSteps = ival;
@@ -925,6 +967,74 @@ void validateConfig(ConfigResult &result)
         {
             setIssue(result, "plugin.allowlist.signature_algorithm", "must be sha256");
         }
+    }
+
+    if (config.frontView.displayFamilies.empty())
+    {
+        setIssue(result, "front_view.display_families", "must include at least one display family");
+    }
+    for (const auto &family : config.frontView.displayFamilies)
+    {
+        if (!isValidFrontViewFamily(family))
+        {
+            setIssue(result, "front_view.display_families", "invalid display family: " + family);
+            break;
+        }
+    }
+    validateRange(result, "front_view.auto_cycle.interval_ms", static_cast<double>(config.frontView.autoCycleIntervalMs), 100.0, 60000.0);
+    if (config.frontView.autoCycleEnabled)
+    {
+        if (config.frontView.autoCycleOrder.empty())
+        {
+            setIssue(result, "front_view.auto_cycle.order", "must include at least one display family");
+        }
+        for (const auto &family : config.frontView.autoCycleOrder)
+        {
+            if (!isValidFrontViewFamily(family))
+            {
+                setIssue(result, "front_view.auto_cycle.order", "invalid display family: " + family);
+                break;
+            }
+            bool found = false;
+            for (const auto &configured : config.frontView.displayFamilies)
+            {
+                if (configured == family)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                setIssue(result, "front_view.auto_cycle.order", "family missing from front_view.display_families: " + family);
+                break;
+            }
+        }
+    }
+    validateRange(result, "front_view.render.latency_budget_ms", config.frontView.renderLatencyBudgetMs, 0.0, 5000.0, false, true);
+    validateRange(result, "front_view.proximity.max_range_m", config.frontView.proximityMaxRangeMeters, 0.0, 1e6, false, true);
+    if (!isValidFrontViewPattern(config.frontView.spoofPattern))
+    {
+        setIssue(result, "front_view.spoof.pattern", "invalid spoof pattern");
+    }
+    if (!isValidFrontViewMotion(config.frontView.spoofMotionProfile))
+    {
+        setIssue(result, "front_view.spoof.motion_profile", "invalid spoof motion profile");
+    }
+    validateRange(result, "front_view.spoof.seed", static_cast<double>(config.frontView.spoofSeed), 0.0, 4294967295.0);
+    validateRange(result, "front_view.spoof.rate_hz", config.frontView.spoofRateHz, 0.0, 240.0, false, true);
+    validateRange(result, "front_view.threading.max_workers", static_cast<double>(config.frontView.threadingMaxWorkers), 1.0, 64.0);
+    if (config.frontView.autoCycleEnabled && !config.frontView.enabled)
+    {
+        setIssue(result, "front_view.auto_cycle.enabled", "front_view.enabled must be true when auto cycle is enabled");
+    }
+    if (config.frontView.spoofEnabled && !config.frontView.enabled)
+    {
+        setIssue(result, "front_view.spoof.enabled", "front_view.enabled must be true when spoof input is enabled");
+    }
+    if (!config.frontView.threadingEnabled && config.frontView.threadingMaxWorkers != 1)
+    {
+        setIssue(result, "front_view.threading.max_workers", "must be 1 when front_view.threading.enabled is false");
     }
 }
 } // namespace

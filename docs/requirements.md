@@ -115,6 +115,8 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-INT-025: The UI shall provide an operator-invoked platform workbench that allows selection of any supported platform profile from a single surface and execution of deterministic profile validation suites; profile cycling is optional per run.
 - REQ-INT-026: Platform workbench suites shall validate profile sensor sets, adapter contract status, and mode-output visibility with explicit pass/fail reason codes.
 - REQ-INT-027: The system shall emit a versioned, machine-readable external I/O envelope with platform, mode, sensor, adapter, authorization, provenance, and determinism fields for cross-system integration.
+- REQ-INT-028: The UI shall provide a front-view display workbench with deterministic EO/IR/proximity display families and operator-selectable single-mode or cycle-all execution from one session.
+- REQ-INT-029: Front-view rendering shall fail closed on invalid, unauthorized, or unavailable frame sources and shall provide explicit denial reasons and recovery guidance.
 
 ## Modularity Requirements (MOD)
 - REQ-MOD-001: The system shall provide independently buildable modules for core, tools, UI, and adapters with explicit, versioned interfaces.
@@ -145,6 +147,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-CFG-010: Configuration shall specify adapter selection (id + version) and UI surface; unknown adapter identifiers or surfaces are errors.
 - REQ-CFG-011: Configuration shall support adapter manifest and allowlist paths with deterministic defaults for official adapters; missing or invalid adapter registry paths shall fail closed.
 - REQ-CFG-012: Configuration shall define adapter runtime compatibility context versions and allowlist freshness limits; invalid semantic versions or freshness limits are errors.
+- REQ-CFG-013: Configuration shall define `front_view.*` display, cycle, spoof, latency, proximity, security, and threading controls with explicit units/ranges/defaults; invalid values shall fail closed.
 
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).

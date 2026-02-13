@@ -3,6 +3,7 @@
 ## Mission Modes
 - gps: Primary mode using GPS measurements.
 - thermal: Thermal sensor mode.
+  Thermal path adjustment is bounded and monotonic with validated heat intensity to avoid abrupt unsafe motion responses.
 - radar: Radar range/bearing mode.
 - vision: EO/IR vision position fixes.
 - lidar: Lidar range/bearing mode.
@@ -25,6 +26,9 @@
 - Fallback selection reasons and disqualified sources are shown with recovery guidance (REQ-INT-017).
 - Scenario and test runs auto-cycle through visual modes aligned to evaluated tracking modes for rapid validation.
 - Multi-mode visualization may present multiple eligible modes concurrently when configured.
+- Platform workbench provides operator-invoked profile selection and optional profile cycling from a single UI session.
+- Front-view workbench provides EO/IR/proximity display families with deterministic spoof-input support when physical sensors are unavailable.
+- Front-view runs support both single-mode rendering and cycle-all rendering from one session.
 
 ## Modularity and Interface Contracts
 - Core, tools, UI, and platform adapters are modular and independently deployable.
@@ -32,6 +36,7 @@
 - Safety and fail-closed behavior apply consistently across all modules and adapters.
 - Third-party platform adapters are supported when they pass contract, safety, and security gates; no additional restrictions apply.
 - Adapter selection uses manifest and allowlist validation; hash mismatches or missing manifests deny activation.
+- Adapter allowlist approvals are freshness-gated; stale or future-dated approvals are denied.
 
 ## Provenance and Gating
 - Every measurement and operator input is tagged with provenance: operational, simulation, test, or unknown.
@@ -43,6 +48,7 @@
 - Mode changes are controlled by the mode manager using health, confidence, and hysteresis.
 - A minimum dwell time shall be enforced to prevent oscillation.
 - On loss of all sensors, the system shall enter hold mode.
+- Invalid operator speed divisors (<= 0) are denied and force tracker inactivity.
 - The navigation ladder prefers higher-permitted sources before lower-permitted ones.
 - Celestial navigation is only permitted when higher-priority sources are unavailable or disallowed.
  - Fallback selection decisions provide explicit reason codes for disqualification (policy, health, freshness, lockout).
@@ -61,6 +67,8 @@
 - Lockout state with remaining steps and reason code.
 - Provenance status and policy authorization state.
 - Visual mode cycle status, including the current visual mode and its mapping to evaluated tracking modes.
+- Front-view status: active display family, view state (front/2d/3d), frame ID, sensor type, latency (ms), dropped-frame count, and drop reason.
+- External I/O envelope status with version, platform profile, adapter status, and deterministic metadata fields.
 
 ## Concurrent Pipeline Operation
 - Compatible sensor pipelines may run concurrently when budgets permit.
@@ -116,5 +124,6 @@
 ## Data Handling
 - Config inputs are untrusted; schema validation is mandatory.
 - Simulation outputs include seed, config version, and build metadata.
+- Target generation utilities are seeded and deterministic for repeatable replay evidence.
 - Celestial datasets are treated as controlled inputs and must pass integrity checks.
 - Audit logs include mode/config changes with timestamps and integrity protections.

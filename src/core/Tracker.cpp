@@ -50,6 +50,13 @@ void Tracker::setTarget(const Object &targetObj)
 
 void Tracker::startTracking(int iterations, int speed)
 {
+    if (speed <= 0)
+    {
+        logMessage(LogLevel::Error, "Invalid tracking speed; must be > 0.");
+        active = false;
+        return;
+    }
+
     int stepCount = 0;
     while (isTrackingActive() && (iterations == 0 || stepCount < iterations))
     {

@@ -163,6 +163,27 @@ struct SimConfig
         bool deviceDriver = false;
     };
 
+    struct FrontViewConfig
+    {
+        bool enabled = false;
+        std::vector<std::string> displayFamilies = {"eo_gray", "ir_white_hot", "ir_black_hot", "proximity_2d"};
+        bool autoCycleEnabled = false;
+        int autoCycleIntervalMs = 1000;
+        std::vector<std::string> autoCycleOrder = {"eo_gray", "ir_white_hot", "ir_black_hot", "proximity_2d"};
+        double renderLatencyBudgetMs = 120.0;
+        double proximityMaxRangeMeters = 2000.0;
+
+        bool spoofEnabled = false;
+        std::string spoofPattern = "gradient";
+        std::string spoofMotionProfile = "linear";
+        unsigned int spoofSeed = 42;
+        double spoofRateHz = 15.0;
+
+        bool requireSignedAssets = true;
+        bool threadingEnabled = false;
+        int threadingMaxWorkers = 1;
+    };
+
     PlatformProfile platformProfile = PlatformProfile::Base;
     bool hasParentProfile = false;
     PlatformProfile parentProfile = PlatformProfile::Base;
@@ -173,6 +194,7 @@ struct SimConfig
     DatasetConfig dataset{};
     AdapterConfig adapter{};
     PluginConfig plugin{};
+    FrontViewConfig frontView{};
     ModeConfig mode{};
     FusionConfig fusion{};
     SchedulerConfig scheduler{};

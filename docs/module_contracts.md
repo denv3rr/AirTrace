@@ -35,6 +35,7 @@ Tools responsibilities:
 - Policy enforcement and authorization decisioning.
 - Dataset integrity validation and audit logging sinks.
 - Adapter registry I/O (manifest + allowlist) and signature/hash checks.
+- Adapter runtime context negotiation (core/tools/ui contract versions) and allowlist approval freshness checks.
 
 Inputs:
 - Config files and policy bundles.
@@ -49,6 +50,7 @@ Outputs:
 UI responsibilities:
 - Operator presentation and input handling.
 - Rendering of baseline UI contract and adapter extensions.
+- Front-view display rendering for EO/IR/proximity families with deterministic cycle control.
 - No direct policy enforcement or external I/O beyond UI controls.
 
 Inputs:
@@ -57,6 +59,8 @@ Inputs:
 
 Outputs:
 - Operator prompts, status banners, and denial guidance.
+- Versioned external I/O envelope records for interoperable platform test exchange.
+- Front-view telemetry fields (mode/state/frame/latency/drop/provenance/auth) in the external I/O envelope.
 
 ## Adapter Contract
 Adapter responsibilities:

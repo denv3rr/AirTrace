@@ -128,3 +128,6 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-122 | REQ-INT-025 | TEST | From a single UI session, run platform workbench for selected profile and all profiles. | Profile selection/cycling is operator-invoked, deterministic, and available without restarting UI. |
 | V-123 | REQ-INT-026 | TEST | Execute platform suites with valid and invalid profiles. | Sensor/adapters/mode-output checks produce explicit pass/fail with stable reason codes. |
 | V-124 | REQ-INT-027 | TEST | Export machine-readable external I/O envelope after platform suite execution. | Envelope contains required versioned fields and deterministic run metadata. |
+| V-125 | REQ-INT-028 | TEST | Run front-view workbench in single-mode and cycle-all paths with spoofed deterministic input. | Front-view mode output is deterministic for a fixed seed and exposes explicit mode/frame/latency status. |
+| V-126 | REQ-INT-029 | TEST | Run front-view workbench with disabled or invalid spoof source settings. | Rendering is denied fail-closed with stable denial reason and recovery guidance. |
+| V-127 | REQ-CFG-013 | TEST | Load valid and invalid `front_view.*` schema values. | Invalid front-view config keys/ranges fail closed with explicit key-level errors; valid config loads successfully. |

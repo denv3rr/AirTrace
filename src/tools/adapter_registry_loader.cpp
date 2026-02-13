@@ -5,7 +5,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -353,6 +355,96 @@ std::string toLower(std::string value)
     return value;
 }
 
+bool isLeapYear(int year)
+{
+    return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+}
+
+int daysInMonth(int year, int month)
+{
+    static const int kDays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (month == 2 && isLeapYear(year))
+    {
+        return 29;
+    }
+    return kDays[month - 1];
+}
+
+bool parseIsoDate(const std::string &value, int &year, int &month, int &day)
+{
+    if (value.size() != 10 || value[4] != '-' || value[7] != '-')
+    {
+        return false;
+    }
+    for (size_t idx = 0; idx < value.size(); ++idx)
+    {
+        if (idx == 4 || idx == 7)
+        {
+            continue;
+        }
+        if (!std::isdigit(static_cast<unsigned char>(value[idx])))
+        {
+            return false;
+        }
+    }
+    year = (value[0] - '0') * 1000 +
+           (value[1] - '0') * 100 +
+           (value[2] - '0') * 10 +
+           (value[3] - '0');
+    month = (value[5] - '0') * 10 +
+            (value[6] - '0');
+    day = (value[8] - '0') * 10 +
+          (value[9] - '0');
+    if (year < 1970 || month < 1 || month > 12)
+    {
+        return false;
+    }
+    if (day < 1 || day > daysInMonth(year, month))
+    {
+        return false;
+    }
+    return true;
+}
+
+int daysFromCivil(int year, unsigned int month, unsigned int day)
+{
+    year -= month <= 2 ? 1 : 0;
+    const int era = (year >= 0 ? year : year - 399) / 400;
+    const unsigned int yoe = static_cast<unsigned int>(year - era * 400);
+    const unsigned int doy = (153 * (month + (month > 2 ? -3 : 9)) + 2) / 5 + day - 1;
+    const unsigned int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    return era * 146097 + static_cast<int>(doe) - 719468;
+}
+
+bool approvalDateIsFresh(const std::string &approvalDate, int maxAgeDays, bool &stale)
+{
+    stale = false;
+    int year = 0;
+    int month = 0;
+    int day = 0;
+    if (!parseIsoDate(approvalDate, year, month, day))
+    {
+        return false;
+    }
+
+    std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::tm *utc = std::gmtime(&now);
+    if (!utc)
+    {
+        return false;
+    }
+    int todayDays = daysFromCivil(utc->tm_year + 1900, static_cast<unsigned int>(utc->tm_mon + 1), static_cast<unsigned int>(utc->tm_mday));
+    int approvalDays = daysFromCivil(year, static_cast<unsigned int>(month), static_cast<unsigned int>(day));
+    if (approvalDays > todayDays)
+    {
+        return false;
+    }
+
+    int ageDays = todayDays - approvalDays;
+    stale = ageDays > maxAgeDays;
+    return true;
+}
+
 bool parseManifest(const std::string &content, AdapterManifest &manifest, std::vector<AdapterUiField> &uiFields, std::string &error)
 {
     JsonValue root;
@@ -587,6 +679,10 @@ AdapterUiSnapshot loadAdapterUiSnapshot(const SimConfig &config)
     snapshot.surface = config.adapter.uiSurface.empty() ? "tui" : toLower(config.adapter.uiSurface);
     snapshot.status = "none";
     snapshot.reason = "none";
+    snapshot.approvedBy = "";
+    snapshot.approvalDate = "";
+    snapshot.signatureAlgorithm = "";
+    snapshot.contextVersionSummary = "";
 
     if (snapshot.adapterId.empty())
     {
@@ -676,6 +772,24 @@ AdapterUiSnapshot loadAdapterUiSnapshot(const SimConfig &config)
         return snapshot;
     }
 
+    snapshot.approvedBy = selectedEntry.approvedBy;
+    snapshot.approvalDate = selectedEntry.approvalDate;
+    snapshot.signatureAlgorithm = selectedEntry.signatureAlgorithm;
+
+    bool stale = false;
+    if (!approvalDateIsFresh(selectedEntry.approvalDate, config.adapter.allowlistMaxAgeDays, stale))
+    {
+        snapshot.status = "allowlist_invalid";
+        snapshot.reason = "adapter_allowlist_invalid";
+        return snapshot;
+    }
+    if (stale)
+    {
+        snapshot.status = "allowlist_stale";
+        snapshot.reason = "adapter_allowlist_stale";
+        return snapshot;
+    }
+
     if (toLower(selectedEntry.signatureAlgorithm) != "sha256")
     {
         snapshot.status = "signature_invalid";
@@ -692,11 +806,16 @@ AdapterUiSnapshot loadAdapterUiSnapshot(const SimConfig &config)
     }
 
     AdapterRegistryContext context;
-    context.coreVersion = kCoreVersion;
-    context.toolsVersion = kToolsVersion;
-    context.uiVersion = kUiVersion;
-    context.adapterContractVersion = kAdapterContractVersion;
-    context.uiContractVersion = kUiContractVersion;
+    context.coreVersion = config.adapter.coreVersion.empty() ? kCoreVersion : config.adapter.coreVersion;
+    context.toolsVersion = config.adapter.toolsVersion.empty() ? kToolsVersion : config.adapter.toolsVersion;
+    context.uiVersion = config.adapter.uiVersion.empty() ? kUiVersion : config.adapter.uiVersion;
+    context.adapterContractVersion = config.adapter.adapterContractVersion.empty() ? kAdapterContractVersion : config.adapter.adapterContractVersion;
+    context.uiContractVersion = config.adapter.uiContractVersion.empty() ? kUiContractVersion : config.adapter.uiContractVersion;
+    snapshot.contextVersionSummary = "core=" + context.coreVersion +
+                                     ",tools=" + context.toolsVersion +
+                                     ",ui=" + context.uiVersion +
+                                     ",adapter_contract=" + context.adapterContractVersion +
+                                     ",ui_contract=" + context.uiContractVersion;
 
     AdapterRegistryResult registryResult;
     if (!validateAdapterRegistration(manifest, selectedEntry, context, snapshot.surface, registryResult))

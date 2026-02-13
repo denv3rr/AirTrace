@@ -36,6 +36,42 @@ std::string denialRecoveryHint(const std::string &denialReason)
     {
         return "verify write permissions for test_logs.txt";
     }
+    if (denialReason == "platform_profile_invalid")
+    {
+        return "select a supported platform profile and retry";
+    }
+    if (denialReason == "platform_suite_failed")
+    {
+        return "review platform suite diagnostics and adapter status";
+    }
+    if (denialReason == "front_view_disabled")
+    {
+        return "set front_view.enabled=true and retry";
+    }
+    if (denialReason == "front_view_sensor_unavailable")
+    {
+        return "enable front_view.spoof.enabled or connect an approved sensor feed";
+    }
+    if (denialReason == "front_view_mode_invalid")
+    {
+        return "verify front_view.display_families and auto_cycle.order values";
+    }
+    if (denialReason == "front_view_cycle_empty")
+    {
+        return "configure at least one front_view display family";
+    }
+    if (denialReason == "front_view_spoof_invalid")
+    {
+        return "verify front_view.spoof.pattern and front_view.spoof.motion_profile";
+    }
+    if (denialReason == "front_view_spoof_rate_invalid")
+    {
+        return "set front_view.spoof.rate_hz within allowed range";
+    }
+    if (denialReason == "render_latency_exceeded")
+    {
+        return "reduce front-view pipeline load or increase latency budget";
+    }
     if (denialReason == "invalid_ladder" || denialReason == "invalid_mode")
     {
         return "verify mode.ladder_order configuration and restart";

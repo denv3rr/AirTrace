@@ -48,6 +48,7 @@ add_executable(AirTrace
         src/ui/alerts.cpp
         src/ui/tui.cpp
         src/ui/adapter_ui_mapping.cpp
+        src/ui/front_view.cpp
         src/ui/simulation.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
@@ -96,9 +97,11 @@ add_executable(AirTraceUiTests
         tests/ui_menu_selection.cpp
         tests/ui_alerts.cpp
         tests/ui_status.cpp
+        tests/front_view_display.cpp
         src/ui/menu_selection.cpp
         src/ui/alerts.cpp
         src/ui/adapter_ui_mapping.cpp
+        src/ui/front_view.cpp
         src/ui/simulation.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
@@ -116,6 +119,7 @@ add_executable(AirTraceHarnessRunner
         src/ui/alerts.cpp
         src/ui/tui.cpp
         src/ui/adapter_ui_mapping.cpp
+        src/ui/front_view.cpp
         src/ui/simulation.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp
@@ -140,6 +144,7 @@ add_executable(AirTraceIntegrationTests
         src/ui/alerts.cpp
         src/ui/tui.cpp
         src/ui/adapter_ui_mapping.cpp
+        src/ui/front_view.cpp
         src/ui/simulation.cpp
         src/ui/inputValidation.cpp
         src/ui/scenario.cpp

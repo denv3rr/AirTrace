@@ -1,18 +1,25 @@
 #include "core/simulation_utils.h"
 
-#include <cstdlib>
 #include <cmath>
+#include <random>
 #include <string>
 
-std::vector<Object> generateTargets(int count, int maxCoord)
+std::vector<Object> generateTargets(int count, int maxCoord, unsigned int seed)
 {
     std::vector<Object> targets;
+    if (count <= 0 || maxCoord <= 0)
+    {
+        return targets;
+    }
+
     targets.reserve(static_cast<size_t>(count));
+    std::mt19937 rng(seed);
+    std::uniform_int_distribution<int> coordinate(0, maxCoord - 1);
 
     for (int i = 0; i < count; ++i)
     {
         Object target(i + 1, "Target_" + std::to_string(i + 1),
-                      {std::rand() % maxCoord, std::rand() % maxCoord});
+                      {coordinate(rng), coordinate(rng)});
         targets.push_back(target);
     }
 

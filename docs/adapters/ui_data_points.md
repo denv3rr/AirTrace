@@ -30,6 +30,26 @@ units, and recovery guidance rules.
 | run.seed | Seed used for deterministic runs. | uint32 | [0, 4294967295] | Missing is an error in simulation/test. |
 | run.deterministic | Determinism flag. | bool | true/false | False is an error in simulation/test. |
 
+## External I/O Envelope Contract
+
+The UI exports a machine-readable envelope for cross-system integration.
+The envelope schema is versioned and backward-compatible.
+
+| Field ID | Description | Units | Range | Error Behavior |
+| --- | --- | --- | --- | --- |
+| schema_version | Envelope schema version identifier. | semver | non-empty | Missing -> reject payload. |
+| interface_id | Stable contract family identifier. | none | non-empty | Unknown -> reject payload. |
+| metadata.platform_profile | Active platform profile under test. | none | enumerated | Unknown -> reject payload. |
+| metadata.adapter_id | Active adapter identifier. | none | allowlisted or empty | Unknown -> reject payload. |
+| metadata.ui_surface | Active UI surface. | none | enumerated | Unknown -> reject payload. |
+| metadata.seed | Deterministic run seed. | uint32 | [0, 4294967295] | Missing -> reject payload. |
+| metadata.deterministic | Determinism marker. | bool | true/false | False -> reject simulation evidence payloads. |
+| mode.active | Active mode/source. | none | enumerated | Unknown -> reject payload. |
+| mode.contributors[] | Active contributors list. | none | list | Unknown source IDs -> reject payload. |
+| sensors[] | Per-sensor health/freshness/confidence records. | mixed | per field | Missing sensor id -> reject payload. |
+| front_view.* | Front-view display mode/state/frame/latency/drop/provenance/auth telemetry. | mixed | per field | Invalid or unknown front-view fields -> reject payload. |
+| status.* | Authorization, provenance, logging, adapter status and reasons. | none | stable IDs/text | Unknown mandatory status -> reject payload. |
+
 ## Adapter Extension Rules
 - Each adapter must declare extension fields with units, ranges, and
   explicit error behavior.

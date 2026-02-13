@@ -81,6 +81,7 @@ Create and maintain these files under `docs/` before adding features:
 - Trend history window added via `mode.history_window`.
 - Disagreement lockout count available via `fusion.max_disagreement_count`.
 - Residual alignment window configured via `fusion.max_residual_age_seconds`.
+- Front-view config namespace added under `front_view.*` with spoof/cycle/threading controls.
 - Next session: add sliding per-sensor residual buffers for time-aligned checks.
 - Next session: add edge-case fixtures for GNSS spoofing, IMU bias drift, magnetometer interference.
 - Next session: add live TUI warning banners for denial reasons and recovery steps.
@@ -118,6 +119,7 @@ Create and maintain these files under `docs/` before adding features:
 - Fallback sensors are modeled in core, but the tracker app does not yet fuse or display sensor health/mode outputs beyond summary status.
 - UI/TUI audit remains incomplete outside core menu/test flows; remaining screens need a full pass for validation paths and safe-state messaging.
 - Tests now include integration coverage for dropout ladders, dataset gating, and UI menu flows; broader integration and scenario coverage remains limited.
+- Front-view display workbench and spoofed display scaffolding are implemented; deeper sensor-specific rendering validation remains pending.
 - README has been simplified; further cleanup for clarity and operator focus is still needed.
 - Security threat model includes a data flow diagram; control mappings per interface require periodic review and expansion as interfaces evolve.
 

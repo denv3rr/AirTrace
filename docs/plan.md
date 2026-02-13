@@ -11,6 +11,7 @@ Align the core/app with the mandatory standards, close sensor fallback gaps, and
 - Enforce network-aid deny-by-default and override auditing end-to-end (REQ-SEC-005/006/007).
 - Add explicit plugin activation audit records for authorization/signature decisions (REQ-SEC-004, REQ-SEC-002/003).
 - Complete full UI/TUI audit outside menu/test-focused flows with explicit fail-closed messaging (REQ-INT-003, REQ-INT-020).
+- Begin front-view sensor display scaffolding (EO/IR + 2D/3D proximity views) with deterministic spoofed input support.
 - Continue usability/visual mode validation implementation for scenario/test runs (REQ-INT-021/022/023).
 - Continue modular interface and packaging boundary enforcement for core/tools/UI/adapters.
 
@@ -300,6 +301,14 @@ Implementation Targets: `src/core/adapter_registry.cpp`, `include/core/adapter_r
 Verification: V-104 UI extensions render, V-107 version mismatch denied, V-109/110 official adapter inspection, V-113 allowlist enforcement.
 Traceability Update: Replace REQ-INT-024/REQ-ADP-001..006/REQ-MOD-004/REQ-SEC-012 TBD entries with code references.
 
+### Gap Closure H: Front-View Sensor Display Pipeline and Cycling
+Objective: Provide a professional, cross-platform front-view display subsystem that supports EO/IR rendering modes, deterministic cycling, and 2D/3D proximity views from normalized sensor data.
+Prereqs: Finalize ingress/egress display contract fields and add configuration schema entries for display modes, cycling, and latency budgets.
+Design Note: `docs/front_view_display_architecture.md`.
+Implementation Targets: `src/ui/simulation.cpp`, `src/ui/scenario.cpp`, `include/ui/simulation.h`, `include/core/external_io_envelope.h`, new UI display pipeline module files.
+Verification: Deterministic spoofed frame replay, mode-cycle correctness, latency/drop reason telemetry, UI/TUI fail-closed messaging checks.
+Traceability Update: Add REQ/VER mappings for front-view display contracts, mode cycling, and proximity views once implementation starts.
+
 ## Perpetual Execution Framework (Autonomous)
 Purpose: Allow continuous project advancement without waiting for low-value prompt-by-prompt direction while still honoring review gates and standards.
 
@@ -334,6 +343,8 @@ Rolling Work Queues:
   - Add performance-budget fixture and evidence capture for REQ-PERF-001.
 - Queue D UI/TUI:
   - Complete REQ-INT-021/022/023 visual mode cycling and multi-mode rendering.
+  - Implement front-view EO/IR display scaffolding with deterministic spoofed-input harness support.
+  - Add 2D/3D proximity toggle views with explicit units, confidence, and denial reason rendering.
   - Expand denial banners to include adapter approval freshness, plugin/network-aid denial context, and recovery guidance.
   - Complete full-screen UI/TUI audit outside menu/test paths.
 
@@ -367,4 +378,6 @@ Per-Change Exit Criteria:
 - Tools layer scaffolded with config loader and audit log ownership; adapter SDK skeleton created under `adapters/sdk/`.
 - Adapter registry loader validates manifests/allowlists with hash checks; adapter config keys and UI extension summaries are enforced; official adapter manifests and allowlist are present under `adapters/`.
 - Plugin authorization/signing gate is now enforced through `plugin.*` schema + core validator with fail-closed reason codes for unauthorized, non-allowlisted, or signature-invalid activation attempts.
+- Front-view display architecture draft is now documented in `docs/front_view_display_architecture.md` with EO/IR mode families, deterministic cycling, spoofed-input strategy, and 2D/3D proximity rendering plan.
+- Front-view display scaffolding is now implemented with a dedicated UI module, menu workbench flow, `front_view.*` config validation, and external I/O envelope telemetry fields.
 - Remaining gaps still open: platform profile inheritance usage beyond config/UI in broader core workflows, full UI/TUI audit outside the menu/test flows, provenance tagging for sim vs operational inputs, and broader documentation simplification.

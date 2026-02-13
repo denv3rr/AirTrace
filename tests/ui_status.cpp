@@ -74,7 +74,10 @@ void runStatusTests()
         "provenance.run_mode=simulation\n"
         "provenance.allowed_inputs=simulation\n"
         "provenance.allow_mixed=false\n"
-        "provenance.unknown_action=deny\n");
+        "provenance.unknown_action=deny\n"
+        "front_view.enabled=true\n"
+        "front_view.spoof.enabled=true\n"
+        "front_view.display_families=eo_gray,ir_white_hot,proximity_2d\n");
     bool loaded = initializeUiContext(configPath.string());
     assert(loaded);
     ModeDecisionDetail detail = sampleDetail();
@@ -96,6 +99,64 @@ void runStatusTests()
     assert(status.sensorStatusSummary.find("gps[avail=y,health=y,meas=y") != std::string::npos);
     assert(status.sensorStatusSummary.find("lockout=steps:2,reason:stale") != std::string::npos);
     assert(status.sensorStatusSummary.find("vision[avail=y,health=n,meas=n") != std::string::npos);
+    assert(status.adapterStatus == "none");
+    assert(status.adapterReason == "none");
+    assert(status.adapterContext.empty());
+
+    const std::vector<std::string> profiles = uiListPlatformProfiles();
+    assert(profiles.size() == 8);
+    assert(profiles[0] == "base");
+    assert(profiles[1] == "air");
+    assert(profiles[7] == "subsea");
+
+    PlatformSuiteResult invalidProfile = uiRunPlatformSuite("invalid_profile");
+    assert(!invalidProfile.pass);
+    assert(invalidProfile.reason == "platform_profile_invalid");
+
+    PlatformSuiteResult airSuite = uiRunPlatformSuite("air");
+    assert(airSuite.pass);
+    assert(airSuite.profile == "air");
+    assert(airSuite.sensorsValidated);
+    assert(airSuite.adapterValidated);
+    assert(airSuite.modeOutputValidated);
+
+    const std::vector<PlatformSuiteResult> allSuites = uiRunAllPlatformSuites();
+    assert(allSuites.size() == profiles.size());
+    bool foundAir = false;
+    for (const auto &entry : allSuites)
+    {
+        if (entry.profile == "air")
+        {
+            foundAir = true;
+        }
+    }
+    assert(foundAir);
+
+    const ExternalIoEnvelope envelope = uiBuildExternalIoEnvelope();
+    assert(envelope.metadata.schemaVersion == "1.0.0");
+    assert(envelope.metadata.platformProfile == getUiStatus().platformProfile);
+    assert(!envelope.mode.activeMode.empty());
+    assert(!envelope.sensors.empty());
+    const std::string envelopeJson = uiBuildExternalIoEnvelopeJson();
+    assert(envelopeJson.find("\"schema_version\":\"1.0.0\"") != std::string::npos);
+    assert(envelopeJson.find("\"platform_profile\":\"" + getUiStatus().platformProfile + "\"") != std::string::npos);
+    assert(envelopeJson.find("\"sensors\"") != std::string::npos);
+
+    const std::vector<std::string> frontViewModes = uiListFrontViewDisplayModes();
+    assert(!frontViewModes.empty());
+    std::string frontViewReason;
+    bool frontViewOk = uiRunFrontViewDisplaySuite(true, frontViewReason);
+    assert(frontViewOk);
+    assert(frontViewReason == "ok" || frontViewReason == "render_latency_exceeded");
+    const UiStatus &frontViewStatus = getUiStatus();
+    assert(!frontViewStatus.frontViewMode.empty());
+    assert(frontViewStatus.frontViewSpoofActive);
+    const ExternalIoEnvelope frontViewEnvelope = uiBuildExternalIoEnvelope();
+    assert(!frontViewEnvelope.frontView.activeMode.empty());
+    assert(frontViewEnvelope.frontView.spoofActive);
+    const std::string frontViewJson = uiBuildExternalIoEnvelopeJson();
+    assert(frontViewJson.find("\"front_view\"") != std::string::npos);
+    assert(frontViewJson.find("\"active_mode\":\"" + frontViewEnvelope.frontView.activeMode + "\"") != std::string::npos);
 
     std::filesystem::remove(configPath);
 }
