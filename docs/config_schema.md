@@ -68,6 +68,7 @@ Schema version: 1.0
   - Values: allowed overrides (network_aid, dataset_tier, mode_override).
   - Format: policy.role_permissions.<role>=comma-separated list.
 - policy.active_role (string): optional; default "operator".
+  - Role matching is case-insensitive; values are normalized to lowercase.
 
 ## Provenance
 - provenance.run_mode (string): optional; default "operational".
@@ -86,8 +87,38 @@ Schema version: 1.0
 - adapter.manifest_path (string): optional; default empty (uses official manifest path when adapter.id is official).
 - For non-official adapter ids, adapter.manifest_path is required.
 - adapter.allowlist_path (string): optional; default empty (uses `adapters/allowlist.json`).
+- adapter.core_version (semver): optional; default "1.0.0".
+- adapter.tools_version (semver): optional; default "1.0.0".
+- adapter.ui_version (semver): optional; default "1.0.0".
+- adapter.contract_version (semver): optional; default "1.0.0".
+- ui.contract_version (semver): optional; default "1.0.0".
+- adapter.allowlist_max_age_days (days): optional; default 365; range [0, 3650].
+  - Allowlist approval records older than this limit are rejected.
 - ui.surface (string): optional; default "tui".
   - Allowed: tui, cockpit, remote_operator, c2.
+
+## Plugin Authorization and Signing
+- plugin.id (string): optional; default empty (no plugin configured).
+  - Allowed characters: a-z, 0-9, underscore, hyphen.
+- plugin.version (semver): required when plugin.id is set.
+- plugin.signature_hash (sha256 hex): required when plugin.id is set.
+- plugin.signature_algorithm (string): required when plugin.id is set; must be `sha256`.
+- plugin.allowlist.id (string): required when plugin.id is set; must match plugin.id.
+- plugin.allowlist.version (semver): required when plugin.id is set; must match plugin.version.
+- plugin.allowlist.signature_hash (sha256 hex): required when plugin.id is set; must match plugin.signature_hash.
+- plugin.allowlist.signature_algorithm (string): required when plugin.id is set; must be `sha256`.
+- plugin.authorization_required (bool): optional; default true.
+  - Must remain true when plugin.id is set; false is denied fail-closed.
+- plugin.authorization_granted (bool): optional; default false.
+  - Must be true when plugin.id is set or activation is denied.
+- plugin.device_driver (bool): optional; default false.
+
+## External I/O Output Contract (Runtime)
+- The external I/O envelope is a runtime output contract, not a config input.
+- schema_version (semver): fixed by implementation; current "1.0.0".
+- interface_id (string): fixed family identifier; current "airtrace.external_io".
+- metadata.seed (uint32) and metadata.deterministic (bool) are mandatory in all exported envelopes.
+- metadata.platform_profile, mode.*, sensors[], and status.* fields must be present and schema-stable for integration consumers.
 
 ## Dataset Tiers
 - dataset.celestial.tier (string): optional; default "minimal".

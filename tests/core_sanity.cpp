@@ -1,14 +1,21 @@
 #include "core/mode_manager.h"
 #include "core/sensors.h"
+#include "core/simulation_utils.h"
+#include "core/Tracker.h"
+#include "core/HeatSignature.h"
 #include "tools/sim_config_loader.h"
+#include "tools/adapter_registry_loader.h"
 #include "core/mode_scheduler.h"
 #include "core/state.h"
 #include "core/hash.h"
 
 #include <cassert>
 #include <cmath>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <limits>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -79,9 +86,29 @@ private:
 std::filesystem::path writeConfigFile(const std::string &name, const std::string &contents)
 {
     std::filesystem::path path = std::filesystem::current_path() / name;
-    std::ofstream file(path.string(), std::ios::trunc);
+    std::ofstream file(path.string(), std::ios::trunc | std::ios::binary);
     file << contents;
     return path;
+}
+
+std::string todayDateIso()
+{
+    std::time_t now = std::time(nullptr);
+    std::tm *utc = std::gmtime(&now);
+    assert(utc != nullptr);
+    std::ostringstream out;
+    out << (utc->tm_year + 1900) << "-";
+    if (utc->tm_mon + 1 < 10)
+    {
+        out << "0";
+    }
+    out << (utc->tm_mon + 1) << "-";
+    if (utc->tm_mday < 10)
+    {
+        out << "0";
+    }
+    out << utc->tm_mday;
+    return out.str();
 }
 } // namespace
 
@@ -264,6 +291,16 @@ int main()
     assert(!badActiveRoleResult.ok);
     std::filesystem::remove(badActiveRoleConfig);
 
+    std::filesystem::path caseInsensitiveRoleConfig = writeConfigFile(
+        "airtrace_case_insensitive_role.cfg",
+        "config.version=1.0\n"
+        "policy.roles=operator,supervisor\n"
+        "policy.active_role=Operator\n"
+        "policy.role_permissions.SuperVisor=network_aid\n");
+    ConfigResult caseInsensitiveRoleResult = loadSimConfig(caseInsensitiveRoleConfig.string());
+    assert(caseInsensitiveRoleResult.ok);
+    std::filesystem::remove(caseInsensitiveRoleConfig);
+
     std::filesystem::path missingHashConfig = writeConfigFile(
         "airtrace_missing_hash.cfg",
         "config.version=1.0\n"
@@ -297,9 +334,252 @@ int main()
     assert(!unknownAdapterResult.ok);
     std::filesystem::remove(unknownAdapterConfig);
 
+    std::filesystem::path invalidAdapterVersionContextConfig = writeConfigFile(
+        "airtrace_invalid_adapter_context.cfg",
+        "config.version=1.0\n"
+        "adapter.core_version=1.0\n");
+    ConfigResult invalidAdapterVersionContextResult = loadSimConfig(invalidAdapterVersionContextConfig.string());
+    assert(!invalidAdapterVersionContextResult.ok);
+    std::filesystem::remove(invalidAdapterVersionContextConfig);
+
+    std::filesystem::path invalidAllowlistAgeConfig = writeConfigFile(
+        "airtrace_invalid_allowlist_age.cfg",
+        "config.version=1.0\n"
+        "adapter.allowlist_max_age_days=-1\n");
+    ConfigResult invalidAllowlistAgeResult = loadSimConfig(invalidAllowlistAgeConfig.string());
+    assert(!invalidAllowlistAgeResult.ok);
+    std::filesystem::remove(invalidAllowlistAgeConfig);
+
+    std::filesystem::path unauthorizedPluginConfig = writeConfigFile(
+        "airtrace_plugin_unauthorized.cfg",
+        "config.version=1.0\n"
+        "plugin.id=nav_plugin\n"
+        "plugin.version=1.0.0\n"
+        "plugin.signature_hash=1111111111111111111111111111111111111111111111111111111111111111\n"
+        "plugin.signature_algorithm=sha256\n"
+        "plugin.allowlist.id=nav_plugin\n"
+        "plugin.allowlist.version=1.0.0\n"
+        "plugin.allowlist.signature_hash=1111111111111111111111111111111111111111111111111111111111111111\n"
+        "plugin.allowlist.signature_algorithm=sha256\n"
+        "plugin.authorization_required=true\n"
+        "plugin.authorization_granted=false\n");
+    ConfigResult unauthorizedPluginResult = loadSimConfig(unauthorizedPluginConfig.string());
+    assert(!unauthorizedPluginResult.ok);
+    bool sawUnauthorizedPlugin = false;
+    for (const auto &issue : unauthorizedPluginResult.issues)
+    {
+        if (issue.message.find("plugin_not_authorized") != std::string::npos)
+        {
+            sawUnauthorizedPlugin = true;
+            break;
+        }
+    }
+    assert(sawUnauthorizedPlugin);
+    std::filesystem::remove(unauthorizedPluginConfig);
+
+    std::filesystem::path unsignedPluginConfig = writeConfigFile(
+        "airtrace_plugin_unsigned.cfg",
+        "config.version=1.0\n"
+        "plugin.id=nav_plugin\n"
+        "plugin.version=1.0.0\n"
+        "plugin.signature_hash=1111111111111111111111111111111111111111111111111111111111111111\n"
+        "plugin.signature_algorithm=sha256\n"
+        "plugin.allowlist.id=nav_plugin\n"
+        "plugin.allowlist.version=1.0.0\n"
+        "plugin.allowlist.signature_hash=2222222222222222222222222222222222222222222222222222222222222222\n"
+        "plugin.allowlist.signature_algorithm=sha256\n"
+        "plugin.authorization_required=true\n"
+        "plugin.authorization_granted=true\n");
+    ConfigResult unsignedPluginResult = loadSimConfig(unsignedPluginConfig.string());
+    assert(!unsignedPluginResult.ok);
+    bool sawInvalidSignature = false;
+    for (const auto &issue : unsignedPluginResult.issues)
+    {
+        if (issue.message.find("plugin_signature_invalid") != std::string::npos)
+        {
+            sawInvalidSignature = true;
+            break;
+        }
+    }
+    assert(sawInvalidSignature);
+    std::filesystem::remove(unsignedPluginConfig);
+
+    std::filesystem::path validPluginConfig = writeConfigFile(
+        "airtrace_plugin_valid.cfg",
+        "config.version=1.0\n"
+        "plugin.id=nav_plugin\n"
+        "plugin.version=1.0.0\n"
+        "plugin.signature_hash=1111111111111111111111111111111111111111111111111111111111111111\n"
+        "plugin.signature_algorithm=sha256\n"
+        "plugin.allowlist.id=nav_plugin\n"
+        "plugin.allowlist.version=1.0.0\n"
+        "plugin.allowlist.signature_hash=1111111111111111111111111111111111111111111111111111111111111111\n"
+        "plugin.allowlist.signature_algorithm=sha256\n"
+        "plugin.authorization_required=true\n"
+        "plugin.authorization_granted=true\n");
+    ConfigResult validPluginResult = loadSimConfig(validPluginConfig.string());
+    assert(validPluginResult.ok);
+    std::filesystem::remove(validPluginConfig);
+
+    const std::string manifestContent =
+        "{\n"
+        "  \"adapter.id\": \"custom_adapter\",\n"
+        "  \"adapter.version\": \"1.0.0\",\n"
+        "  \"adapter.contract_version\": \"1.0.0\",\n"
+        "  \"ui.contract_version\": \"1.0.0\",\n"
+        "  \"core.compatibility.min\": \"1.0.0\",\n"
+        "  \"core.compatibility.max\": \"1.0.0\",\n"
+        "  \"tools.compatibility.min\": \"1.0.0\",\n"
+        "  \"tools.compatibility.max\": \"1.0.0\",\n"
+        "  \"ui.compatibility.min\": \"1.0.0\",\n"
+        "  \"ui.compatibility.max\": \"1.0.0\",\n"
+        "  \"capabilities\": [\n"
+        "    {\n"
+        "      \"id\": \"gps_fix\",\n"
+        "      \"description\": \"GPS fix\",\n"
+        "      \"units\": \"meters\",\n"
+        "      \"range_min\": 0,\n"
+        "      \"range_max\": 100000,\n"
+        "      \"error_behavior\": \"deny\"\n"
+        "    }\n"
+        "  ],\n"
+        "  \"ui_extensions\": [\n"
+        "    {\n"
+        "      \"field_id\": \"gps_hdop\",\n"
+        "      \"type\": \"number\",\n"
+        "      \"units\": \"ratio\",\n"
+        "      \"range_min\": 0,\n"
+        "      \"range_max\": 50,\n"
+        "      \"error_behavior\": \"hide\",\n"
+        "      \"surfaces\": [\"tui\"]\n"
+        "    }\n"
+        "  ]\n"
+        "}\n";
+    const std::filesystem::path manifestPath = writeConfigFile("airtrace_adapter_manifest.json", manifestContent);
+    std::vector<unsigned char> manifestBytes(manifestContent.begin(), manifestContent.end());
+    const std::string manifestHash = sha256Hex(manifestBytes);
+
+    std::ostringstream staleAllowlist;
+    staleAllowlist
+        << "{\n"
+        << "  \"entries\": [\n"
+        << "    {\n"
+        << "      \"adapter.id\": \"custom_adapter\",\n"
+        << "      \"adapter.version\": \"1.0.0\",\n"
+        << "      \"signature.hash\": \"" << manifestHash << "\",\n"
+        << "      \"signature.algorithm\": \"sha256\",\n"
+        << "      \"approved_by\": \"qa\",\n"
+        << "      \"approval_date\": \"2000-01-01\",\n"
+        << "      \"allowed_surfaces\": [\"tui\"]\n"
+        << "    }\n"
+        << "  ]\n"
+        << "}\n";
+    const std::filesystem::path staleAllowlistPath = writeConfigFile("airtrace_adapter_allowlist_stale.json", staleAllowlist.str());
+
+    std::ostringstream staleAdapterConfig;
+    staleAdapterConfig
+        << "config.version=1.0\n"
+        << "adapter.id=custom_adapter\n"
+        << "adapter.version=1.0.0\n"
+        << "adapter.manifest_path=" << manifestPath.string() << "\n"
+        << "adapter.allowlist_path=" << staleAllowlistPath.string() << "\n"
+        << "adapter.allowlist_max_age_days=30\n"
+        << "ui.surface=tui\n";
+    const std::filesystem::path staleAdapterConfigPath = writeConfigFile("airtrace_adapter_stale.cfg", staleAdapterConfig.str());
+    ConfigResult staleAdapterConfigResult = loadSimConfig(staleAdapterConfigPath.string());
+    assert(!staleAdapterConfigResult.ok);
+    bool sawStaleReason = false;
+    for (const auto &issue : staleAdapterConfigResult.issues)
+    {
+        if (issue.message.find("adapter_allowlist_stale") != std::string::npos)
+        {
+            sawStaleReason = true;
+            break;
+        }
+    }
+    assert(sawStaleReason);
+    std::filesystem::remove(staleAdapterConfigPath);
+    std::filesystem::remove(staleAllowlistPath);
+
+    std::ostringstream freshAllowlist;
+    freshAllowlist
+        << "{\n"
+        << "  \"entries\": [\n"
+        << "    {\n"
+        << "      \"adapter.id\": \"custom_adapter\",\n"
+        << "      \"adapter.version\": \"1.0.0\",\n"
+        << "      \"signature.hash\": \"" << manifestHash << "\",\n"
+        << "      \"signature.algorithm\": \"sha256\",\n"
+        << "      \"approved_by\": \"qa\",\n"
+        << "      \"approval_date\": \"" << todayDateIso() << "\",\n"
+        << "      \"allowed_surfaces\": [\"tui\"]\n"
+        << "    }\n"
+        << "  ]\n"
+        << "}\n";
+    const std::filesystem::path freshAllowlistPath = writeConfigFile("airtrace_adapter_allowlist_fresh.json", freshAllowlist.str());
+
+    SimConfig freshAdapterConfig;
+    freshAdapterConfig.adapter.id = "custom_adapter";
+    freshAdapterConfig.adapter.version = "1.0.0";
+    freshAdapterConfig.adapter.manifestPath = manifestPath.string();
+    freshAdapterConfig.adapter.allowlistPath = freshAllowlistPath.string();
+    freshAdapterConfig.adapter.allowlistMaxAgeDays = 30;
+    freshAdapterConfig.adapter.uiSurface = "tui";
+    freshAdapterConfig.adapter.coreVersion = "1.0.0";
+    freshAdapterConfig.adapter.toolsVersion = "1.0.0";
+    freshAdapterConfig.adapter.uiVersion = "1.0.0";
+    freshAdapterConfig.adapter.adapterContractVersion = "1.0.0";
+    freshAdapterConfig.adapter.uiContractVersion = "1.0.0";
+    tools::AdapterUiSnapshot adapterSnapshot = tools::loadAdapterUiSnapshot(freshAdapterConfig);
+    assert(adapterSnapshot.status == "ok");
+    assert(adapterSnapshot.reason == "ok");
+    assert(adapterSnapshot.approvedBy == "qa");
+    assert(adapterSnapshot.contextVersionSummary.find("core=1.0.0") != std::string::npos);
+    std::filesystem::remove(freshAllowlistPath);
+    std::filesystem::remove(manifestPath);
+
     std::vector<unsigned char> abc = {'a', 'b', 'c'};
     std::string abcHash = sha256Hex(abc);
     assert(hashEquals("BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD", abcHash));
+
+    std::vector<Object> seededTargetsA = generateTargets(5, 100, 1337);
+    std::vector<Object> seededTargetsB = generateTargets(5, 100, 1337);
+    assert(seededTargetsA.size() == seededTargetsB.size());
+    for (size_t idx = 0; idx < seededTargetsA.size(); ++idx)
+    {
+        assert(seededTargetsA[idx].getPosition() == seededTargetsB[idx].getPosition());
+    }
+    assert(generateTargets(5, 100, 1337)[0].getPosition() != generateTargets(5, 100, 1338)[0].getPosition());
+
+    Object follower(1, "follower", std::pair<int, int>{0, 0});
+    Object target(2, "target", std::pair<int, int>{10, 10});
+    Tracker tracker(follower);
+    tracker.setTrackingMode("gps");
+    tracker.setTarget(target);
+    tracker.startTracking(1, 0);
+    assert(!tracker.isTrackingActive());
+
+    HeatSignature heatSignature;
+    heatSignature.setHeatData(10.0f);
+    const std::pair<int, int> lowHeatStep = heatSignature.calculatePath(follower, target);
+    heatSignature.setHeatData(80.0f);
+    const std::pair<int, int> highHeatStep = heatSignature.calculatePath(follower, target);
+    assert(highHeatStep.first > lowHeatStep.first);
+
+    heatSignature.setHeatData(-5.0f);
+    const std::pair<int, int> clampedLowStep = heatSignature.calculatePath(follower, target);
+    assert(clampedLowStep.first == 0);
+    assert(clampedLowStep.second == 0);
+
+    heatSignature.setHeatData(200.0f);
+    const std::pair<int, int> clampedHighStep = heatSignature.calculatePath(follower, target);
+    assert(clampedHighStep.first == 5);
+    assert(clampedHighStep.second == 5);
+
+    heatSignature.setHeatData(std::numeric_limits<float>::quiet_NaN());
+    const std::pair<int, int> nanStep = heatSignature.calculatePath(follower, target);
+    assert(nanStep.first == 0);
+    assert(nanStep.second == 0);
 
     std::mt19937 rng(42);
     SensorConfig testConfig{1.0, 0.0, 0.0, 0.0, 5000.0};

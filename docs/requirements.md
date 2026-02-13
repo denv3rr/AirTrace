@@ -25,6 +25,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-SYS-018: Operational runs shall reject mixed or unknown provenance inputs by default and enter a defined safe state with explicit denial.
 - REQ-SYS-019: The system shall evaluate mode eligibility via a deterministic, fail-closed pipeline that denies activation if any required eligibility input is missing or invalid (health, freshness, policy, provenance, dataset availability).
 - REQ-SYS-020: The tools layer shall own configuration and audit logging I/O; the core shall not perform file I/O or wall-clock operations.
+- REQ-SYS-021: Core tracking loops shall reject non-positive operator speed divisors, log an explicit denial, and enter an inactive safe state.
 
 ## Functional Requirements (FUNC)
 - REQ-FUNC-001: The core shall ingest sensor measurements using a common state and measurement contract.
@@ -50,6 +51,8 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-FUNC-021: The system shall require time-aligned measurements within a configured window for cross-sensor residual checks.
 - REQ-FUNC-022: The system shall compute and expose per-source eligibility decisions with explicit, stable reason codes for allow/deny outcomes.
 - REQ-FUNC-023: The system shall require policy and provenance authorization decisions prior to mode activation and shall deny if authorization cannot be confirmed.
+- REQ-FUNC-024: Deterministic target generation utilities shall use explicit seeded RNG inputs and produce repeatable sequences for identical seeds.
+- REQ-FUNC-025: Heat-signature path adjustment shall be monotonic with validated heat input and clamped to configured-safe response bounds.
 
 ## Performance Requirements (PERF)
 - REQ-PERF-001: The core update loop shall process a single state update in deterministic time for a fixed input.
@@ -71,8 +74,8 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 
 ## Security Requirements (SEC)
 - REQ-SEC-001: All external inputs shall be validated and sanitized before use.
-- REQ-SEC-002: The system shall require explicit authorization to load plugins or device drivers.
-- REQ-SEC-003: Plugins shall be versioned, signed, and validated before activation.
+- REQ-SEC-002: The system shall require explicit authorization to load plugins or device drivers; when plugin loading is configured, `plugin.authorization_required=true` and `plugin.authorization_granted=true` are mandatory or activation is denied.
+- REQ-SEC-003: Plugins shall be versioned, signed, and validated before activation, including identifier/version allowlist match and SHA-256 signature match checks.
 - REQ-SEC-004: The system shall provide an audit log of configuration and mode changes.
 - REQ-SEC-005: Network-aid usage shall be deny-by-default unless explicitly permitted by configuration.
 - REQ-SEC-006: Overrides of deny-by-default policies shall require credential or key-based confirmation and be logged.
@@ -82,6 +85,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-SEC-010: Provenance decisions (accept/reject) shall be recorded with reason codes, source identifiers, run ID, config version, config ID, build ID, and seed.
 - REQ-SEC-011: Authorization decisions shall be versioned, auditable, and deny-by-default when policy provenance cannot be verified.
 - REQ-SEC-012: Adapters shall be signed, allowlisted, and validated before activation; failures shall be denied and logged.
+- REQ-SEC-013: Adapter allowlist approvals shall include a valid non-future date and shall be rejected when older than the configured freshness window.
 
 ## Interface Requirements (INT)
 - REQ-INT-001: All public interfaces shall declare units, valid ranges, and error behavior.
@@ -108,6 +112,9 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-INT-022: The UI shall support simultaneous visualization of multiple eligible modes when configured, including per-mode contributors, confidence, and denial reasons.
 - REQ-INT-023: Operator-facing UI interfaces shall be versioned and backward-compatible; updates shall preserve the interface contract and rendering semantics.
 - REQ-INT-024: Platform-specific UI surfaces shall render adapter-defined data points in addition to the baseline UI contract, with explicit units, ranges, and error behavior.
+- REQ-INT-025: The UI shall provide an operator-invoked platform workbench that allows selection of any supported platform profile from a single surface and execution of deterministic profile validation suites; profile cycling is optional per run.
+- REQ-INT-026: Platform workbench suites shall validate profile sensor sets, adapter contract status, and mode-output visibility with explicit pass/fail reason codes.
+- REQ-INT-027: The system shall emit a versioned, machine-readable external I/O envelope with platform, mode, sensor, adapter, authorization, provenance, and determinism fields for cross-system integration.
 
 ## Modularity Requirements (MOD)
 - REQ-MOD-001: The system shall provide independently buildable modules for core, tools, UI, and adapters with explicit, versioned interfaces.
@@ -137,6 +144,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-CFG-009: Configuration shall define policy/provenance authorization inputs (version, source, allowed modes) and reject unknown or missing fields.
 - REQ-CFG-010: Configuration shall specify adapter selection (id + version) and UI surface; unknown adapter identifiers or surfaces are errors.
 - REQ-CFG-011: Configuration shall support adapter manifest and allowlist paths with deterministic defaults for official adapters; missing or invalid adapter registry paths shall fail closed.
+- REQ-CFG-012: Configuration shall define adapter runtime compatibility context versions and allowlist freshness limits; invalid semantic versions or freshness limits are errors.
 
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).

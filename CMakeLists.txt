@@ -26,6 +26,7 @@ add_library(airtrace_core
         src/core/logging.cpp
         src/core/hash.cpp
         src/core/adapter_registry.cpp
+        src/core/plugin_auth.cpp
 )
 
 target_include_directories(airtrace_core PUBLIC include)

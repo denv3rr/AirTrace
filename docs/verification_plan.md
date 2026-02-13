@@ -24,8 +24,8 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-018 | REQ-SAFE-003 | TEST | Oscillate sensor health. | Minimum dwell time enforced. |
 | V-019 | REQ-SAFE-004 | TEST | Exceed turn/speed/accel limits. | Limits enforced. |
 | V-020 | REQ-SEC-001 | TEST | Fuzz config inputs. | Input validation blocks malformed data. |
-| V-021 | REQ-SEC-002 | INSPECTION | Review plugin loading paths. | Explicit authorization enforced. |
-| V-022 | REQ-SEC-003 | TEST | Load unsigned plugin. | Rejected with audit log. |
+| V-021 | REQ-SEC-002 | TEST | Load config with plugin metadata and `plugin.authorization_granted=false`. | Config load fails closed with `plugin_not_authorized` reason. |
+| V-022 | REQ-SEC-003 | TEST | Load config with plugin allowlist/signature mismatch and then a matching signed plugin. | Mismatch fails closed with `plugin_signature_invalid`; matching signed allowlisted plugin passes. |
 | V-023 | REQ-SEC-004 | TEST | Trigger mode/config changes and capture audit records. | Records include event type, mode/config identifiers, role/actor, and timestamp. |
 | V-024 | REQ-INT-001 | INSPECTION | Review public headers. | Units/ranges documented. |
 | V-025 | REQ-INT-002 | DEMO | Operate UI with sensor changes. | Mode/health/status visible. |
@@ -120,3 +120,11 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-114 | REQ-SYS-020 | INSPECTION | Verify config and audit logging I/O are owned by tools; core has no file or wall-clock I/O. | Core I/O scan passes; tools provide config/audit interfaces. |
 | V-115 | REQ-ADP-007 | INSPECTION | Review adapter SDK skeleton headers and build templates. | SDK skeleton exists and is versioned. |
 | V-116 | REQ-CFG-011 | TEST | Load config with adapter registry paths missing or invalid, then with valid overrides. | Missing/invalid paths fail closed; valid overrides load allowlisted manifest. |
+| V-117 | REQ-CFG-012 | TEST | Load config with invalid adapter semantic versions and invalid allowlist freshness values. | Validation fails with explicit key-level errors before execution. |
+| V-118 | REQ-SEC-013 | TEST | Validate adapter selection with stale, future-dated, and current allowlist approvals. | Stale/future approvals are denied with stable reason codes; current approvals pass. |
+| V-119 | REQ-SYS-021 | TEST | Invoke tracker loop with speed <= 0. | Tracker logs explicit denial and transitions to inactive safe state without divide-by-zero. |
+| V-120 | REQ-FUNC-024; REQ-SYS-015 | TEST | Generate target sequences with repeated and differing seeds. | Identical seeds produce identical sequences; different seeds produce deterministic but distinct sequences. |
+| V-121 | REQ-FUNC-025 | TEST | Exercise heat-signature pathing with low/high/out-of-range/non-finite heat inputs. | Movement response remains monotonic for valid inputs and clamps safely for invalid/out-of-range values. |
+| V-122 | REQ-INT-025 | TEST | From a single UI session, run platform workbench for selected profile and all profiles. | Profile selection/cycling is operator-invoked, deterministic, and available without restarting UI. |
+| V-123 | REQ-INT-026 | TEST | Execute platform suites with valid and invalid profiles. | Sensor/adapters/mode-output checks produce explicit pass/fail with stable reason codes. |
+| V-124 | REQ-INT-027 | TEST | Export machine-readable external I/O envelope after platform suite execution. | Envelope contains required versioned fields and deterministic run metadata. |

@@ -7,11 +7,12 @@ Align the core/app with the mandatory standards, close sensor fallback gaps, and
 - Every module must remain independently usable and testable with explicit interfaces and declared dependencies.
 - Safety and fail-closed behavior remain first-order requirements for all modules and adapters.
 
-## Next Session Priority (2026-02-03)
-- Implement plugin authorization/signing gates (REQ-SEC-002/003) with audit logging.
-- Enforce network-aid deny-by-default and override auditing (REQ-SEC-005/006/007).
-- Begin usability/visual mode validation implementation for scenario/test runs (REQ-INT-021/022/023).
-- Define the modular interface contract and packaging boundaries for core/tools/UI/adapters.
+## Next Session Priority (2026-02-13)
+- Enforce network-aid deny-by-default and override auditing end-to-end (REQ-SEC-005/006/007).
+- Add explicit plugin activation audit records for authorization/signature decisions (REQ-SEC-004, REQ-SEC-002/003).
+- Complete full UI/TUI audit outside menu/test-focused flows with explicit fail-closed messaging (REQ-INT-003, REQ-INT-020).
+- Continue usability/visual mode validation implementation for scenario/test runs (REQ-INT-021/022/023).
+- Continue modular interface and packaging boundary enforcement for core/tools/UI/adapters.
 
 ## Phase 0: Modularization and Interface Contracts (Gate Before Code)
 Goal: Ensure each module is independently usable, with explicit, versioned interfaces and no hidden dependencies.
@@ -261,7 +262,7 @@ Traceability Update: Replace REQ-SEC-010 TBD with concrete code references.
 Objective: Enforce explicit authorization and signed plugin validation with deny-by-default behavior.
 Prereqs: Define plugin allowlist, signing manifest format, and versioned ABI check requirements.
 Implementation Targets: `src/core/plugin_auth.cpp`, `include/core/plugin_auth.h`, plugin loader entrypoint.
-Verification: V-021 inspection of gate enforcement, V-022 unsigned plugin rejection with audit log.
+Verification: V-021 plugin authorization denial test, V-022 signature mismatch rejection and signed allowlisted activation test.
 Traceability Update: Replace REQ-SEC-002/003 TBD entries with code references.
 
 ### Gap Closure C: REQ-SEC-005/006/007 Network-Aid Deny-by-Default
@@ -299,6 +300,49 @@ Implementation Targets: `src/core/adapter_registry.cpp`, `include/core/adapter_r
 Verification: V-104 UI extensions render, V-107 version mismatch denied, V-109/110 official adapter inspection, V-113 allowlist enforcement.
 Traceability Update: Replace REQ-INT-024/REQ-ADP-001..006/REQ-MOD-004/REQ-SEC-012 TBD entries with code references.
 
+## Perpetual Execution Framework (Autonomous)
+Purpose: Allow continuous project advancement without waiting for low-value prompt-by-prompt direction while still honoring review gates and standards.
+
+Cadence:
+- Weekly engineering cycle: execute one highest-risk safety/security item, one modularization item, and one verification coverage item.
+- Biweekly review package: publish SRR/PDR/CDR/TRR delta checklist with REQ/V/HZ changes and evidence links.
+- Monthly hardening cycle: run static-analysis, dependency provenance review, and adapter allowlist/surface contract audits.
+
+Default Prioritization Rules:
+- Priority 1: any fail-open behavior, undefined behavior, or stale/unknown authorization path.
+- Priority 2: missing traceability links or verification evidence for already implemented behavior.
+- Priority 3: modular interface completion and adapter platform expansion.
+- Priority 4: usability refinements after safety/security acceptance criteria are green.
+
+Autonomous Decision Policy:
+- If a change touches parser, scheduler, mode logic, or adapter registry: require simultaneous updates to `docs/requirements.md`, `docs/verification_plan.md`, and `docs/traceability.md`.
+- If a new deny reason appears: update `docs/hazard_log.md`, `docs/security_threat_model.md`, and UI denial mapping in the same change set.
+- If a behavior cannot be fully implemented in one increment: ship the fail-closed guard first, then feature-complete in the next scheduled cycle.
+
+Rolling Work Queues:
+- Queue A Safety/Security:
+  - Keep REQ-SEC-002/003 plugin authorization/signing gate coverage green and add explicit audit events for plugin activation decisions.
+  - Complete REQ-SEC-005/006/007 network-aid deny-by-default enforcement path.
+  - Retire waiver for public-key manifest signatures after PKI validation path exists.
+- Queue B Modularization:
+  - Finish independent build targets for core/tools/UI/adapters (REQ-MOD-001/002).
+  - Add dependency graph enforcement and CI gate for undeclared module edges (REQ-MOD-003).
+  - Add out-of-process adapter execution scaffold with timeout/error isolation.
+- Queue C Verification:
+  - Add dedicated adapter registry test suite for reason-code reachability and surface gating.
+  - Add deterministic replay harness for REQ-FUNC-004.
+  - Add performance-budget fixture and evidence capture for REQ-PERF-001.
+- Queue D UI/TUI:
+  - Complete REQ-INT-021/022/023 visual mode cycling and multi-mode rendering.
+  - Expand denial banners to include adapter approval freshness, plugin/network-aid denial context, and recovery guidance.
+  - Complete full-screen UI/TUI audit outside menu/test paths.
+
+Per-Change Exit Criteria:
+- Source change merged with matching REQ, V, and traceability entries.
+- Safety/security impacts logged with hazard/threat links.
+- Tests pass in deterministic mode with seeded fixtures.
+- Outstanding risk or deferment explicitly recorded in `docs/plan.md`.
+
 ## Notes
 - No code changes may proceed until Phase 1 updates are merged.
 - Keep all new additions ASCII unless the file already uses Unicode.
@@ -315,10 +359,12 @@ Traceability Update: Replace REQ-INT-024/REQ-ADP-001..006/REQ-MOD-004/REQ-SEC-01
 - Status banners, abort controls, and destructive confirmations are enforced in simulation flows with audit trails.
 - Provenance policy keys now parsed and validated in config schema (REQ-CFG-008).
 - Requirements updated to remove duplicate REQ-INT-010 and add eligibility/authorization and UI visibility requirements.
+- Single-UI platform workbench now supports selected-profile and all-profile suite execution with deterministic external I/O envelope export (REQ-INT-025/026/027).
 - Authorization bundle inputs are parsed/validated and mode eligibility now denies when authorization is unavailable or denied.
 - UI status banner now includes ladder status and per-sensor lockout details.
 - Provenance tagging added to measurements with eligibility gating and UI provenance status display.
 - Adapter architecture and official platform adapter design notes are documented under `docs/adapter_architecture.md` and `docs/adapters/`.
 - Tools layer scaffolded with config loader and audit log ownership; adapter SDK skeleton created under `adapters/sdk/`.
 - Adapter registry loader validates manifests/allowlists with hash checks; adapter config keys and UI extension summaries are enforced; official adapter manifests and allowlist are present under `adapters/`.
+- Plugin authorization/signing gate is now enforced through `plugin.*` schema + core validator with fail-closed reason codes for unauthorized, non-allowlisted, or signature-invalid activation attempts.
 - Remaining gaps still open: platform profile inheritance usage beyond config/UI in broader core workflows, full UI/TUI audit outside the menu/test flows, provenance tagging for sim vs operational inputs, and broader documentation simplification.

@@ -140,6 +140,27 @@ struct SimConfig
         std::string manifestPath;
         std::string allowlistPath;
         std::string uiSurface = "tui";
+        std::string coreVersion = "1.0.0";
+        std::string toolsVersion = "1.0.0";
+        std::string uiVersion = "1.0.0";
+        std::string adapterContractVersion = "1.0.0";
+        std::string uiContractVersion = "1.0.0";
+        int allowlistMaxAgeDays = 365;
+    };
+
+    struct PluginConfig
+    {
+        std::string id{};
+        std::string version{};
+        std::string signatureHash{};
+        std::string signatureAlgorithm{};
+        std::string allowlistId{};
+        std::string allowlistVersion{};
+        std::string allowlistSignatureHash{};
+        std::string allowlistSignatureAlgorithm{};
+        bool authorizationRequired = true;
+        bool authorizationGranted = false;
+        bool deviceDriver = false;
     };
 
     PlatformProfile platformProfile = PlatformProfile::Base;
@@ -151,6 +172,7 @@ struct SimConfig
     ProvenancePolicy provenance{};
     DatasetConfig dataset{};
     AdapterConfig adapter{};
+    PluginConfig plugin{};
     ModeConfig mode{};
     FusionConfig fusion{};
     SchedulerConfig scheduler{};

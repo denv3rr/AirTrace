@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
 
+#include "core/plugin_auth.h"
 #include "tools/adapter_registry_loader.h"
 
 namespace
@@ -199,6 +201,52 @@ bool isValidModeName(const std::string &name)
     return false;
 }
 
+bool isSemver(const std::string &value)
+{
+    int major = 0;
+    int minor = 0;
+    int patch = 0;
+    char dot1 = '\0';
+    char dot2 = '\0';
+    std::istringstream input(trim(value));
+    if (!(input >> major >> dot1 >> minor >> dot2 >> patch))
+    {
+        return false;
+    }
+    if (dot1 != '.' || dot2 != '.')
+    {
+        return false;
+    }
+    if (major < 0 || minor < 0 || patch < 0)
+    {
+        return false;
+    }
+    char trailing = '\0';
+    if (input >> trailing)
+    {
+        return false;
+    }
+    return true;
+}
+
+bool isSha256Hex(const std::string &value)
+{
+    if (value.size() != 64)
+    {
+        return false;
+    }
+    for (char ch : value)
+    {
+        if (!std::isdigit(static_cast<unsigned char>(ch)) &&
+            !(ch >= 'a' && ch <= 'f') &&
+            !(ch >= 'A' && ch <= 'F'))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool toNetworkAidMode(const std::string &value, SimConfig::NetworkAidMode &out)
 {
     std::string lowered = toLower(trim(value));
@@ -370,7 +418,7 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "policy.network_aid.override_auth" && toOverrideAuth(value, authMode)) config.policy.overrideAuth = authMode;
     else if (key == "policy.network_aid.override_timeout_seconds" && toInt(value, ival)) config.policy.overrideTimeoutSeconds = ival;
     else if (key == "policy.roles") config.policy.roles = splitList(value);
-    else if (key == "policy.active_role") config.policy.activeRole = value;
+    else if (key == "policy.active_role") config.policy.activeRole = toLower(trim(value));
     else if (key == "policy.authorization.version") config.policy.authorization.version = value;
     else if (key == "policy.authorization.source") config.policy.authorization.source = value;
     else if (key == "policy.authorization.allowed_modes") config.policy.authorization.allowedModes = splitList(value);
@@ -407,7 +455,7 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "provenance.unknown_action") setIssue(result, key, "invalid unknown_action");
     else if (key.rfind("policy.role_permissions.", 0) == 0)
     {
-        std::string role = key.substr(std::string("policy.role_permissions.").size());
+        std::string role = toLower(trim(key.substr(std::string("policy.role_permissions.").size())));
         if (role.empty())
         {
             setIssue(result, key, "missing role name");
@@ -427,8 +475,25 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "adapter.version") config.adapter.version = trim(value);
     else if (key == "adapter.manifest_path") config.adapter.manifestPath = trim(value);
     else if (key == "adapter.allowlist_path") config.adapter.allowlistPath = trim(value);
+    else if (key == "adapter.core_version") config.adapter.coreVersion = trim(value);
+    else if (key == "adapter.tools_version") config.adapter.toolsVersion = trim(value);
+    else if (key == "adapter.ui_version") config.adapter.uiVersion = trim(value);
+    else if (key == "adapter.contract_version") config.adapter.adapterContractVersion = trim(value);
+    else if (key == "ui.contract_version") config.adapter.uiContractVersion = trim(value);
+    else if (key == "adapter.allowlist_max_age_days" && toInt(value, ival)) config.adapter.allowlistMaxAgeDays = ival;
     else if (key == "ui.surface" && toUiSurface(value, uiSurface)) config.adapter.uiSurface = uiSurface;
     else if (key == "ui.surface") setIssue(result, key, "invalid ui surface");
+    else if (key == "plugin.id") config.plugin.id = toLower(trim(value));
+    else if (key == "plugin.version") config.plugin.version = trim(value);
+    else if (key == "plugin.signature_hash") config.plugin.signatureHash = trim(value);
+    else if (key == "plugin.signature_algorithm") config.plugin.signatureAlgorithm = toLower(trim(value));
+    else if (key == "plugin.allowlist.id") config.plugin.allowlistId = toLower(trim(value));
+    else if (key == "plugin.allowlist.version") config.plugin.allowlistVersion = trim(value);
+    else if (key == "plugin.allowlist.signature_hash") config.plugin.allowlistSignatureHash = trim(value);
+    else if (key == "plugin.allowlist.signature_algorithm") config.plugin.allowlistSignatureAlgorithm = toLower(trim(value));
+    else if (key == "plugin.authorization_required" && toBool(value, bval)) config.plugin.authorizationRequired = bval;
+    else if (key == "plugin.authorization_granted" && toBool(value, bval)) config.plugin.authorizationGranted = bval;
+    else if (key == "plugin.device_driver" && toBool(value, bval)) config.plugin.deviceDriver = bval;
     else if (key == "mode.ladder_order") config.mode.ladderOrder = splitList(value);
     else if (key == "mode.min_healthy_count" && toInt(value, ival)) config.mode.minHealthyCount = ival;
     else if (key == "mode.min_dwell_steps" && toInt(value, ival)) config.mode.minDwellSteps = ival;
@@ -559,6 +624,10 @@ void validateConfig(ConfigResult &result)
     if (config.policy.overrideTimeoutSeconds < 0)
     {
         setIssue(result, "policy.network_aid.override_timeout_seconds", "must be >= 0");
+    }
+    if (config.adapter.allowlistMaxAgeDays < 0 || config.adapter.allowlistMaxAgeDays > 3650)
+    {
+        setIssue(result, "adapter.allowlist_max_age_days", "must be between 0 and 3650");
     }
 
     validateRange(result, "mode.min_healthy_count", static_cast<double>(config.mode.minHealthyCount), 1.0, 1000.0);
@@ -762,9 +831,100 @@ void validateConfig(ConfigResult &result)
             setIssue(result, "adapter.allowlist_path", "adapter.id required for allowlist_path");
         }
     }
-    if (!config.adapter.uiSurface.empty() && !toUiSurface(config.adapter.uiSurface, config.adapter.uiSurface))
+    if (!isSemver(config.adapter.coreVersion))
     {
-        setIssue(result, "ui.surface", "invalid ui surface");
+        setIssue(result, "adapter.core_version", "invalid semantic version");
+    }
+    if (!isSemver(config.adapter.toolsVersion))
+    {
+        setIssue(result, "adapter.tools_version", "invalid semantic version");
+    }
+    if (!isSemver(config.adapter.uiVersion))
+    {
+        setIssue(result, "adapter.ui_version", "invalid semantic version");
+    }
+    if (!isSemver(config.adapter.adapterContractVersion))
+    {
+        setIssue(result, "adapter.contract_version", "invalid semantic version");
+    }
+    if (!isSemver(config.adapter.uiContractVersion))
+    {
+        setIssue(result, "ui.contract_version", "invalid semantic version");
+    }
+    if (!config.adapter.uiSurface.empty())
+    {
+        std::string normalizedUiSurface = config.adapter.uiSurface;
+        if (!toUiSurface(normalizedUiSurface, normalizedUiSurface))
+        {
+            setIssue(result, "ui.surface", "invalid ui surface");
+        }
+    }
+
+    if (config.plugin.id.empty())
+    {
+        if (!config.plugin.version.empty())
+        {
+            setIssue(result, "plugin.version", "plugin.id required");
+        }
+        if (!config.plugin.signatureHash.empty())
+        {
+            setIssue(result, "plugin.signature_hash", "plugin.id required");
+        }
+        if (!config.plugin.signatureAlgorithm.empty())
+        {
+            setIssue(result, "plugin.signature_algorithm", "plugin.id required");
+        }
+        if (!config.plugin.allowlistId.empty())
+        {
+            setIssue(result, "plugin.allowlist.id", "plugin.id required");
+        }
+        if (!config.plugin.allowlistVersion.empty())
+        {
+            setIssue(result, "plugin.allowlist.version", "plugin.id required");
+        }
+        if (!config.plugin.allowlistSignatureHash.empty())
+        {
+            setIssue(result, "plugin.allowlist.signature_hash", "plugin.id required");
+        }
+        if (!config.plugin.allowlistSignatureAlgorithm.empty())
+        {
+            setIssue(result, "plugin.allowlist.signature_algorithm", "plugin.id required");
+        }
+    }
+    else
+    {
+        if (!isValidModuleName(config.plugin.id))
+        {
+            setIssue(result, "plugin.id", "invalid plugin identifier");
+        }
+        if (!isSemver(config.plugin.version))
+        {
+            setIssue(result, "plugin.version", "invalid semantic version");
+        }
+        if (config.plugin.signatureHash.empty() || !isSha256Hex(config.plugin.signatureHash))
+        {
+            setIssue(result, "plugin.signature_hash", "invalid sha256 hash");
+        }
+        if (config.plugin.signatureAlgorithm != "sha256")
+        {
+            setIssue(result, "plugin.signature_algorithm", "must be sha256");
+        }
+        if (!isValidModuleName(config.plugin.allowlistId))
+        {
+            setIssue(result, "plugin.allowlist.id", "invalid plugin identifier");
+        }
+        if (!isSemver(config.plugin.allowlistVersion))
+        {
+            setIssue(result, "plugin.allowlist.version", "invalid semantic version");
+        }
+        if (config.plugin.allowlistSignatureHash.empty() || !isSha256Hex(config.plugin.allowlistSignatureHash))
+        {
+            setIssue(result, "plugin.allowlist.signature_hash", "invalid sha256 hash");
+        }
+        if (config.plugin.allowlistSignatureAlgorithm != "sha256")
+        {
+            setIssue(result, "plugin.allowlist.signature_algorithm", "must be sha256");
+        }
     }
 }
 } // namespace
@@ -856,6 +1016,28 @@ ConfigResult loadSimConfig(const std::string &path)
         if (!tools::validateAdapterSelection(result.config, reason))
         {
             setIssue(result, "adapter.registry", reason);
+        }
+    }
+
+    if (result.ok && !result.config.plugin.id.empty())
+    {
+        PluginAuthRequest request;
+        request.identity.id = result.config.plugin.id;
+        request.identity.version = result.config.plugin.version;
+        request.identity.deviceDriver = result.config.plugin.deviceDriver;
+        request.signature.hash = result.config.plugin.signatureHash;
+        request.signature.algorithm = result.config.plugin.signatureAlgorithm;
+        request.allowlist.id = result.config.plugin.allowlistId;
+        request.allowlist.version = result.config.plugin.allowlistVersion;
+        request.allowlist.signatureHash = result.config.plugin.allowlistSignatureHash;
+        request.allowlist.signatureAlgorithm = result.config.plugin.allowlistSignatureAlgorithm;
+        request.authorization.required = result.config.plugin.authorizationRequired;
+        request.authorization.granted = result.config.plugin.authorizationGranted;
+
+        PluginAuthResult pluginResult;
+        if (!validatePluginActivation(request, pluginResult))
+        {
+            setIssue(result, "plugin.auth", pluginResult.reason);
         }
     }
 

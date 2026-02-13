@@ -22,7 +22,7 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-016 | Barometric drift yields incorrect altitude. | Marginal | Occasional | Drift modeling and range checks with safe-state fallback. | V-046 |
 | HZ-017 | Multi-sensor disagreement produces divergent state updates. | Critical | Occasional | Cross-check thresholds, reject outliers, degrade to safer mode. | V-054 |
 | HZ-018 | Fused mode switches without proper alignment cause discontinuity. | Critical | Occasional | State handoff rules, alignment checks, and dwell constraints. | V-051 |
-| HZ-019 | Unauthorized sensor source contaminates fused solution. | Critical | Remote | Authorization gates and source allowlists for fusion. | V-055 |
+| HZ-019 | Unauthorized plugin, device driver, or sensor source contaminates fused solution. | Critical | Remote | Plugin/device authorization gates, signed allowlists, and source allowlists for fusion. | V-021, V-022, V-055 |
 | HZ-020 | Concurrent pipelines starve timing for safety-critical updates. | Critical | Occasional | Deterministic scheduler with budgets and safe-state fallback. | V-059 |
 | HZ-021 | Snapshot sensor interrupts long-scan pipeline causing stale output. | Marginal | Occasional | Preserve scan continuity and tag auxiliary snapshots. | V-058 |
 | HZ-022 | Timing jitter or stale data leads to unsafe mode selection. | Critical | Occasional | Freshness thresholds, jitter detection, safe-state downgrade. | V-062 |
@@ -39,3 +39,42 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-033 | Stale or unverifiable authorization policy yields incorrect eligibility decisions. | Critical | Occasional | Policy provenance verification, version gating, deny-by-default. | V-097, V-099 |
 | HZ-034 | Operator cannot interpret eligibility denial causes, leading to unsafe manual override attempts. | Critical | Occasional | Explicit reason codes and recovery guidance in UI/TUI. | V-100 |
 | HZ-035 | Adapter malfunction or incompatible interface yields unsafe data or UI ambiguity. | Critical | Occasional | Signed allowlisted adapters, versioned contracts, safe-state on adapter failure, explicit UI validation. | V-111, V-113 |
+
+## Requirement and Control Crosswalk
+| Hazard ID | Requirement Links | Security/Interface Control Links |
+| --- | --- | --- |
+| HZ-001 | REQ-SYS-005; REQ-CFG-001; REQ-CFG-002; REQ-SEC-001 | Config Parser (TB-1) |
+| HZ-002 | REQ-SAFE-001; REQ-SAFE-003; REQ-FUNC-002 | Sensor Adapters + Mode Manager |
+| HZ-003 | REQ-FUNC-012; REQ-SAFE-006 | Sensor Adapters + Provenance Gate |
+| HZ-004 | REQ-SAFE-003; REQ-FUNC-002 | Mode Manager guard conditions |
+| HZ-005 | REQ-FUNC-006; REQ-FUNC-025; REQ-SAFE-004 | Config Parser bounds validation |
+| HZ-006 | REQ-SYS-006; REQ-SAFE-002; REQ-SEC-004 | Audit Log Sink |
+| HZ-007 | REQ-INT-002; REQ-INT-003; REQ-INT-020; REQ-INT-025; REQ-INT-026; REQ-INT-027 | UI/TUI Input + UI standards |
+| HZ-008 | REQ-FUNC-012; REQ-SAFE-008 | Sensor freshness gating |
+| HZ-009 | REQ-SEC-005; REQ-SEC-006; REQ-SEC-007 | Network Aid Gate (TB-2) |
+| HZ-010 | REQ-SYS-008; REQ-FUNC-015; REQ-SAFE-011 | Mode eligibility pipeline |
+| HZ-011 | REQ-FUNC-009; REQ-SAFE-005 | Dataset Validator |
+| HZ-012 | REQ-SYS-007; REQ-CFG-004 | Config Parser + profile policy |
+| HZ-013 | REQ-SEC-007; REQ-SEC-006 | Authorization Bundle + Network Aid Gate |
+| HZ-014 | REQ-SYS-009; REQ-FUNC-010; REQ-CFG-005 | Dataset tier policy |
+| HZ-015 | REQ-FUNC-011; REQ-FUNC-019 | Sensor Adapters + residual checks |
+| HZ-016 | REQ-FUNC-011; REQ-SAFE-008 | Sensor Adapters + safe degraded mode |
+| HZ-017 | REQ-SAFE-006; REQ-FUNC-019 | Residual conflict detection |
+| HZ-018 | REQ-SAFE-003; REQ-FUNC-013 | Mode transition guards |
+| HZ-019 | REQ-SEC-002; REQ-SEC-003; REQ-SEC-008; REQ-SYS-019 | Plugin authorization gate + provenance/authorization gates |
+| HZ-020 | REQ-SAFE-007; REQ-FUNC-016 | Scheduler resource controls |
+| HZ-021 | REQ-FUNC-017; REQ-SAFE-007 | Scheduler snapshot arbitration |
+| HZ-022 | REQ-SAFE-008; REQ-FUNC-012 | Freshness and jitter gating |
+| HZ-023 | REQ-FUNC-019; REQ-SAFE-006 | Residual threshold controls |
+| HZ-024 | REQ-FUNC-020; REQ-SAFE-009; REQ-INT-017 | Lockout pipeline + UI guidance |
+| HZ-025 | REQ-SEC-008; REQ-FUNC-019; REQ-SYS-008 | Source authorization + fallback |
+| HZ-026 | REQ-SAFE-008; REQ-FUNC-009 | Dataset and fallback constraints |
+| HZ-027 | REQ-FUNC-012; REQ-SAFE-008 | Sensor confidence/freshness gating |
+| HZ-028 | REQ-SYS-013; REQ-CFG-007 | Profile inheritance validator |
+| HZ-029 | REQ-SYS-016; REQ-SAFE-010; REQ-SEC-009 | Audit Log Sink health checks |
+| HZ-030 | REQ-SYS-001; REQ-SYS-015; REQ-FUNC-024 | Deterministic RNG + fixed timestep |
+| HZ-031 | REQ-SYS-014; REQ-SYS-018 | Provenance Gate |
+| HZ-032 | REQ-SYS-019; REQ-FUNC-023; REQ-SAFE-011 | Eligibility + authorization gating |
+| HZ-033 | REQ-SEC-011; REQ-CFG-009; REQ-SAFE-011 | Authorization Bundle controls |
+| HZ-034 | REQ-INT-017; REQ-INT-018; REQ-INT-019; REQ-INT-020 | UI/TUI denial messaging |
+| HZ-035 | REQ-SEC-012; REQ-SEC-013; REQ-SAFE-012; REQ-INT-024; REQ-INT-027; REQ-MOD-004 | Adapter Registry + Allowlist + UI surface controls |
