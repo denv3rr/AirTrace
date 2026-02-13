@@ -382,3 +382,15 @@ Per-Change Exit Criteria:
 - Front-view display scaffolding is now implemented with a dedicated UI module, menu workbench flow, `front_view.*` config validation, and external I/O envelope telemetry fields.
 - Front-view Stage-1 contract hardening is implemented with deterministic frame timestamp/age, latency-stage breakdown, stream identity, stabilization/gimbal metadata, and fail-closed validation for invalid frame/stream/stabilization/gimbal conditions.
 - Remaining gaps still open: platform profile inheritance usage beyond config/UI in broader core workflows, full UI/TUI audit outside the menu/test flows, provenance tagging for sim vs operational inputs, and broader documentation simplification.
+
+## Next Session Cold-Start Checklist
+1. Validate baseline first:
+- Run `./scripts/test.ps1`; require deterministic green before edits.
+2. Continue Stage-2 front-view rendering track:
+- Implement deterministic EO/IR transfer-function controls and compute-budget profiles.
+- Keep fail-closed denial on invalid rendering profile/palette/transfer-function config.
+3. Advance synchronized multi-view logic:
+- Add deterministic alignment checks between front-view streams and proximity 2D/3D views.
+- Deny and alert on stream time-skew/confidence divergence outside configured bounds.
+4. Close the increment with evidence:
+- Add/update tests and then update `docs/requirements.md`, `docs/verification_plan.md`, `docs/traceability.md`, `docs/hazard_log.md`, and `docs/security_threat_model.md`.
