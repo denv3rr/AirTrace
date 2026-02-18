@@ -68,7 +68,14 @@ if ($resetBuildType) {
 
 cmake @cmakeArgs
 Assert-LastExitCode "CMake configure"
-cmake --build $BuildDir --target AirTraceCoreTests AirTraceEdgeCaseTests AirTraceUiTests AirTraceHarnessTests AirTraceIntegrationTests
+$moduleTargets = @("airtrace_core", "airtrace_adapters_contract", "airtrace_tools", "airtrace_ui", "airtrace_ui_harness")
+$sdkEnabled = Select-String -Path $cachePath -Pattern "^AIRTRACE_BUILD_ADAPTER_SDK:BOOL=ON$" -Quiet -ErrorAction SilentlyContinue
+if ($sdkEnabled) {
+    $moduleTargets += "airtrace_adapters_sdk"
+}
+$testTargets = @("AirTraceCoreTests", "AirTraceEdgeCaseTests", "AirTraceUiTests", "AirTraceHarnessTests", "AirTraceIntegrationTests")
+$buildTargets = $moduleTargets + $testTargets
+cmake --build $BuildDir --target @buildTargets
 Assert-LastExitCode "CMake build"
 
 Push-Location $BuildDir

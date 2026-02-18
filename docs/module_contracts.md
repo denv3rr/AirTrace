@@ -6,9 +6,11 @@ Modules are independently buildable and must be usable in isolation.
 
 ## Dependency Rules
 - core has no dependency on tools, UI, or adapters.
-- tools depends on core and provides all external I/O and policy enforcement.
+- adapter contract module depends on core and provides adapter manifest/allowlist contract validation.
+- tools depends on core + adapter contract module and provides all external I/O and policy enforcement.
 - UI depends on tools and core; UI performs no direct policy or I/O beyond UI.
 - adapters depend on core contracts only; adapters do not depend on UI internals.
+- Automated dependency-boundary checks fail verification on undeclared module include edges.
 
 ## Versioning
 - Each module publishes a semantic contract version.
@@ -36,6 +38,7 @@ Tools responsibilities:
 - Dataset integrity validation and audit logging sinks.
 - Adapter registry I/O (manifest + allowlist) and signature/hash checks.
 - Adapter runtime context negotiation (core/tools/ui contract versions) and allowlist approval freshness checks.
+- External I/O envelope packaging and conversion across approved formats (`ie_json_v1`, `ie_kv_v1`) with deterministic numeric fidelity and fail-closed error handling.
 
 Inputs:
 - Config files and policy bundles.
@@ -45,6 +48,7 @@ Outputs:
 - Validated configuration objects.
 - Authorization status and eligibility gates.
 - Audit log status and run identifiers.
+- Versioned external payloads and explicit conversion failure reasons for malformed or schema-loss inputs.
 
 ## UI Contract
 UI responsibilities:

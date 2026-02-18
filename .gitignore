@@ -80,6 +80,7 @@ coverage/
 .codex-cache/
 AGENTS.local.md
 AGENTS.local.*
+agents_abstract.md
 .codex/**
 .codex-cache/**
 
@@ -105,3 +106,15 @@ configs/harness_commands.txt
 *.credentials
 *.auth
 *.jwt
+
+# IDE/OS local state
+.vs/
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# Local CMake generators
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/

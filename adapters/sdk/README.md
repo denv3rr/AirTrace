@@ -9,6 +9,6 @@ Contents:
 - `CMakeLists.txt` template for adapter builds.
 
 Notes:
-- This SDK is a template and is not built by default.
+- Root build exposes this SDK as target `airtrace_adapters_sdk` (toggle with `AIRTRACE_BUILD_ADAPTER_SDK`).
 - Adapters must use the contract and allowlist rules in `docs/adapter_contract.md`.
 - Adapter UI extensions must follow `docs/adapters/ui_data_points.md`.

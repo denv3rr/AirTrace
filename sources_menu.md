@@ -37,6 +37,7 @@
   5. N.5 AI-Driven Tracking / Sensor Fusion / Autonomy: [link](#ai-driven-tracking-sensor-fusion-autonomy)
   6. N.6 Academic Preprint Feeds (set alerts): [link](#academic-preprint-feeds-set-alerts)
   7. N.7 Journals / Proceedings: [link](#journals-proceedings)
+  8. N.8 Co-Simulation, Federation, and Open-Interface Standards: [link](#co-simulation-federation-and-open-interface-standards)
 - O. Display, HMI, and Human Factors: [link](#o-display-hmi-and-human-factors)
   1. O.1 Core Human Factors / Human Engineering Standards (DoD + Systems): [link](#core-human-factors-human-engineering-standards-dod-systems)
   2. O.2 Aviation / Flight Deck Display & Control Guidance (very transferable to weapon/C2 displays): [link](#aviation-flight-deck-display-control-guidance-very-transferable-to-weapon-c2-displays)
@@ -61,6 +62,7 @@
   14. P.14 Core Security & Systems Assurance: [link](#core-security-systems-assurance)
   15. P.15 Secure Systems & Supply Chain: [link](#secure-systems-supply-chain)
   16. P.16 Military / Intelligence Cyber Doctrine & Policy: [link](#military-intelligence-cyber-doctrine-policy)
+- Q. Compliance Baseline Standards and Status Pages: [link](#q-compliance-baseline-standards-and-status-pages)
 
 ## A. Project and Local References
 - Tracker Component Library: https://github.com/USNavalResearchLaboratory/TrackerComponentLibrary
@@ -450,15 +452,26 @@ Russia / USSR
 - https://ieeexplore.ieee.org/
 - https://digital-library.theiet.org/
 
+### Co-Simulation, Federation, and Open-Interface Standards
+- https://fmi-standard.org/docs/3.0.2/
+- https://dcp-standard.org/about/
+- https://dcp-standard.org/assets/DCP_Specification_v1.0.pdf
+- https://www.omg.org/omg-dds-portal/
+- https://www.omg.org/spec/DDS/1.4/
+- https://standards.ieee.org/ieee/1516/6687/
+- https://www.sisostandards.org/news/695782/HLA-4-Approved-by-IEEE.htm
+- https://www.opengroup.org/face/approach
+- https://www.opengroup.org/face/tech-standard-2.1
+- https://www.opengroup.org/sosa
+- https://www.law.cornell.edu/uscode/text/10/4401
+- https://www.acquisition.gov/afars/modular-open-systems-approach-mosa-10-u.s.-code-%C2%A7-4401
+
 ---
 
 ## O. Display, HMI, and Human Factors
 
 ### Core Human Factors / Human Engineering Standards (DoD + Systems)
-- **MIL-STD-1472F (Human Engineering) (PDF)**  
-  https://www.denix.osd.mil/soh/denix-files/sites/21/2016/03/02_MIL-STD-1472F-Human-Engineering.pdf
-
-- **MIL-STD-1472 status + latest doc trail (DLA QuickSearch)**  
+- **MIL-STD-1472H (Human Engineering) status page (DLA QuickSearch)**  
   https://quicksearch.dla.mil/qsdocdetails.aspx?ident_number=36903
 
 - **DoD Human Systems Integration (HSI) Guidebook (PDF)**  
@@ -508,16 +521,13 @@ Russia / USSR
 
 
 ### Military Symbology (crucial for tactical displays, overlays, track objects, IFF-style UI)
-- **MIL-STD-2525D — Department of Defense Interface Standard (Joint Military Symbology) (PDF)**  
-  https://www.jcs.mil/portals/36/documents/doctrine/other_pubs/ms_2525d.pdf
-
-- **DLA QuickSearch — MIL-STD-2525 metadata / current status**  
+- **MIL-STD-2525E — Department of Defense Interface Standard (Joint Military Symbology) status page (DLA QuickSearch)**  
   https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=114934
 
 - **ADP 1-02 — Terms and Military Symbols (PDF)**  
   https://irp.fas.org/doddir/army/adp1_02.pdf
 
-- **Marine Corps student references (points to MIL-STD-2525D as standard symbology reference) (PDF)**  
+- **Marine Corps student references (legacy training reference) (PDF)**  
   https://www.trngcmd.marines.mil/Portals/207/Docs/TBS/Operational%20Terms%20and%20Graphics%20WOBC.pdf
 
 - **NATO APP-6 (legacy, land-based symbols) (PDF)**  
@@ -541,6 +551,29 @@ Russia / USSR
   https://www.nist.gov/itl/iad/visualization-and-usability-group/human-factors-human-centered-design
 
 ---
+
+## Q. Compliance Baseline Standards and Status Pages
+
+### MIL-STD Baseline (Authoritative Metadata / Status)
+Status snapshot date: 2026-02-18
+- MIL-STD-498 (CANC status; cancellation metadata dated 1998-05-27 and marked superseded by IEEE/EIA 12207.x): https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=114847
+- MIL-STD-882E (ACTIVE status; Rev E with CHG-1 metadata): https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=36027
+- MIL-STD-961E (ACTIVE status; Rev E with CHG-5 metadata): https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=36063
+- MIL-STD-1472H (ACTIVE status; Rev H metadata, next-review metadata reached in 2025): https://quicksearch.dla.mil/qsdocdetails.aspx?ident_number=36903
+- MIL-STD-810H (ACTIVE status; environmental engineering baseline metadata): https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=35978
+- MIL-STD-2525E (ACTIVE status; joint military symbology baseline metadata): https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=114934
+
+### RMF, Security Controls, and STIG
+- NIST SP 800-53 Rev. 5 (Security and Privacy Controls): https://csrc.nist.gov/pubs/sp/800/53/r5/upd1/final
+- NIST Risk Management Framework (RMF): https://csrc.nist.gov/projects/risk-management/about-rmf
+- NIST SP 800-218 (SSDF): https://csrc.nist.gov/pubs/sp/800/218/final
+- DoDI 8510.01 (DoD Risk Management Framework): https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodi/851001p.pdf
+- DISA STIG portal: https://cyber.mil/stigs/
+
+### Secure Coding Baseline References
+- CERT C++ Coding Standard wiki: https://wiki.sei.cmu.edu/confluence/display/cplusplus
+- MISRA C++ guidelines overview page: https://misra.org.uk/misra-c/
+- JSF AV C++ rules (public mirror for study): https://www.stroustrup.com/JSF-AV-rules.pdf
 
 ## P. Security, SIGINT, and Cyber References
 

@@ -45,11 +45,14 @@ AirTrace is an operational tool with simulation and test harnesses used strictly
 ## Build Targets (Current + Planned)
 Current:
 - `airtrace_core` (core library)
+- `airtrace_adapters_contract` (adapter contract validation module)
 - `airtrace_tools` (controlled I/O and policy)
+- `airtrace_ui` (operator surfaces as a reusable library target)
+- `airtrace_ui_harness` (deterministic harness-enabled UI module for test/integration flows)
+- `airtrace_adapters_sdk` (adapter SDK skeleton target)
 - `AirTrace` (operator TUI application)
 
 Planned:
-- `airtrace_ui` (operator surfaces as a library target)
 - `airtrace_adapter_<platform>` (official adapters; per platform profile)
 
 ## Boundaries

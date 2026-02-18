@@ -128,3 +128,5 @@
 - Target generation utilities are seeded and deterministic for repeatable replay evidence.
 - Celestial datasets are treated as controlled inputs and must pass integrity checks.
 - Audit logs include mode/config changes with timestamps and integrity protections.
+- External I/O envelope conversion uses approved versioned formats (`ie_json_v1`, `ie_kv_v1`) and fails closed on malformed, duplicate, or schema-loss payloads.
+- JSON payload ingest accepts scalar primitives and strings for flat envelope keys; nested structures and null values are rejected.

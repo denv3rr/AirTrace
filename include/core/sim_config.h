@@ -78,12 +78,22 @@ struct SimConfig
             }
         };
 
+        struct RoleUiPreset
+        {
+            std::string uiSurface{};
+            bool frontViewEnabled = false;
+            bool hasFrontViewEnabled = false;
+            std::vector<std::string> frontViewFamilies{};
+            bool hasFrontViewFamilies = false;
+        };
+
         NetworkAidMode networkAidMode = NetworkAidMode::Deny;
         bool overrideRequired = true;
         OverrideAuth overrideAuth = OverrideAuth::Credential;
         int overrideTimeoutSeconds = 0;
         std::vector<std::string> roles = {"operator"};
         std::unordered_map<std::string, std::vector<std::string>> rolePermissions{};
+        std::unordered_map<std::string, RoleUiPreset> roleUiPresets{};
         std::string activeRole = "operator";
         AuthorizationBundle authorization{};
     };

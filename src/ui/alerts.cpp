@@ -144,6 +144,10 @@ std::string denialRecoveryHint(const std::string &denialReason)
     {
         return "ensure inputs are tagged with provenance or adjust unknown_action policy";
     }
+    if (denialReason == "provenance_unknown_hold")
+    {
+        return "inputs with unknown provenance are being held; tag source provenance or set unknown_action=deny";
+    }
     if (denialReason == "provenance_mixed")
     {
         return "provide single-provenance inputs or enable allow_mixed policy";

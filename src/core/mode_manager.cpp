@@ -529,7 +529,9 @@ ModeDecision ModeManager::decide(const std::vector<SensorBase *> &sensors)
         ProvenanceTag tag = status.lastMeasurement.provenance;
         if (tag == ProvenanceTag::Unknown)
         {
-            reason = "provenance_unknown";
+            reason = (config.provenanceUnknownAction == UnknownProvenanceAction::Hold)
+                         ? "provenance_unknown_hold"
+                         : "provenance_unknown";
             return false;
         }
         if (!isAllowedProvenance(config, tag))

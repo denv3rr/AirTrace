@@ -19,7 +19,7 @@ struct Measurement
     std::optional<double> heading;
     bool valid = false;
     std::string note;
-    ProvenanceTag provenance = ProvenanceTag::Unknown;
+    ProvenanceTag provenance = ProvenanceTag::Operational;
 };
 
 struct SensorStatus
@@ -65,7 +65,7 @@ protected:
     std::string name;
     SensorStatus status;
     double timeAccumulator;
-    ProvenanceTag provenance = ProvenanceTag::Unknown;
+    ProvenanceTag provenance = ProvenanceTag::Operational;
 };
 
 class GpsSensor : public SensorBase

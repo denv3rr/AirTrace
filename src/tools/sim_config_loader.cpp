@@ -517,6 +517,58 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
             config.policy.rolePermissions[role] = splitList(value);
         }
     }
+    else if (key.rfind("policy.role_preset.", 0) == 0)
+    {
+        const std::string prefix = "policy.role_preset.";
+        std::string remainder = key.substr(prefix.size());
+        const std::size_t split = remainder.find('.');
+        if (split == std::string::npos || split == 0 || split + 1 >= remainder.size())
+        {
+            setIssue(result, key, "invalid role preset key");
+        }
+        else
+        {
+            std::string role = toLower(trim(remainder.substr(0, split)));
+            std::string field = remainder.substr(split + 1);
+            if (role.empty())
+            {
+                setIssue(result, key, "missing role name");
+            }
+            else if (field == "ui_surface")
+            {
+                std::string uiSurfaceValue;
+                if (!toUiSurface(value, uiSurfaceValue))
+                {
+                    setIssue(result, key, "invalid ui surface");
+                }
+                else
+                {
+                    config.policy.roleUiPresets[role].uiSurface = uiSurfaceValue;
+                }
+            }
+            else if (field == "front_view_enabled")
+            {
+                if (!toBool(value, bval))
+                {
+                    setIssue(result, key, "invalid boolean");
+                }
+                else
+                {
+                    config.policy.roleUiPresets[role].frontViewEnabled = bval;
+                    config.policy.roleUiPresets[role].hasFrontViewEnabled = true;
+                }
+            }
+            else if (field == "front_view_families")
+            {
+                config.policy.roleUiPresets[role].frontViewFamilies = splitList(value);
+                config.policy.roleUiPresets[role].hasFrontViewFamilies = true;
+            }
+            else
+            {
+                setIssue(result, key, "unknown role preset field");
+            }
+        }
+    }
     else if (key == "dataset.celestial.tier" && toDatasetTier(value, tier)) config.dataset.tier = tier;
     else if (key == "dataset.celestial.max_size_mb" && toDouble(value, dval)) config.dataset.maxSizeMB = dval;
     else if (key == "dataset.celestial.catalog_path") config.dataset.celestialCatalogPath = value;
@@ -800,6 +852,67 @@ void validateConfig(ConfigResult &result)
         if (!found)
         {
             setIssue(result, "policy.role_permissions." + role, "role not defined");
+        }
+    }
+
+    for (const auto &entry : config.policy.roleUiPresets)
+    {
+        const std::string &role = entry.first;
+        const auto &preset = entry.second;
+        bool roleFound = false;
+        for (const auto &defined : config.policy.roles)
+        {
+            if (defined == role)
+            {
+                roleFound = true;
+                break;
+            }
+        }
+        if (!roleFound)
+        {
+            setIssue(result, "policy.role_preset." + role, "role not defined");
+            continue;
+        }
+        if (!preset.uiSurface.empty())
+        {
+            std::string normalized = preset.uiSurface;
+            if (!toUiSurface(normalized, normalized))
+            {
+                setIssue(result, "policy.role_preset." + role + ".ui_surface", "invalid ui surface");
+            }
+        }
+        if (preset.hasFrontViewFamilies)
+        {
+            if (preset.frontViewFamilies.empty())
+            {
+                setIssue(result, "policy.role_preset." + role + ".front_view_families", "must include at least one display family");
+            }
+            else
+            {
+                std::unordered_map<std::string, int> familyCounts;
+                for (const auto &family : preset.frontViewFamilies)
+                {
+                    if (!isValidFrontViewFamily(family))
+                    {
+                        setIssue(result, "policy.role_preset." + role + ".front_view_families", "invalid display family: " + family);
+                        break;
+                    }
+                    familyCounts[family]++;
+                    if (familyCounts[family] > 1)
+                    {
+                        setIssue(result, "policy.role_preset." + role + ".front_view_families", "duplicate display family: " + family);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!config.policy.roleUiPresets.empty())
+    {
+        if (config.policy.roleUiPresets.find(config.policy.activeRole) == config.policy.roleUiPresets.end())
+        {
+            setIssue(result, "policy.role_preset." + config.policy.activeRole, "active role preset not defined");
         }
     }
 

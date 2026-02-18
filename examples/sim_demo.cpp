@@ -11,6 +11,7 @@
 #include "core/sensors.h"
 #include "core/sim_config.h"
 #include "core/state.h"
+#include "tools/sim_config_loader.h"
 
 namespace
 {

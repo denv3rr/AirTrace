@@ -28,8 +28,12 @@ Contact:
 - Runtime UI: terminal UI (TUI)
 - Modules:
   - `airtrace_core`: deterministic algorithms and mode logic
+  - `airtrace_adapters_contract`: adapter manifest/allowlist contract validation
   - `airtrace_tools`: config parsing, policy gates, audit logging, adapter registry loading
-  - `AirTrace`: operator-facing UI app
+  - `airtrace_ui`: operator-facing UI module used by app and UI test targets
+  - `airtrace_ui_harness`: deterministic UI harness module for non-interactive test/integration flows
+  - `airtrace_adapters_sdk`: adapter SDK/module skeleton target
+  - `AirTrace`: operator-facing executable that links `airtrace_ui`
 
 ## Core Capabilities
 - Deterministic simulation and test execution (seeded RNG + fixed timestep).
@@ -62,6 +66,18 @@ Contact:
    - Windows: `.\scripts\test.ps1`
    - Linux/macOS: `./scripts/test.sh`
 
+## Development Workflow
+- Branch from latest `main` using a traceable name:
+  - `feature/REQ-XXX-short-name`
+  - `bugfix/V-XXX-short-name`
+- Keep every change set traceable:
+  - update `docs/requirements.md`, `docs/verification_plan.md`, and `docs/traceability.md` in the same PR when behavior changes.
+- Rebase before opening and merging PRs to reduce agent conflict risk.
+- Keep branches short-lived (target <= 5 days); use temporary `integration/*` branches only for multi-agent convergence.
+- Require deterministic green tests before merge:
+  - Windows: `.\scripts\test.ps1`
+  - Linux/macOS: `./scripts/test.sh`
+
 ## Menu Guide (Operator View)
 - `Scenario Mode`: run operational-style flow checks.
 - `Test Mode`: run deterministic mode-specific tests.
@@ -86,6 +102,7 @@ Contact:
 - UI standards: `docs/ui_standards.md`
 - Front-view architecture: `docs/front_view_display_architecture.md`
 - Plan and sequencing: `docs/plan.md`
+- Agent abstract and execution intent: `agents_abstract.md`
 
 ## Configuration Notes
 - Main config keys are documented in `docs/config_schema.md`.

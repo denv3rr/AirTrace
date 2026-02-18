@@ -28,7 +28,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-FUNC-001 | docs/architecture.md | src/core/sensors.cpp | V-007 |
 | REQ-FUNC-002 | docs/operational_concepts.md | src/core/mode_manager.cpp | V-008 |
 | REQ-FUNC-003 | docs/config_schema.md | src/tools/sim_config_loader.cpp | V-009 |
-| REQ-FUNC-004 | docs/operational_concepts.md | TBD (not implemented) | V-010 |
+| REQ-FUNC-004 | docs/operational_concepts.md | src/core/simulation_utils.cpp; src/tools/sim_config_loader.cpp; src/ui/simulation.cpp | V-010 |
 | REQ-FUNC-005 | docs/architecture.md | src/core/state.cpp | V-011 |
 | REQ-FUNC-006 | docs/operational_concepts.md | src/core/motion_models.cpp | V-012 |
 | REQ-FUNC-007 | docs/operational_concepts.md | src/core/mode_manager.cpp | V-013 |
@@ -74,7 +74,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-SEC-008 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-055 |
 | REQ-SEC-009 | docs/security_threat_model.md | src/tools/audit_log.cpp | V-082 |
 | REQ-SEC-010 | docs/security_threat_model.md | src/tools/audit_log.cpp; include/tools/audit_log.h; src/ui/simulation.cpp | V-090 |
-| REQ-SEC-011 | docs/security_threat_model.md | TBD (planned: src/core/policy_authorization.cpp; include/core/policy_authorization.h) | V-097 |
+| REQ-SEC-011 | docs/security_threat_model.md | src/tools/sim_config_loader.cpp; src/core/mode_manager.cpp; src/ui/simulation.cpp | V-097 |
 | REQ-SEC-012 | docs/adapter_architecture.md; docs/security_threat_model.md | src/core/adapter_registry.cpp; src/tools/adapter_registry_loader.cpp; adapters/allowlist.json | V-113 |
 | REQ-SEC-013 | docs/security_threat_model.md; docs/adapter_contract.md | src/tools/adapter_registry_loader.cpp | V-118 |
 | REQ-INT-001 | docs/architecture.md | include/core/*.h | V-024 |
@@ -97,8 +97,8 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-INT-018 | docs/ui_standards.md | src/ui/simulation.cpp; include/ui/simulation.h | V-100 |
 | REQ-INT-019 | docs/ui_standards.md | src/ui/simulation.cpp; include/ui/simulation.h | V-100 |
 | REQ-INT-020 | docs/ui_standards.md | src/ui/simulation.cpp; src/ui/alerts.cpp | V-100 |
-| REQ-INT-021 | docs/ui_standards.md | TBD (planned: src/ui/simulation.cpp; src/ui/scenario.cpp) | V-101 |
-| REQ-INT-022 | docs/ui_standards.md | TBD (planned: src/ui/simulation.cpp; src/ui/scenario.cpp) | V-102 |
+| REQ-INT-021 | docs/ui_standards.md | src/ui/front_view.cpp; src/ui/simulation.cpp; include/ui/front_view.h | V-101 |
+| REQ-INT-022 | docs/ui_standards.md | src/ui/front_view.cpp; src/ui/simulation.cpp; include/ui/simulation.h | V-102 |
 | REQ-INT-023 | docs/ui_standards.md | include/core/external_io_envelope.h; src/ui/simulation.cpp | V-103 |
 | REQ-INT-024 | docs/adapter_architecture.md; docs/adapters/ui_data_points.md | src/ui/adapter_ui_mapping.cpp; include/ui/adapter_ui_mapping.h; src/ui/simulation.cpp | V-104 |
 | REQ-INT-025 | docs/ui_standards.md; docs/operational_concepts.md | src/ui/menu.cpp; src/ui/menu_selection.cpp; include/ui/menu_selection.h; src/ui/simulation.cpp | V-122 |
@@ -108,11 +108,14 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-INT-029 | docs/front_view_display_architecture.md; docs/security_threat_model.md | src/ui/front_view.cpp; include/ui/front_view.h; src/ui/alerts.cpp; src/ui/menu.cpp; src/ui/simulation.cpp | V-126 |
 | REQ-INT-030 | docs/front_view_display_architecture.md; docs/adapters/ui_data_points.md | include/ui/front_view.h; src/ui/front_view.cpp; include/core/external_io_envelope.h; src/ui/simulation.cpp; include/ui/simulation.h | V-128 |
 | REQ-INT-031 | docs/front_view_display_architecture.md; docs/operational_concepts.md; docs/security_threat_model.md | src/ui/front_view.cpp; src/tools/sim_config_loader.cpp; include/core/sim_config.h; src/ui/alerts.cpp | V-129 |
-| REQ-MOD-001 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | TBD (planned: build targets per module) | V-105 |
-| REQ-MOD-002 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | TBD (planned: build targets per module) | V-105 |
-| REQ-MOD-003 | docs/architecture.md; docs/module_contracts.md | TBD (planned: build graph enforcement) | V-106 |
+| REQ-INT-032 | docs/module_contracts.md; docs/operational_concepts.md | include/tools/io_packager.h; src/tools/io_packager.cpp; examples/io_packager.cpp | V-131 |
+| REQ-INT-033 | docs/security_threat_model.md; docs/module_contracts.md | include/tools/io_packager.h; src/tools/io_packager.cpp; tests/core_sanity.cpp | V-132 |
+| REQ-INT-034 | docs/ui_standards.md; docs/operational_concepts.md | src/ui/simulation.cpp; include/core/sim_config.h; src/tools/sim_config_loader.cpp | V-135 |
+| REQ-MOD-001 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; adapters/sdk/CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
+| REQ-MOD-002 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
+| REQ-MOD-003 | docs/architecture.md; docs/module_contracts.md | CMakeLists.txt; cmake/check_module_dependencies.cmake | V-106 |
 | REQ-MOD-004 | docs/adapter_architecture.md; docs/adapter_contract.md | src/core/adapter_registry.cpp; src/tools/adapter_registry_loader.cpp | V-107 |
-| REQ-MOD-005 | docs/adapter_architecture.md; docs/adapter_contract.md | TBD (planned: src/core/adapter_registry.cpp) | V-108 |
+| REQ-MOD-005 | docs/adapter_architecture.md; docs/adapter_contract.md | src/core/adapter_registry.cpp; src/tools/adapter_registry_loader.cpp; adapters/sdk/include/adapter_sdk.h; adapters/sdk/CMakeLists.txt | V-108 |
 | REQ-ADP-001 | docs/adapter_architecture.md | adapters/official/air/manifest.json; adapters/official/ground/manifest.json; adapters/official/maritime/manifest.json; adapters/official/space/manifest.json; adapters/official/handheld/manifest.json; adapters/official/fixed_site/manifest.json; adapters/official/subsea/manifest.json | V-109 |
 | REQ-ADP-002 | docs/adapter_architecture.md; docs/adapter_contract.md | adapters/official/air/manifest.json; adapters/official/ground/manifest.json; adapters/official/maritime/manifest.json; adapters/official/space/manifest.json; adapters/official/handheld/manifest.json; adapters/official/fixed_site/manifest.json; adapters/official/subsea/manifest.json; src/core/adapter_registry.cpp; src/tools/adapter_registry_loader.cpp | V-110 |
 | REQ-ADP-003 | docs/adapter_architecture.md | src/ui/adapter_ui_mapping.cpp; include/ui/adapter_ui_mapping.h; src/ui/simulation.cpp | V-110 |
@@ -134,6 +137,8 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-CFG-012 | docs/config_schema.md; docs/adapter_contract.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h | V-117 |
 | REQ-CFG-013 | docs/config_schema.md; docs/front_view_display_architecture.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h | V-127 |
 | REQ-CFG-014 | docs/config_schema.md; docs/front_view_display_architecture.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h; src/ui/front_view.cpp | V-130 |
+| REQ-CFG-015 | docs/config_schema.md; docs/ui_standards.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h; tests/core_sanity.cpp | V-134 |
+| REQ-CM-001 | docs/git_process.md; docs/plan.md; AGENTS.md | docs/git_process.md; AGENTS.md | V-133 |
 | REQ-VER-001 | docs/verification_plan.md | docs/verification_plan.md | V-030 |
 | REQ-VER-002 | docs/verification_plan.md | tests/core_sanity.cpp | V-031 |
 | REQ-VER-003 | docs/verification_plan.md | scripts/test.ps1; scripts/test.sh | V-068 |

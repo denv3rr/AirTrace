@@ -22,6 +22,49 @@
 - Adapter activation and capability registration.
 - Adapter manifest and allowlist files.
 
+## Data Flow Diagram (ASCII)
+```text
+  [TB-1 External Inputs]
+  +---------------------+          +-------------------------------+
+  | E1 Operator         |--------->| P1 UI/TUI                     |
+  +---------------------+          +-------------------------------+
+             |                                  |
+             v                                  v
+  +---------------------+          +-------------------------------+
+  | D1 Config Files     |--------->| P2 Config Parser + Policy Gate|
+  +---------------------+          +-------------------------------+
+             |                                  |
+             |                                  v
+  +---------------------+          +-------------------------------+
+  | E2 Sensors          |--------->| P3 Sensor Adapters            |
+  +---------------------+          +-------------------------------+
+                                                 |
+  +---------------------+                        v
+  | D2 Celestial Data   |--------------->+--------------------------+
+  +---------------------+                | P8 Provenance Gate       |
+                                         +--------------------------+
+                                                   |
+                                                   v
+                                         +--------------------------+
+                                         | P4 Core Mode Manager     |
+                                         +--------------------------+
+                                          |    |              |
+                                          |    |              v
+                                          |    |      +------------------+
+                                          |    +----->| P7 Audit Log Sink|
+                                          |           +------------------+
+                                          |                    |
+                                          v                    v
+                                  +---------------+    +------------------+
+                                  | P5 Tracker    |    | D3 Run/Sim Logs  |
+                                  +---------------+    +------------------+
+
+  [TB-2 Future Network Inputs]
+  +---------------------+
+  | E3 Network Aid      |-------------------------> P4 Core Mode Manager
+  +---------------------+
+```
+
 ## Data Flow Diagram (Text)
 Legend: E = External entity, P = Process, D = Data store, TB = Trust boundary.
 
@@ -106,6 +149,7 @@ P4 -> P7 (audit events) -> D3 (logs)
 - Role-based authorization for overrides and policy changes (REQ-SEC-007).
 - Versioned authorization bundles with provenance checks; deny-by-default on unverifiable inputs (REQ-SEC-011).
 - Fusion source allowlists and authorization checks before contributing to fused modes (REQ-SEC-008).
+- Unknown provenance policy (`deny` or safe-state `hold`) is enforced with explicit reason codes and no fail-open path.
 - Ladder ordering and fusion parameters locked to signed configs with audit logging.
 - Test harness input paths are compile-time gated and require explicit runtime enablement.
 - External I/O envelope exports are schema-versioned and only produced after profile suite validation.

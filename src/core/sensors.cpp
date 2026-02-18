@@ -38,7 +38,7 @@ double normalizeAngle(double angleRad)
 } // namespace
 
 SensorBase::SensorBase(std::string name, SensorConfig config)
-    : config(config), name(std::move(name)), timeAccumulator(0.0)
+    : config(config), name(std::move(name)), timeAccumulator(0.0), provenance(ProvenanceTag::Operational)
 {
 }
 

@@ -28,6 +28,7 @@ void runAlertsTests()
     assert(denialRecoveryHint("front_view_frame_stale") == "reduce source latency or increase front_view.frame.max_age_ms");
     assert(denialRecoveryHint("front_view_confidence_low") == "improve source quality or reduce front_view.frame.min_confidence");
     assert(denialRecoveryHint("render_latency_exceeded") == "reduce front-view pipeline load or increase latency budget");
+    assert(denialRecoveryHint("provenance_unknown_hold") == "inputs with unknown provenance are being held; tag source provenance or set unknown_action=deny");
     assert(denialRecoveryHint("unknown_reason") == "review logs and configuration");
 
     assert(buildDenialBanner("") == "");

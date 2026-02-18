@@ -3,17 +3,25 @@
 ## Purpose
 Align the core/app with the mandatory standards, close sensor fallback gaps, and bring tests, UI, and docs to a verifiable state without duplicating work.
 
+## Standards Status Snapshot (2026-02-18)
+- MIL-STD-498 is marked canceled in ASSIST/DLA metadata (1998-05-27); keep it as legacy lineage guidance and map active lifecycle execution to current approved process controls.
+- MIL-STD-961E, MIL-STD-882E, MIL-STD-1472H, MIL-STD-810H, and MIL-STD-2525E remain tracked through ASSIST/DLA status pages in `sources_menu.md`.
+- NIST SP 800-53 Rev. 5 Update 1, NIST RMF material, and DISA STIG portal references remain active baseline sources.
+- Revalidate this snapshot at each SRR/PDR/CDR/TRR/PRR gate and log deltas here.
+
 ## Modularity and Safety Priority (Continuous)
 - Every module must remain independently usable and testable with explicit interfaces and declared dependencies.
 - Safety and fail-closed behavior remain first-order requirements for all modules and adapters.
 
-## Next Session Priority (2026-02-13)
+## Next Session Priority (2026-02-18)
 - Enforce network-aid deny-by-default and override auditing end-to-end (REQ-SEC-005/006/007).
 - Add explicit plugin activation audit records for authorization/signature decisions (REQ-SEC-004, REQ-SEC-002/003).
 - Complete full UI/TUI audit outside menu/test-focused flows with explicit fail-closed messaging (REQ-INT-003, REQ-INT-020).
 - Begin front-view sensor display scaffolding (EO/IR + 2D/3D proximity views) with deterministic spoofed input support.
 - Continue usability/visual mode validation implementation for scenario/test runs (REQ-INT-021/022/023).
 - Continue modular interface and packaging boundary enforcement for core/tools/UI/adapters.
+- Expand external I/O packaging with a codec-registry design that supports additional input/output transports while preserving fail-closed conversion behavior (REQ-INT-032/033).
+- Enforce professional branch/PR process controls per REQ-CM-001 and evidence checklist verification (V-133).
 
 ## Phase 0: Modularization and Interface Contracts (Gate Before Code)
 Goal: Ensure each module is independently usable, with explicit, versioned interfaces and no hidden dependencies.
@@ -120,6 +128,23 @@ Exit Criteria
 - Add a navigation fallback ladder that prefers permissible methods and enables celestial navigation only when higher-priority sources are unavailable.
 - Define network-aid authorization rules per platform and mission profile (no broadcast unless permitted).
 
+### Interoperability Codec Registry Workstream (Gate Before Code)
+Goal: Support additional input/output payload formats through a versioned codec registry without weakening deterministic and fail-closed guarantees.
+
+Requirements and Traceability
+- Extend REQ-INT-032/033 mappings for codec registration, format discovery, and unsupported-format denial behavior.
+- Add verification cases for codec compatibility matrix, malformed-format rejection, and deterministic roundtrip for each approved codec.
+
+Design and Architecture
+- Define a codec interface (parse, serialize, canonical-map conformance, schema version declaration).
+- Define codec allowlist policy and explicit deny reason codes for unknown/unapproved codecs.
+- Keep canonical envelope as the single semantic boundary between external transports and internal logic.
+
+Implementation Scope
+- Add tools-layer codec registry with explicit registration and deterministic ordering.
+- Add CLI support for `--list-formats` and strict `--in-format/--out-format` validation.
+- Add regression suites for numeric fidelity, boolean fidelity, and schema-loss rejection across codecs.
+
 ### Multi-Modal Switching Workstream (Gate Before Code)
 Goal: Implement fused modes and switching logic aligned to the fallback ladder with traceability, safety, and policy compliance.
 
@@ -170,6 +195,23 @@ Verification and Test Readiness
 - Ensure UI logging does not write outside approved locations.
 - Add explicit operator abort controls and confirmation prompts for destructive actions.
 - Add units and reference frames to all operator prompts and outputs.
+
+### Operator-First Mission UX Workstream (Gate Before Code)
+Goal: Reduce training burden and operator cognitive load while preserving safety gates and military human-factors constraints.
+
+Requirements and Traceability
+- Add UI flow requirements for "three-step mission execution" patterns, explicit action confirmation, and denial recovery guidance.
+- Add verification for time-to-complete critical flows (mode select, source override request, safe-state recovery) under deterministic scenarios.
+
+Design and Architecture
+- Define role-specific UI surfaces: fighter pilot, tactical drone operator, and command workstation profiles.
+- Standardize interaction patterns: one-primary-action screens, progressive disclosure for advanced controls, and non-color-only alerts.
+- Keep all automation advisory-only unless explicit operator confirmation and authorization checks pass.
+
+Implementation Scope
+- Add a simplified mission quick-action panel with safety guardrails and explicit state labels.
+- Add deterministic tutorial overlays for first-run and recurrence training mode.
+- Add operator workload telemetry fields (steps, denials, recovery latency) to support usability tuning.
 
 ### UI/TUI Safety Gap Closure (Per-Sensor Health, Ladder Status, Denials)
 Goal: Ensure operators can see per-sensor health, fallback ladder state, and explicit denial reasons with recovery guidance.
@@ -233,6 +275,9 @@ Rules
 - No code work without the corresponding requirements and verification plan updates.
 - Each backlog item must include REQ IDs, V IDs, and hazard references if applicable.
 - Each completed phase must spawn a new "next plan" entry for the subsequent phase or gap.
+- Use short-lived, traceable branches (`feature/REQ-XXX-*`, `bugfix/V-XXX-*`) rebased to latest `main` before PR submission.
+- Use `integration/*` branches only for temporary multi-agent convergence; do not keep long-lived shared branches.
+- PRs must include updated requirement/verification/traceability evidence and deterministic test results before merge.
 
 Rolling Backlog (Initial)
 - Close REQ-INT-010 duplication and restore unique requirement numbering.
@@ -243,13 +288,15 @@ Rolling Backlog (Initial)
 - Implement authorization bundle parsing and enforcement (REQ-CFG-009, REQ-SEC-011).
 - Implement plugin authorization/signing gates (REQ-SEC-002/003).
 - Enforce network-aid deny-by-default and credentialed overrides (REQ-SEC-005/006/007).
-- Implement deterministic replay logging and restore (REQ-FUNC-004).
+- Harden deterministic replay evidence and restore-path coverage (REQ-FUNC-004).
 - Define and measure deterministic performance budget for fixed inputs (REQ-PERF-001).
 - Implement adapter registry + allowlist enforcement with contract version checks and audit logging (REQ-MOD-004, REQ-SEC-012, REQ-ADP-006).
 - Enforce adapter selection and UI surface config keys in tools parsing (REQ-CFG-010).
 - Implement adapter UI mapping for baseline + extensions and surface rendering (REQ-INT-024, REQ-ADP-003).
 - Add official adapter skeletons with signed manifests and UI extension mappings per platform (REQ-ADP-001/002/005).
 - Implement public-key signature verification for adapter manifests and retire WVR-001.
+- Enforce REQ-CM-001 branch naming and PR evidence checklist via repository workflow artifacts and review gates.
+- Expand I/O packaging beyond `ie_json_v1`/`ie_kv_v1` via a versioned codec registry with deterministic conformance vectors.
 
 ## Perpetual Plan Addendum (Gap Closure Subplans)
 ### Gap Closure A: REQ-SEC-010 Audit Fields and Run Context
@@ -274,11 +321,11 @@ Verification: V-037 deny-by-default, V-038 override without credentials denied a
 Traceability Update: Replace REQ-SEC-005/006/007 TBD entries with code references.
 
 ### Gap Closure D: REQ-FUNC-004 Deterministic Replay
-Objective: Provide deterministic replay using logged seeds/configs and stable output comparison.
+Objective: Maintain deterministic replay using logged seeds/configs and expand stable output comparison coverage.
 Prereqs: Define replay format and output equivalence rules in `docs/operational_concepts.md`.
 Implementation Targets: `src/core/replay.cpp`, `include/core/replay.h`, UI or CLI entrypoint.
 Verification: V-010 replay matches original output deterministically.
-Traceability Update: Replace REQ-FUNC-004 TBD with code references.
+Traceability Update: Keep REQ-FUNC-004 code references current when replay paths change.
 
 ### Gap Closure E: REQ-PERF-001 Deterministic Timing Budget
 Objective: Define a deterministic timing budget and measure update runtime under fixed load.
@@ -288,11 +335,11 @@ Verification: V-014 measurement under fixed load meets documented budget.
 Traceability Update: Replace REQ-PERF-001 TBD with code references.
 
 ### Gap Closure F: Usability and Visual Mode Validation Implementation
-Objective: Implement auto-visual mode cycling and multi-mode visualization for scenario/test runs.
+Objective: Maintain and expand auto-visual mode cycling and multi-mode visualization for scenario/test runs.
 Prereqs: UI contract versioning and visual mode mapping defined in `docs/ui_standards.md`.
 Implementation Targets: `src/ui/simulation.cpp`, `src/ui/scenario.cpp`, `include/ui/ui_contract.h`.
 Verification: V-101 deterministic mode cycling, V-102 multi-mode view demo, V-103 UI contract inspection.
-Traceability Update: Replace REQ-INT-021/022/023 TBD entries with code references.
+Traceability Update: Keep REQ-INT-021/022/023 code references synchronized with implementation updates.
 
 ### Gap Closure G: Adapter Registry + UI Mapping + Official Skeletons
 Objective: Implement adapter registry enforcement, config selection, and UI mapping with official adapter skeletons.
@@ -334,15 +381,15 @@ Rolling Work Queues:
   - Complete REQ-SEC-005/006/007 network-aid deny-by-default enforcement path.
   - Retire waiver for public-key manifest signatures after PKI validation path exists.
 - Queue B Modularization:
-  - Finish independent build targets for core/tools/UI/adapters (REQ-MOD-001/002).
-  - Add dependency graph enforcement and CI gate for undeclared module edges (REQ-MOD-003).
+  - Maintain independent build targets for core/tools/UI/adapters and keep module contract versions synchronized (REQ-MOD-001/002).
+  - Keep dependency graph enforcement and CI gate coverage for undeclared module edges (REQ-MOD-003).
   - Add out-of-process adapter execution scaffold with timeout/error isolation.
 - Queue C Verification:
   - Add dedicated adapter registry test suite for reason-code reachability and surface gating.
   - Add deterministic replay harness for REQ-FUNC-004.
   - Add performance-budget fixture and evidence capture for REQ-PERF-001.
 - Queue D UI/TUI:
-  - Complete REQ-INT-021/022/023 visual mode cycling and multi-mode rendering.
+- Expand REQ-INT-021/022/023 visual mode cycling and multi-mode rendering coverage.
   - Implement front-view EO/IR display scaffolding with deterministic spoofed-input harness support.
   - Add 2D/3D proximity toggle views with explicit units, confidence, and denial reason rendering.
   - Expand denial banners to include adapter approval freshness, plugin/network-aid denial context, and recovery guidance.
@@ -353,6 +400,7 @@ Per-Change Exit Criteria:
 - Safety/security impacts logged with hazard/threat links.
 - Tests pass in deterministic mode with seeded fixtures.
 - Outstanding risk or deferment explicitly recorded in `docs/plan.md`.
+- Branch is rebased to latest `main` and PR description includes REQ/V IDs and gate evidence links.
 
 ## Notes
 - No code changes may proceed until Phase 1 updates are merged.
@@ -374,9 +422,11 @@ Per-Change Exit Criteria:
 - Authorization bundle inputs are parsed/validated and mode eligibility now denies when authorization is unavailable or denied.
 - UI status banner now includes ladder status and per-sensor lockout details.
 - Provenance tagging added to measurements with eligibility gating and UI provenance status display.
+- Sensor defaults now apply deterministic operational provenance when explicit tags are absent, and unknown provenance handling now honors `provenance.unknown_action` with explicit deny/hold reason codes.
 - Adapter architecture and official platform adapter design notes are documented under `docs/adapter_architecture.md` and `docs/adapters/`.
 - Tools layer scaffolded with config loader and audit log ownership; adapter SDK skeleton created under `adapters/sdk/`.
 - Adapter registry loader validates manifests/allowlists with hash checks; adapter config keys and UI extension summaries are enforced; official adapter manifests and allowlist are present under `adapters/`.
+- Modular build boundaries are now explicit with independent module targets (`airtrace_core`, `airtrace_adapters_contract`, `airtrace_tools`, `airtrace_ui`, `airtrace_adapters_sdk`) and automated dependency-boundary verification via `cmake/check_module_dependencies.cmake`.
 - Plugin authorization/signing gate is now enforced through `plugin.*` schema + core validator with fail-closed reason codes for unauthorized, non-allowlisted, or signature-invalid activation attempts.
 - Front-view display architecture draft is now documented in `docs/front_view_display_architecture.md` with EO/IR mode families, deterministic cycling, spoofed-input strategy, and 2D/3D proximity rendering plan.
 - Front-view display scaffolding is now implemented with a dedicated UI module, menu workbench flow, `front_view.*` config validation, and external I/O envelope telemetry fields.

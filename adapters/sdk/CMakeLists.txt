@@ -1,17 +1,19 @@
-cmake_minimum_required(VERSION 3.10)
-
-project(AirTraceAdapterTemplate VERSION 1.0)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
-# Template adapter target. Copy and rename for official adapters.
-add_library(airtrace_adapter_template
+# SDK target for adapter development and independent module verification.
+add_library(airtrace_adapters_sdk
     src/adapter_sdk.cpp
 )
 
-target_include_directories(airtrace_adapter_template PUBLIC include)
-target_include_directories(airtrace_adapter_template PRIVATE ../../include)
+add_library(airtrace_adapter_template ALIAS airtrace_adapters_sdk)
+
+target_include_directories(airtrace_adapters_sdk
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PRIVATE ${PROJECT_SOURCE_DIR}/include
+)
 
 # Link to core contracts only. Tools/UI are not required in adapters.
-target_link_libraries(airtrace_adapter_template PRIVATE airtrace_core)
+target_link_libraries(airtrace_adapters_sdk PUBLIC airtrace_core)
+
+set_target_properties(airtrace_adapters_sdk PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION 1
+)

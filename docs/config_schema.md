@@ -69,6 +69,16 @@ Schema version: 1.0
   - Format: policy.role_permissions.<role>=comma-separated list.
 - policy.active_role (string): optional; default "operator".
   - Role matching is case-insensitive; values are normalized to lowercase.
+- policy.role_preset (map): optional; default empty.
+  - Keys: role names already declared in `policy.roles`.
+  - Every configured preset map requires an entry for `policy.active_role` (fail-closed if missing).
+  - Format: `policy.role_preset.<role>.<field>=<value>`.
+  - Supported fields:
+    - `ui_surface` (string): optional override for UI surface; allowed `tui`, `cockpit`, `remote_operator`, `c2`.
+    - `front_view_enabled` (bool): optional override for front-view default enablement.
+    - `front_view_families` (list): optional override for front-view default families.
+      - Allowed families: `eo_gray`, `ir_white_hot`, `ir_black_hot`, `ir_false_color`, `fusion_overlay`, `proximity_2d`, `proximity_3d`.
+      - Must contain at least one value and no duplicates when specified.
 
 ## Provenance
 - provenance.run_mode (string): optional; default "operational".

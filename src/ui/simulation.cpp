@@ -542,9 +542,33 @@ std::string buildProvenanceStatus(const SimConfig &config)
     return out.str();
 }
 
+void applyActiveRoleUiPreset(SimConfig &config)
+{
+    auto presetIt = config.policy.roleUiPresets.find(config.policy.activeRole);
+    if (presetIt == config.policy.roleUiPresets.end())
+    {
+        return;
+    }
+    const auto &preset = presetIt->second;
+    if (!preset.uiSurface.empty())
+    {
+        config.adapter.uiSurface = preset.uiSurface;
+    }
+    if (preset.hasFrontViewEnabled)
+    {
+        config.frontView.enabled = preset.frontViewEnabled;
+    }
+    if (preset.hasFrontViewFamilies)
+    {
+        config.frontView.displayFamilies = preset.frontViewFamilies;
+    }
+}
+
 void setFrontViewStatusDefaults(const SimConfig &config)
 {
-    uiContext.status.frontViewMode = config.frontView.displayFamilies.empty() ? "none" : config.frontView.displayFamilies.front();
+    uiContext.status.frontViewMode = config.frontView.enabled
+                                         ? (config.frontView.displayFamilies.empty() ? "none" : config.frontView.displayFamilies.front())
+                                         : "none";
     uiContext.status.frontViewViewState = "none";
     uiContext.status.frontViewFrameId.clear();
     uiContext.status.frontViewSourceId.clear();
@@ -560,9 +584,11 @@ void setFrontViewStatusDefaults(const SimConfig &config)
     uiContext.status.frontViewDropReason.clear();
     uiContext.status.frontViewSpoofActive = false;
     uiContext.status.frontViewConfidence = 0.0;
-    uiContext.status.frontViewProvenance = config.frontView.spoofEnabled ? "simulation" : "unknown";
+    uiContext.status.frontViewProvenance = (config.frontView.enabled && config.frontView.spoofEnabled) ? "simulation" : "unknown";
     uiContext.status.frontViewAuthStatus = config.frontView.enabled ? "authorized" : "not_configured";
-    uiContext.status.frontViewStreamId = config.frontView.streamIds.empty() ? "primary" : config.frontView.streamIds.front();
+    uiContext.status.frontViewStreamId = config.frontView.enabled
+                                             ? (config.frontView.streamIds.empty() ? "primary" : config.frontView.streamIds.front())
+                                             : "primary";
     uiContext.status.frontViewStreamIndex = 0;
     uiContext.status.frontViewStreamCount = 0;
     uiContext.status.frontViewMaxConcurrentViews = static_cast<unsigned int>(config.frontView.maxConcurrentViews);
@@ -663,7 +689,7 @@ void updateStatusFromConfig(const SimConfig &config)
     uiContext.status.lockoutStatus = "";
     uiContext.status.ladderStatus = "";
     uiContext.status.sensorStatusSummary = "";
-    uiContext.status.concurrencyStatus = config.frontView.threadingEnabled
+    uiContext.status.concurrencyStatus = (config.frontView.enabled && config.frontView.threadingEnabled)
                                              ? ("front_view_threads=" + std::to_string(config.frontView.threadingMaxWorkers))
                                              : "none";
     uiContext.status.decisionReason = "";
@@ -717,6 +743,7 @@ bool applyPlatformProfile(SimConfig::PlatformProfile profile, std::string &reaso
         updated.adapter.allowlistPath.clear();
     }
 
+    applyActiveRoleUiPreset(updated);
     uiContext.config = updated;
     uiContext.seed = updated.seed;
     uiContext.rng.seed(uiContext.seed);
@@ -802,12 +829,13 @@ bool initializeUiContext(const std::string &configPath)
     }
 
     uiContext.config = loaded.config;
+    applyActiveRoleUiPreset(uiContext.config);
     uiContext.configLoaded = true;
-    uiContext.seed = loaded.config.seed;
+    uiContext.seed = uiContext.config.seed;
     uiContext.rng.seed(uiContext.seed);
-    updateStatusFromConfig(loaded.config);
+    updateStatusFromConfig(uiContext.config);
     {
-        tools::AdapterUiSnapshot snapshot = tools::loadAdapterUiSnapshot(loaded.config);
+        tools::AdapterUiSnapshot snapshot = tools::loadAdapterUiSnapshot(uiContext.config);
         uiContext.status.adapterId = snapshot.adapterId;
         uiContext.status.adapterVersion = snapshot.adapterVersion;
         uiContext.status.adapterSurface = snapshot.surface.empty() ? "tui" : snapshot.surface;
@@ -821,7 +849,7 @@ bool initializeUiContext(const std::string &configPath)
             uiContext.status.denialReason = snapshot.reason;
         }
     }
-    tools::setAuditRunContext("", loaded.config.version, loaded.config.seed);
+    tools::setAuditRunContext("", uiContext.config.version, uiContext.config.seed);
     return true;
 }
 

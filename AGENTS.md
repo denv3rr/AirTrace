@@ -4,7 +4,7 @@ All work must comply with the baseline below with no exceptions.
 Note `sources_menu.md`and `docs/`.
 
 ## Compliance Baseline (Mandatory)
-- MIL-STD-498 (systems/software development and documentation)
+- MIL-STD-498 (legacy systems/software development baseline; canceled metadata retained for historical compliance context)
 - MIL-STD-882E (system safety)
 - MIL-STD-961E (requirements format and management)
 - MIL-STD-1472H (human factors for UI/TUI)
@@ -86,6 +86,9 @@ Create and maintain these files under `docs/` before adding features:
 - Next session: add sliding per-sensor residual buffers for time-aligned checks.
 - Next session: add edge-case fixtures for GNSS spoofing, IMU bias drift, magnetometer interference.
 - Next session: add live TUI warning banners for denial reasons and recovery steps.
+- Next session: add a recurring standards-status sweep (ASSIST/NIST/STIG) and log results in `docs/plan.md`.
+- Next session: enforce branch naming and PR evidence checklist (`REQ/V/HZ`, deterministic test proof) in contributor workflow docs/templates.
+- Next session: add interface packager adapters beyond `ie_json_v1`/`ie_kv_v1` through a versioned codec registry.
 
 ## Verification and Validation
 - Unit tests for core algorithms and boundaries (100% for safety-critical modules).

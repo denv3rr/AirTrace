@@ -21,8 +21,8 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-SYS-014: The system shall prioritize operational tool modes; simulation/test modes shall be explicitly identified, gated, and prohibited in operational runs unless authorized.
 - REQ-SYS-015: The core shall be free of direct file I/O, wall-clock time access, and non-seeded randomness; all external effects shall route through controlled interfaces.
 - REQ-SYS-016: The system shall bind a controlled audit log sink at startup and report logging health status.
-- REQ-SYS-017: The system shall tag every measurement and input with provenance (operational, simulation, test, unknown) and propagate provenance through fusion outputs.
-- REQ-SYS-018: Operational runs shall reject mixed or unknown provenance inputs by default and enter a defined safe state with explicit denial.
+- REQ-SYS-017: The system shall tag every measurement and input with provenance (operational, simulation, test, unknown), apply deterministic defaults when explicit provenance is not set, and propagate provenance through fusion outputs.
+- REQ-SYS-018: Operational runs shall reject mixed or unknown provenance inputs by default and enter a defined safe state with explicit denial; when configured, unknown provenance may force safe-state hold with explicit hold reasoning.
 - REQ-SYS-019: The system shall evaluate mode eligibility via a deterministic, fail-closed pipeline that denies activation if any required eligibility input is missing or invalid (health, freshness, policy, provenance, dataset availability).
 - REQ-SYS-020: The tools layer shall own configuration and audit logging I/O; the core shall not perform file I/O or wall-clock operations.
 - REQ-SYS-021: Core tracking loops shall reject non-positive operator speed divisors, log an explicit denial, and enter an inactive safe state.
@@ -119,11 +119,14 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-INT-029: Front-view rendering shall fail closed on invalid, unauthorized, or unavailable frame sources and shall provide explicit denial reasons and recovery guidance.
 - REQ-INT-030: Front-view frame records shall include deterministic timestamp, frame age, acquisition/processing/render latency breakdown, source identifier, stream identifier/index/count, confidence, provenance, and authorization status for every rendered frame.
 - REQ-INT-031: Front-view display workflows shall support stabilized and swiveling multi-view operation with explicit stabilization and gimbal state metadata, and shall fail closed on invalid stream, stabilization, or gimbal settings.
+- REQ-INT-032: The tools layer shall provide deterministic, versioned external I/O payload packaging between supported transport formats (`ie_kv_v1`, `ie_json_v1`) using the canonical external I/O envelope.
+- REQ-INT-033: External I/O payload conversion shall fail closed on malformed payloads, missing required keys, duplicate keys, type/range parse failures, or schema-loss conditions.
+- REQ-INT-034: The UI initialization path shall apply active-role UI presets deterministically (surface and front-view defaults) so each operator role receives the configured, fail-closed interface profile at startup and profile-switch transitions.
 
 ## Modularity Requirements (MOD)
 - REQ-MOD-001: The system shall provide independently buildable modules for core, tools, UI, and adapters with explicit, versioned interfaces.
 - REQ-MOD-002: The core shall operate without adapters; adapters shall be optional extensions.
-- REQ-MOD-003: Modules shall declare all dependencies and shall not access undeclared modules at runtime.
+- REQ-MOD-003: Modules shall declare all dependencies, and automated dependency-boundary checks shall fail verification on undeclared module access.
 - REQ-MOD-004: Module interface version mismatches shall be detected and shall fail closed with explicit reason codes.
 - REQ-MOD-005: The system shall support third-party platform adapters via the versioned adapter contract; integration shall only be constrained by safety, security, and compliance gates.
 
@@ -151,6 +154,10 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-CFG-012: Configuration shall define adapter runtime compatibility context versions and allowlist freshness limits; invalid semantic versions or freshness limits are errors.
 - REQ-CFG-013: Configuration shall define `front_view.*` display, cycle, spoof, latency, proximity, security, and threading controls with explicit units/ranges/defaults; invalid values shall fail closed.
 - REQ-CFG-014: Configuration shall define `front_view.frame.*`, `front_view.multi_view.*`, `front_view.stabilization.*`, and `front_view.gimbal.*` controls with explicit units/ranges/inter-field constraints; invalid or incompatible combinations shall fail closed.
+- REQ-CFG-015: Configuration shall define `policy.role_preset.<role>.*` UI profile overrides (`ui_surface`, `front_view_enabled`, `front_view_families`) with strict role binding and fail-closed validation for unknown roles, invalid surfaces, and invalid display-family lists.
+
+## Configuration Management Requirements (CM)
+- REQ-CM-001: Pull requests to protected branches shall use standardized branch naming (`feature/REQ-...`, `bugfix/V-...`, `integration/...`) and include evidence checklist entries (linked REQ/V/HZ IDs, deterministic test results, and safety/security impact summary) before merge approval.
 
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).

@@ -91,8 +91,8 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-085 | REQ-INT-013 | TEST | Trigger operator abort during a run. | Run exits safely with recovery guidance. |
 | V-086 | REQ-INT-014 | INSPECTION | Review non-menu error/empty states. | Denial reasons and recovery guidance are present. |
 | V-087 | REQ-INT-015 | INSPECTION | Review prompts and outputs for measurement units. | All operator-facing measurements include units and frames. |
-| V-088 | REQ-SYS-017 | TEST | Inject mixed-provenance inputs and fused outputs. | Provenance tags persist and are reported on outputs. |
-| V-089 | REQ-SYS-018 | TEST | Attempt operational run with mixed/unknown provenance sources. | System rejects inputs, logs denial, and enters safe state. |
+| V-088 | REQ-SYS-017 | TEST | Sample sensor measurements without explicit provenance override and inject mixed-provenance inputs. | Deterministic default provenance is applied and provenance tags persist on outputs. |
+| V-089 | REQ-SYS-018 | TEST | Attempt operational run with mixed/unknown provenance sources under `unknown_action=deny` and `unknown_action=hold`. | Deny mode rejects unknown provenance; hold mode remains in safe-state hold with explicit hold reason. |
 | V-090 | REQ-SEC-010 | TEST | Trigger provenance accept/reject decisions. | Audit records include reason, sources, run ID, config version, config ID, build ID, and seed. |
 | V-091 | REQ-CFG-008 | TEST | Provide invalid or mixed provenance policy settings. | Config validation fails with explicit errors. |
 | V-092 | REQ-INT-016 | DEMO | Operate UI during provenance denial and unknown provenance conditions. | UI shows provenance status with recovery guidance. |
@@ -108,8 +108,8 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-102 | REQ-INT-022 | DEMO | Enable multi-mode visualization in a scenario run. | Concurrent mode views show contributors, confidence, and denial reasons. |
 | V-103 | REQ-INT-023 | INSPECTION | Review UI interface contract versioning and compatibility checks. | Interface contract is versioned and changes are backward-compatible. |
 | V-104 | REQ-INT-024 | DEMO | Render platform-specific UI extensions on at least one official adapter surface. | Adapter-defined fields appear with units and error behavior. |
-| V-105 | REQ-MOD-001; REQ-MOD-002 | TEST | Build and run core/tools/UI without adapters, then build an adapter independently. | Modules build and operate independently without missing dependencies. |
-| V-106 | REQ-MOD-003 | INSPECTION | Review module dependency declarations and link graph. | No undeclared cross-module dependencies exist. |
+| V-105 | REQ-MOD-001; REQ-MOD-002 | TEST | Build module targets (`airtrace_core`, `airtrace_adapters_contract`, `airtrace_tools`, `airtrace_ui`, `airtrace_ui_harness`) and build adapter SDK target (`airtrace_adapters_sdk`) independently in the test pipeline. | Modules build and operate independently without missing dependencies; core/tools/UI operate even when adapter SDK is optional. |
+| V-106 | REQ-MOD-003 | TEST | Run automated dependency-boundary gate (`cmake/check_module_dependencies.cmake`) during test execution. | Undeclared cross-module include dependencies fail verification with file/line evidence. |
 | V-107 | REQ-MOD-004 | TEST | Attempt to load an adapter with an incompatible interface version. | Activation fails closed with explicit reason code. |
 | V-108 | REQ-MOD-005 | TEST | Register a third-party adapter that passes contract, safety, and security gates. | Adapter activates without additional restrictions. |
 | V-109 | REQ-ADP-001 | INSPECTION | Review official adapter list and build targets. | Official adapters exist for each required platform profile. |
@@ -134,3 +134,8 @@ Each requirement maps to at least one verification case. Methods: TEST, ANALYSIS
 | V-128 | REQ-INT-030 | TEST | Export front-view records during deterministic cycle runs with multi-view enabled. | Each frame record includes deterministic timestamp, frame age, source/stream identifiers, latency breakdown, confidence, provenance, and authorization fields. |
 | V-129 | REQ-INT-031 | TEST | Run front-view suite with stabilization/gimbal enabled and invalid stream/stabilization/gimbal combinations. | Valid runs expose stabilization/gimbal metadata; invalid combinations are denied fail-closed with stable reason codes. |
 | V-130 | REQ-CFG-014 | TEST | Load invalid and valid `front_view.frame.*`, `front_view.multi_view.*`, `front_view.stabilization.*`, and `front_view.gimbal.*` settings. | Invalid ranges/combinations are rejected with explicit key-level errors; valid settings load and execute deterministically. |
+| V-131 | REQ-INT-032 | TEST | Serialize and parse canonical external I/O envelopes across `ie_json_v1` and `ie_kv_v1`, list codec registry descriptors, and convert between both formats by enum and format name. | Round-trip preserves canonical fields deterministically and format discovery reports the supported canonical/alias set. |
+| V-132 | REQ-INT-033 | TEST | Parse malformed payloads (invalid JSON, missing required keys, duplicate keys, invalid numeric/bool values). | Conversion/parser fails closed with explicit errors and no partial acceptance. |
+| V-133 | REQ-CM-001 | INSPECTION | Review branch naming and PR evidence checklist requirements in workflow docs and PR template/checklist artifacts. | Protected-branch merge path requires standardized branch naming and REQ/V/HZ + deterministic-test evidence before approval. |
+| V-134 | REQ-CFG-015 | TEST | Load valid and invalid `policy.role_preset.<role>.*` config entries including unknown roles, missing active-role preset, invalid surface, and invalid display-family lists. | Loader accepts valid role presets and fails closed with explicit key-level issues for invalid role preset data. |
+| V-135 | REQ-INT-034 | TEST | Initialize UI context and platform profile transitions with role presets that override surface/front-view defaults. | Runtime status and defaults reflect the active-role preset deterministically on startup and profile changes. |

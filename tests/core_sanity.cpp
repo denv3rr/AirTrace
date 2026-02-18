@@ -5,6 +5,7 @@
 #include "core/HeatSignature.h"
 #include "tools/sim_config_loader.h"
 #include "tools/adapter_registry_loader.h"
+#include "tools/io_packager.h"
 #include "core/mode_scheduler.h"
 #include "core/state.h"
 #include "core/hash.h"
@@ -300,6 +301,60 @@ int main()
     ConfigResult caseInsensitiveRoleResult = loadSimConfig(caseInsensitiveRoleConfig.string());
     assert(caseInsensitiveRoleResult.ok);
     std::filesystem::remove(caseInsensitiveRoleConfig);
+
+    std::filesystem::path rolePresetConfig = writeConfigFile(
+        "airtrace_role_preset_valid.cfg",
+        "config.version=1.0\n"
+        "policy.roles=pilot,c2\n"
+        "policy.active_role=pilot\n"
+        "policy.role_permissions.pilot=front_view_workbench\n"
+        "policy.role_permissions.c2=platform_workbench\n"
+        "policy.role_preset.pilot.ui_surface=cockpit\n"
+        "policy.role_preset.pilot.front_view_enabled=true\n"
+        "policy.role_preset.pilot.front_view_families=eo_gray,ir_white_hot\n"
+        "policy.role_preset.c2.ui_surface=c2\n"
+        "policy.role_preset.c2.front_view_enabled=false\n"
+        "policy.role_preset.c2.front_view_families=proximity_2d\n");
+    ConfigResult rolePresetResult = loadSimConfig(rolePresetConfig.string());
+    assert(rolePresetResult.ok);
+    assert(rolePresetResult.config.policy.roleUiPresets.count("pilot") == 1U);
+    const auto &pilotPreset = rolePresetResult.config.policy.roleUiPresets.at("pilot");
+    assert(pilotPreset.uiSurface == "cockpit");
+    assert(pilotPreset.hasFrontViewEnabled);
+    assert(pilotPreset.frontViewEnabled);
+    assert(pilotPreset.hasFrontViewFamilies);
+    assert(pilotPreset.frontViewFamilies.size() == 2U);
+    std::filesystem::remove(rolePresetConfig);
+
+    std::filesystem::path rolePresetUndefinedRoleConfig = writeConfigFile(
+        "airtrace_role_preset_undefined_role.cfg",
+        "config.version=1.0\n"
+        "policy.roles=operator\n"
+        "policy.active_role=operator\n"
+        "policy.role_preset.pilot.ui_surface=cockpit\n");
+    ConfigResult rolePresetUndefinedRoleResult = loadSimConfig(rolePresetUndefinedRoleConfig.string());
+    assert(!rolePresetUndefinedRoleResult.ok);
+    std::filesystem::remove(rolePresetUndefinedRoleConfig);
+
+    std::filesystem::path rolePresetMissingActiveConfig = writeConfigFile(
+        "airtrace_role_preset_missing_active.cfg",
+        "config.version=1.0\n"
+        "policy.roles=operator,supervisor\n"
+        "policy.active_role=operator\n"
+        "policy.role_preset.supervisor.ui_surface=c2\n");
+    ConfigResult rolePresetMissingActiveResult = loadSimConfig(rolePresetMissingActiveConfig.string());
+    assert(!rolePresetMissingActiveResult.ok);
+    std::filesystem::remove(rolePresetMissingActiveConfig);
+
+    std::filesystem::path rolePresetInvalidFamilyConfig = writeConfigFile(
+        "airtrace_role_preset_invalid_family.cfg",
+        "config.version=1.0\n"
+        "policy.roles=operator\n"
+        "policy.active_role=operator\n"
+        "policy.role_preset.operator.front_view_families=eo_gray,invalid_mode\n");
+    ConfigResult rolePresetInvalidFamilyResult = loadSimConfig(rolePresetInvalidFamilyConfig.string());
+    assert(!rolePresetInvalidFamilyResult.ok);
+    std::filesystem::remove(rolePresetInvalidFamilyConfig);
 
     std::filesystem::path missingHashConfig = writeConfigFile(
         "airtrace_missing_hash.cfg",
@@ -671,6 +726,7 @@ int main()
     Measurement visionMeas = vision.sample(state, 1.0, rng);
     assert(visionMeas.valid);
     assert(visionMeas.position.has_value());
+    assert(visionMeas.provenance == ProvenanceTag::Operational);
 
     Measurement lidarMeas = lidar.sample(state, 1.0, rng);
     assert(lidarMeas.valid);
@@ -688,6 +744,7 @@ int main()
     Measurement celestialMeas = celestialSensor.sample(state, 1.0, rng);
     assert(celestialMeas.valid);
     assert(celestialMeas.position.has_value());
+    assert(celestialMeas.provenance == ProvenanceTag::Operational);
 
     ModeManagerConfig modeConfig;
     modeConfig.minHealthyCount = 2;
@@ -792,6 +849,22 @@ int main()
     decision = provenanceManager.decide(sensors);
     assert(decision.mode == TrackingMode::Hold);
     assert(provenanceManager.getLastDecisionDetail().downgradeReason == "provenance_denied");
+
+    ModeManagerConfig unknownProvenanceConfig = provenanceModeConfig;
+    unknownProvenanceConfig.allowedProvenances = {ProvenanceTag::Operational};
+    unknownProvenanceConfig.provenanceUnknownAction = UnknownProvenanceAction::Deny;
+    ModeManager unknownProvenanceDenyManager(unknownProvenanceConfig);
+    gps.setProvenance(ProvenanceTag::Unknown);
+    gps.setHealthy(true);
+    decision = unknownProvenanceDenyManager.decide(sensors);
+    assert(decision.mode == TrackingMode::Hold);
+    assert(unknownProvenanceDenyManager.getLastDecisionDetail().downgradeReason == "provenance_unknown");
+
+    unknownProvenanceConfig.provenanceUnknownAction = UnknownProvenanceAction::Hold;
+    ModeManager unknownProvenanceHoldManager(unknownProvenanceConfig);
+    decision = unknownProvenanceHoldManager.decide(sensors);
+    assert(decision.mode == TrackingMode::Hold);
+    assert(unknownProvenanceHoldManager.getLastDecisionDetail().downgradeReason == "provenance_unknown_hold");
 
     ModeManagerConfig ladderConfig;
     ladderConfig.minHealthyCount = 1;
@@ -1021,6 +1094,170 @@ int main()
     ScheduleResult noOverlap = noOverlapScheduler.schedule(requests, 10.0);
     assert(noOverlap.scheduled.size() == 1);
     assert(noOverlap.scheduled[0] == "primary_scan");
+
+    ExternalIoEnvelope packagerEnvelope;
+    packagerEnvelope.metadata.schemaVersion = "1.0.0";
+    packagerEnvelope.metadata.interfaceId = "airtrace.external_io";
+    packagerEnvelope.metadata.platformProfile = "air";
+    packagerEnvelope.metadata.adapterId = "official.air";
+    packagerEnvelope.metadata.adapterVersion = "1.0.0";
+    packagerEnvelope.metadata.uiSurface = "tui";
+    packagerEnvelope.metadata.seed = 42U;
+    packagerEnvelope.metadata.deterministic = true;
+    packagerEnvelope.mode.activeMode = "gps";
+    packagerEnvelope.mode.contributors = {"gps", "imu"};
+    packagerEnvelope.mode.confidence = 0.9101234567890123;
+    packagerEnvelope.mode.decisionReason = "gps_eligible";
+    packagerEnvelope.mode.denialReason.clear();
+    packagerEnvelope.mode.ladderStatus = "ok";
+    packagerEnvelope.sensors.push_back({"gps", true, true, true, 0.10000000000000001, 0.9501234567890123, ""});
+    packagerEnvelope.frontView.frameAgeMs = 1.234567890123456;
+    packagerEnvelope.frontView.acquisitionLatencyMs = 2.345678901234567;
+    packagerEnvelope.frontView.processingLatencyMs = 3.456789012345678;
+    packagerEnvelope.frontView.renderLatencyMs = 4.567890123456789;
+    packagerEnvelope.frontView.latencyMs = 10.987654321012345;
+    packagerEnvelope.frontView.confidence = 0.8123456789012345;
+    packagerEnvelope.frontView.stabilizationErrorDeg = 0.000000123456789;
+    packagerEnvelope.frontView.gimbalYawDeg = 12.3456789012345;
+    packagerEnvelope.frontView.gimbalPitchDeg = -6.54321098765432;
+    packagerEnvelope.frontView.gimbalYawRateDegPerSec = 0.3333333333333333;
+    packagerEnvelope.frontView.gimbalPitchRateDegPerSec = -0.2222222222222222;
+    packagerEnvelope.frontView.streamCount = 0;
+    packagerEnvelope.frontView.streamIndex = 0;
+    packagerEnvelope.frontView.maxConcurrentViews = 1;
+
+    tools::IoEnvelopeSerializeResult serializedJson =
+        tools::serializeExternalIoEnvelope(tools::IoEnvelopeFormat::Json, packagerEnvelope);
+    assert(serializedJson.ok);
+    tools::IoEnvelopeParseResult parsedJson =
+        tools::parseExternalIoEnvelope(tools::IoEnvelopeFormat::Json, serializedJson.payload);
+    assert(parsedJson.ok);
+    assert(parsedJson.envelope.metadata.platformProfile == "air");
+    assert(parsedJson.envelope.mode.activeMode == "gps");
+    assert(parsedJson.envelope.sensors.size() == 1);
+    assert(parsedJson.envelope.sensors[0].sensorId == "gps");
+    assert(parsedJson.envelope.mode.contributors.size() == 2);
+    assert(parsedJson.envelope.mode.confidence == packagerEnvelope.mode.confidence);
+    assert(parsedJson.envelope.frontView.latencyMs == packagerEnvelope.frontView.latencyMs);
+    assert(parsedJson.envelope.frontView.gimbalYawDeg == packagerEnvelope.frontView.gimbalYawDeg);
+
+    tools::IoEnvelopeSerializeResult serializedKv =
+        tools::serializeExternalIoEnvelope(tools::IoEnvelopeFormat::KeyValue, packagerEnvelope);
+    assert(serializedKv.ok);
+    tools::IoEnvelopeParseResult parsedKv =
+        tools::parseExternalIoEnvelope(tools::IoEnvelopeFormat::KeyValue, serializedKv.payload);
+    assert(parsedKv.ok);
+    assert(parsedKv.envelope.metadata.seed == 42U);
+    assert(parsedKv.envelope.sensors[0].healthy);
+    assert(parsedKv.envelope.mode.confidence == packagerEnvelope.mode.confidence);
+    assert(parsedKv.envelope.frontView.confidence == packagerEnvelope.frontView.confidence);
+
+    tools::IoEnvelopeSerializeResult convertedKv =
+        tools::convertExternalIoEnvelope(
+            serializedJson.payload,
+            tools::IoEnvelopeFormat::Json,
+            tools::IoEnvelopeFormat::KeyValue);
+    assert(convertedKv.ok);
+    tools::IoEnvelopeParseResult convertedParsed =
+        tools::parseExternalIoEnvelope(tools::IoEnvelopeFormat::KeyValue, convertedKv.payload);
+    assert(convertedParsed.ok);
+    assert(convertedParsed.envelope.mode.activeMode == "gps");
+
+    std::vector<tools::IoEnvelopeCodecDescriptor> codecs = tools::listIoEnvelopeCodecs();
+    assert(codecs.size() >= 2U);
+    bool sawJsonCodec = false;
+    bool sawKvCodec = false;
+    for (const auto &codec : codecs)
+    {
+        if (codec.canonicalName == "ie_json_v1")
+        {
+            sawJsonCodec = true;
+        }
+        if (codec.canonicalName == "ie_kv_v1")
+        {
+            sawKvCodec = true;
+        }
+    }
+    assert(sawJsonCodec);
+    assert(sawKvCodec);
+    assert(tools::isSupportedIoEnvelopeFormat("json"));
+    assert(tools::isSupportedIoEnvelopeFormat("ie_json_v1"));
+    assert(tools::isSupportedIoEnvelopeFormat("kv"));
+    assert(tools::isSupportedIoEnvelopeFormat("ie_kv_v1"));
+    assert(!tools::isSupportedIoEnvelopeFormat("xml"));
+
+    tools::IoEnvelopeParseResult parsedByName =
+        tools::parseExternalIoEnvelope("ie_json_v1", serializedJson.payload);
+    assert(parsedByName.ok);
+    assert(parsedByName.envelope.metadata.interfaceId == packagerEnvelope.metadata.interfaceId);
+    tools::IoEnvelopeSerializeResult serializedByName =
+        tools::serializeExternalIoEnvelope("kv", parsedByName.envelope);
+    assert(serializedByName.ok);
+    tools::IoEnvelopeSerializeResult convertedByName =
+        tools::convertExternalIoEnvelope(serializedByName.payload, "ie_kv_v1", "ie_json_v1");
+    assert(convertedByName.ok);
+    tools::IoEnvelopeSerializeResult unsupportedFormat =
+        tools::convertExternalIoEnvelope(serializedByName.payload, "ie_kv_v1", "yaml");
+    assert(!unsupportedFormat.ok);
+
+    std::string numericJsonPayload = serializedJson.payload;
+    const auto replaceJsonQuotedValue = [](std::string &text, const std::string &key, const std::string &literal) -> bool
+    {
+        const std::string prefix = "\"" + key + "\":\"";
+        const std::size_t keyPos = text.find(prefix);
+        if (keyPos == std::string::npos)
+        {
+            return false;
+        }
+        const std::size_t valueStart = keyPos + prefix.size();
+        const std::size_t valueEnd = text.find('"', valueStart);
+        if (valueEnd == std::string::npos)
+        {
+            return false;
+        }
+        text.replace(keyPos, valueEnd - keyPos + 1, "\"" + key + "\":" + literal);
+        return true;
+    };
+    assert(replaceJsonQuotedValue(numericJsonPayload, "metadata.seed", "42"));
+    assert(replaceJsonQuotedValue(numericJsonPayload, "metadata.deterministic", "true"));
+    assert(replaceJsonQuotedValue(numericJsonPayload, "mode.confidence", "0.9101234567890123"));
+    tools::IoEnvelopeParseResult numericJsonParsed =
+        tools::parseExternalIoEnvelope(tools::IoEnvelopeFormat::Json, numericJsonPayload);
+    assert(numericJsonParsed.ok);
+    assert(numericJsonParsed.envelope.metadata.seed == 42U);
+    assert(numericJsonParsed.envelope.metadata.deterministic);
+
+    tools::IoEnvelopeParseResult malformedKv =
+        tools::parseExternalIoEnvelope(tools::IoEnvelopeFormat::KeyValue, "schema_version=1.0.0\n");
+    assert(!malformedKv.ok);
+
+    tools::IoEnvelopeParseResult malformedJson =
+        tools::parseExternalIoEnvelope(tools::IoEnvelopeFormat::Json, "{\"schema_version\":\"1.0.0\"");
+    assert(!malformedJson.ok);
+
+    std::string nonFiniteKvPayload = serializedKv.payload;
+    const auto replaceKvValue = [](std::string &text, const std::string &key, const std::string &value) -> bool
+    {
+        const std::string prefix = key + "=";
+        const std::size_t keyPos = text.find(prefix);
+        if (keyPos == std::string::npos)
+        {
+            return false;
+        }
+        const std::size_t valueStart = keyPos + prefix.size();
+        const std::size_t valueEnd = text.find('\n', valueStart);
+        if (valueEnd == std::string::npos)
+        {
+            text.replace(valueStart, text.size() - valueStart, value);
+            return true;
+        }
+        text.replace(valueStart, valueEnd - valueStart, value);
+        return true;
+    };
+    assert(replaceKvValue(nonFiniteKvPayload, "front_view.confidence", "nan"));
+    tools::IoEnvelopeParseResult nonFiniteKv =
+        tools::parseExternalIoEnvelope(tools::IoEnvelopeFormat::KeyValue, nonFiniteKvPayload);
+    assert(!nonFiniteKv.ok);
 
     return 0;
 }
