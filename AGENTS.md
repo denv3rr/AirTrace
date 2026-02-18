@@ -69,6 +69,13 @@ Create and maintain these files under `docs/` before adding features:
 - Default values must be documented and justified in `docs/config_schema.md`.
 - All simulation runs must log config version, seed, and build identifiers.
 
+## Agent Branch Workflow
+- Agents are authorized to create and commit on `feature/*`, `bugfix/*`, and short-lived `integration/*` branches for active scoped work.
+- Agents must not commit directly to `main`; all changes flow through reviewed PRs.
+- Every agent commit must include linked `REQ-*` and `V-*` identifiers in commit message body or subject.
+- Before committing, agents must run deterministic tests and update `docs/requirements.md`, `docs/verification_plan.md`, and `docs/traceability.md` when behavior changes.
+- Agent handoffs between branches require a short note with current status, remaining work, and known risks.
+
 ## Agent Hygiene
 - Agent scratch files and local notes must remain untracked and gitignored.
 - Only the project-standard artifacts in `docs/` are committed.

@@ -10,6 +10,16 @@ Define a consistent branch and pull-request workflow for multi-agent execution w
 - Multi-agent convergence branches (short-lived only): `integration/capability-name`.
 - Rebase each active branch on latest `main` before opening a PR and again before merge.
 
+## Agent Branch and Commit Protocol
+- Agents may create and commit to `feature/*`, `bugfix/*`, and `integration/*` branches without additional approval when work is traceable to active REQ/V scope.
+- Agents must never commit directly to `main`.
+- Each agent-owned branch must have a single declared owner in the PR body or handoff note.
+- Before commit, agents must confirm:
+  - requirement + verification IDs are updated
+  - changed files are scoped to one coherent capability increment
+  - deterministic tests were run and results recorded
+- If a branch needs handoff, the current owner must add a short handoff note listing remaining steps and known risks.
+
 ## Commit Standards
 - Include requirement and verification IDs in commit subject or body (for example: `REQ-INT-032 V-131`).
 - Keep commits scoped to one coherent requirement change set when possible.
@@ -34,4 +44,3 @@ Define a consistent branch and pull-request workflow for multi-agent execution w
   - requirement/verification/traceability completeness
   - deterministic test pass evidence
 - Merge approval is denied if PR checklist evidence is incomplete.
-
