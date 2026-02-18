@@ -185,4 +185,38 @@ void runStatusTests()
     assert(frontViewJson.find("\"front_view_streams\"") != std::string::npos);
 
     std::filesystem::remove(configPath);
+
+    std::filesystem::path rolePresetConfigPath = writeConfigFile(
+        "airtrace_ui_status_role_preset.cfg",
+        "config.version=1.0\n"
+        "policy.roles=pilot,c2\n"
+        "policy.active_role=pilot\n"
+        "policy.role_permissions.pilot=front_view_workbench\n"
+        "policy.role_permissions.c2=platform_workbench\n"
+        "policy.role_preset.pilot.ui_surface=cockpit\n"
+        "policy.role_preset.pilot.front_view_enabled=false\n"
+        "policy.role_preset.pilot.front_view_families=proximity_2d\n"
+        "policy.role_preset.c2.ui_surface=c2\n"
+        "policy.role_preset.c2.front_view_enabled=true\n"
+        "policy.role_preset.c2.front_view_families=eo_gray,ir_white_hot\n"
+        "front_view.enabled=true\n"
+        "front_view.display_families=eo_gray,ir_white_hot\n"
+        "front_view.threading.enabled=true\n"
+        "front_view.threading.max_workers=2\n"
+        "ui.surface=tui\n");
+    bool rolePresetLoaded = initializeUiContext(rolePresetConfigPath.string());
+    assert(rolePresetLoaded);
+    const UiStatus &rolePresetStatus = getUiStatus();
+    assert(rolePresetStatus.adapterSurface == "cockpit");
+    assert(rolePresetStatus.frontViewAuthStatus == "not_configured");
+    assert(rolePresetStatus.frontViewMode == "none");
+    assert(rolePresetStatus.concurrencyStatus == "none");
+
+    PlatformSuiteResult baseSuite = uiRunPlatformSuite("base");
+    assert(baseSuite.pass);
+    const UiStatus &postProfileStatus = getUiStatus();
+    assert(postProfileStatus.adapterSurface == "cockpit");
+    assert(postProfileStatus.frontViewAuthStatus == "not_configured");
+
+    std::filesystem::remove(rolePresetConfigPath);
 }

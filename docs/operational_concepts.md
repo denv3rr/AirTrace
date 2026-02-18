@@ -21,6 +21,7 @@
 
 ## Operator Displays and UI Surfaces
 - The system supports multiple operator surfaces: cockpit UI, remote operator visuals, C2 screens, and TUI.
+- Active-role UI presets may override default surface and front-view startup behavior to enforce role-specific workflows deterministically.
 - All surfaces must present consistent semantics for mode, source, contributors, and denial reason codes.
 - Displays expose per-sensor health/availability/freshness/confidence and lockout state.
 - Fallback selection reasons and disqualified sources are shown with recovery guidance (REQ-INT-017).

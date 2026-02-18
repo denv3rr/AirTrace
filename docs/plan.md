@@ -21,6 +21,7 @@ Align the core/app with the mandatory standards, close sensor fallback gaps, and
 - Continue usability/visual mode validation implementation for scenario/test runs (REQ-INT-021/022/023).
 - Continue modular interface and packaging boundary enforcement for core/tools/UI/adapters.
 - Expand external I/O packaging with a codec-registry design that supports additional input/output transports while preserving fail-closed conversion behavior (REQ-INT-032/033).
+- Stand up co-simulation/federation research and planning artifacts under `docs/agents_research/` to evaluate scalable multi-device orchestration patterns before production adoption.
 - Enforce professional branch/PR process controls per REQ-CM-001 and evidence checklist verification (V-133).
 
 ## Phase 0: Modularization and Interface Contracts (Gate Before Code)
@@ -144,6 +145,22 @@ Implementation Scope
 - Add tools-layer codec registry with explicit registration and deterministic ordering.
 - Add CLI support for `--list-formats` and strict `--in-format/--out-format` validation.
 - Add regression suites for numeric fidelity, boolean fidelity, and schema-loss rejection across codecs.
+
+### Co-Simulation and Federation Orchestration Workstream (Gate Before Code)
+Goal: Evaluate a standards-based orchestration layer for multi-device and simulation federation while preserving deterministic, fail-closed AirTrace contracts.
+
+Requirements and Traceability
+- Stage candidate requirements for deterministic federation timing authority, endpoint authorization, and profile-scoped feature gating before implementation.
+- Map candidate verification coverage for replay determinism, timing-fault handling, and unauthorized-endpoint rejection.
+
+Design and Architecture
+- Keep canonical envelope as the semantic boundary.
+- Evaluate hybrid architecture: operational runtime on canonical envelope contracts, lab/integration orchestration via co-simulation federation tools.
+- Define clear separation between lab-only federation features and operationally approved capabilities.
+
+Implementation Scope (Research-First)
+- Maintain dated findings and backlog in `docs/agents_research/`.
+- Prototype only in isolated tooling paths until SRR/PDR approval converts findings into formal REQ/V artifacts.
 
 ### Multi-Modal Switching Workstream (Gate Before Code)
 Goal: Implement fused modes and switching logic aligned to the fallback ladder with traceability, safety, and policy compliance.
