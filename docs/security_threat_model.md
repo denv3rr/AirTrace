@@ -107,6 +107,7 @@ P4 -> P7 (audit events) -> D3 (logs)
 | --- | --- | --- | --- | --- | --- | --- |
 | UI/TUI Input | Menu selections, scenario values | TB-1 | Input validation, fail-closed on unavailable input, explicit recovery prompts | REQ-SEC-001, REQ-INT-003, REQ-INT-006 | HZ-007, HZ-034 | V-026, V-066, V-069, V-100 |
 | External I/O Envelope Export | Platform, mode, sensor, adapter, policy status fields | TB-1 | Versioned schema, deterministic metadata, explicit reason codes, fail-closed profile validation before export | REQ-INT-025, REQ-INT-026, REQ-INT-027 | HZ-007, HZ-035 | V-122, V-123, V-124 |
+| Federation Bridge Fan-Out | Canonical external I/O envelope + endpoint trust policy | TB-1 | Deterministic event framing, endpoint format allowlist, source/time-authority gating, federate key lifecycle validation, endpoint key allowlists, endpoint attestation requirements, and deterministic publish/deny audit events | REQ-INT-035, REQ-INT-036, REQ-INT-037, REQ-INT-038, REQ-SEC-014 | HZ-038 | V-136, V-137, V-138, V-139 |
 | Front-View Display Pipeline | Front-view mode selection, spoofed frame generation, stream/stabilization/gimbal metadata, render telemetry | TB-1 | Contract validation for spoof source, stream IDs, stabilization/gimbal settings, and mode/cycle inputs; fail-closed denial on invalid frame source or timing/stabilization state; deterministic status export | REQ-INT-028, REQ-INT-029, REQ-INT-030, REQ-INT-031, REQ-CFG-013, REQ-CFG-014 | HZ-036, HZ-037 | V-125, V-126, V-127, V-128, V-129, V-130 |
 | Config Parser | Config files, policy, profiles | TB-1 | Schema validation, unknown key rejection, version checks | REQ-CFG-001, REQ-FUNC-003, REQ-CFG-012 | HZ-001, HZ-028 | V-009, V-027, V-028, V-117 |
 | Sensor Adapters | Sensor measurements | TB-1 | Measurement contract, health/confidence checks, freshness gating | REQ-FUNC-001, REQ-FUNC-012 | HZ-002, HZ-003, HZ-022 | V-007, V-050, V-062 |
@@ -130,6 +131,7 @@ P4 -> P7 (audit events) -> D3 (logs)
 - Tampering: celestial dataset modification or downgrade.
 - Spoofing: unauthorized sensor contribution into fused modes.
 - Tampering: forced ladder reordering or fusion weight manipulation.
+- Spoofing/Tampering: forged or stale federate credentials and missing attestation routed through federation fan-out.
 - Spoofing: forged front-view frame sources or unsupported rendering mode injection.
 - Tampering: manipulated multi-view stream IDs or stabilization/gimbal metadata to misrepresent scene geometry.
 
@@ -149,6 +151,8 @@ P4 -> P7 (audit events) -> D3 (logs)
 - Role-based authorization for overrides and policy changes (REQ-SEC-007).
 - Versioned authorization bundles with provenance checks; deny-by-default on unverifiable inputs (REQ-SEC-011).
 - Fusion source allowlists and authorization checks before contributing to fused modes (REQ-SEC-008).
+- Federation bridge trust policy enforces key-validity windows, endpoint key allowlists, and endpoint attestation requirements with fail-closed rejection (REQ-INT-038).
+- Federation bridge publish and denial paths emit structured deterministic audit events containing federate/key identity and route/endpoint context (REQ-SEC-014).
 - Unknown provenance policy (`deny` or safe-state `hold`) is enforced with explicit reason codes and no fail-open path.
 - Ladder ordering and fusion parameters locked to signed configs with audit logging.
 - Test harness input paths are compile-time gated and require explicit runtime enablement.

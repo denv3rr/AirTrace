@@ -53,7 +53,7 @@ struct FederationEventFrame
     std::string federateKeyId;
     std::uint64_t federateKeyEpoch = 0;
     std::uint64_t federateKeyValidUntilTimestampMs = 0;
-    std::string federateAttestationTag;
+    std::string federateAttestationTag{};
     std::string routeKey;
     std::uint64_t routeSequence = 0;
     std::uint64_t logicalTick = 0;

@@ -56,7 +56,7 @@ MODULE_TARGETS="airtrace_core airtrace_adapters_contract airtrace_tools airtrace
 if [ -f "$BUILD_DIR/CMakeCache.txt" ] && grep -q '^AIRTRACE_BUILD_ADAPTER_SDK:BOOL=ON$' "$BUILD_DIR/CMakeCache.txt"; then
   MODULE_TARGETS="$MODULE_TARGETS airtrace_adapters_sdk"
 fi
-cmake --build "$BUILD_DIR" --target $MODULE_TARGETS AirTraceCoreTests AirTraceEdgeCaseTests AirTraceUiTests AirTraceHarnessTests AirTraceIntegrationTests
+cmake --build "$BUILD_DIR" --target $MODULE_TARGETS AirTraceCoreTests AirTraceFederationBridgeTests AirTraceEdgeCaseTests AirTraceUiTests AirTraceHarnessTests AirTraceIntegrationTests
 
 cd "$BUILD_DIR"
 temp_output=$(mktemp 2>/dev/null || echo "$BUILD_DIR/ctest_output.log")
