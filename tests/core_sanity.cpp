@@ -6,6 +6,7 @@
 #include "tools/sim_config_loader.h"
 #include "tools/adapter_registry_loader.h"
 #include "tools/io_packager.h"
+#include "tools/federation_bridge.h"
 #include "core/mode_scheduler.h"
 #include "core/state.h"
 #include "core/hash.h"
@@ -1258,6 +1259,64 @@ int main()
     tools::IoEnvelopeParseResult nonFiniteKv =
         tools::parseExternalIoEnvelope(tools::IoEnvelopeFormat::KeyValue, nonFiniteKvPayload);
     assert(!nonFiniteKv.ok);
+
+    tools::FederationBridgeConfig bridgeConfig;
+    bridgeConfig.startLogicalTick = 100;
+    bridgeConfig.tickStep = 5;
+    bridgeConfig.startTimestampMs = 1000;
+    bridgeConfig.tickDurationMs = 20;
+    bridgeConfig.maxLatencyBudgetMs = 2500.0;
+    bridgeConfig.requireDeterministic = true;
+    bridgeConfig.outputFormatName = "ie_json_v1";
+    tools::FederationBridge bridge(bridgeConfig);
+
+    packagerEnvelope.frontView.timestampMs = 1100;
+    packagerEnvelope.frontView.sourceId = "front_sensor";
+    tools::FederationBridgeResult bridgeFrame1 = bridge.publish(packagerEnvelope);
+    assert(bridgeFrame1.ok);
+    assert(bridgeFrame1.frame.logicalTick == 100U);
+    assert(bridgeFrame1.frame.eventTimestampMs == 3000U);
+    assert(bridgeFrame1.frame.sourceTimestampMs == 1100U);
+    assert(bridgeFrame1.frame.sourceLatencyMs == 1900.0);
+    assert(bridgeFrame1.frame.payloadFormat == "ie_json_v1");
+    tools::IoEnvelopeParseResult bridgePayloadParsed =
+        tools::parseExternalIoEnvelope(bridgeFrame1.frame.payloadFormat, bridgeFrame1.frame.payload);
+    assert(bridgePayloadParsed.ok);
+    assert(bridgePayloadParsed.envelope.mode.activeMode == packagerEnvelope.mode.activeMode);
+    const std::string bridgeJson = tools::serializeFederationEventFrameJson(bridgeFrame1.frame);
+    assert(bridgeJson.find("\"logical_tick\":100") != std::string::npos);
+    assert(bridgeJson.find("\"payload_format\":\"ie_json_v1\"") != std::string::npos);
+
+    tools::FederationBridgeResult bridgeFrame2 = bridge.publish(packagerEnvelope);
+    assert(bridgeFrame2.ok);
+    assert(bridgeFrame2.frame.logicalTick == 105U);
+    assert(bridgeFrame2.frame.eventTimestampMs == 3100U);
+
+    tools::FederationBridgeConfig unsupportedCodecConfig = bridgeConfig;
+    unsupportedCodecConfig.outputFormatName = "yaml";
+    tools::FederationBridge unsupportedBridge(unsupportedCodecConfig);
+    tools::FederationBridgeResult unsupportedCodecResult = unsupportedBridge.publish(packagerEnvelope);
+    assert(!unsupportedCodecResult.ok);
+
+    tools::FederationBridgeConfig nondeterministicRequiredConfig = bridgeConfig;
+    nondeterministicRequiredConfig.requireDeterministic = true;
+    tools::FederationBridge nondeterministicBridge(nondeterministicRequiredConfig);
+    ExternalIoEnvelope nondeterministicEnvelope = packagerEnvelope;
+    nondeterministicEnvelope.metadata.deterministic = false;
+    tools::FederationBridgeResult nondeterministicResult = nondeterministicBridge.publish(nondeterministicEnvelope);
+    assert(!nondeterministicResult.ok);
+
+    tools::FederationBridgeConfig lowLatencyConfig = bridgeConfig;
+    lowLatencyConfig.maxLatencyBudgetMs = 10.0;
+    tools::FederationBridge lowLatencyBridge(lowLatencyConfig);
+    tools::FederationBridgeResult lowLatencyResult = lowLatencyBridge.publish(packagerEnvelope);
+    assert(!lowLatencyResult.ok);
+
+    tools::FederationBridgeConfig invalidTickConfig = bridgeConfig;
+    invalidTickConfig.tickStep = 0;
+    tools::FederationBridge invalidTickBridge(invalidTickConfig);
+    tools::FederationBridgeResult invalidTickResult = invalidTickBridge.publish(packagerEnvelope);
+    assert(!invalidTickResult.ok);
 
     return 0;
 }

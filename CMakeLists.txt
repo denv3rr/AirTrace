@@ -53,6 +53,7 @@ add_library(airtrace_tools
         src/tools/sim_config_loader.cpp
         src/tools/audit_log.cpp
         src/tools/io_packager.cpp
+        src/tools/federation_bridge.cpp
         src/tools/adapter_registry_loader.cpp
 )
 target_include_directories(airtrace_tools PUBLIC include)

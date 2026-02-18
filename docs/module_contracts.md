@@ -39,6 +39,7 @@ Tools responsibilities:
 - Adapter registry I/O (manifest + allowlist) and signature/hash checks.
 - Adapter runtime context negotiation (core/tools/ui contract versions) and allowlist approval freshness checks.
 - External I/O envelope packaging and conversion across approved formats (`ie_json_v1`, `ie_kv_v1`) with deterministic numeric fidelity, explicit codec discovery, and fail-closed error handling.
+- Deterministic federation-bridge event framing from canonical envelopes to logical ticks/timestamps with bounded-latency validation and fail-closed rejection paths.
 
 Inputs:
 - Config files and policy bundles.

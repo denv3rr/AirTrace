@@ -111,6 +111,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-INT-032 | docs/module_contracts.md; docs/operational_concepts.md | include/tools/io_packager.h; src/tools/io_packager.cpp; examples/io_packager.cpp | V-131 |
 | REQ-INT-033 | docs/security_threat_model.md; docs/module_contracts.md | include/tools/io_packager.h; src/tools/io_packager.cpp; tests/core_sanity.cpp | V-132 |
 | REQ-INT-034 | docs/ui_standards.md; docs/operational_concepts.md | src/ui/simulation.cpp; include/core/sim_config.h; src/tools/sim_config_loader.cpp | V-135 |
+| REQ-INT-035 | docs/module_contracts.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/core_sanity.cpp | V-136 |
 | REQ-MOD-001 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; adapters/sdk/CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
 | REQ-MOD-002 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
 | REQ-MOD-003 | docs/architecture.md; docs/module_contracts.md | CMakeLists.txt; cmake/check_module_dependencies.cmake | V-106 |
