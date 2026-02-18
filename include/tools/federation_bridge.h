@@ -12,6 +12,13 @@ namespace tools
 {
 struct FederationBridgeConfig
 {
+    struct EndpointConfig
+    {
+        std::string endpointId = "endpoint_default";
+        std::string outputFormatName = "ie_json_v1";
+        bool enabled = true;
+    };
+
     std::uint64_t startLogicalTick = 0;
     std::uint64_t tickStep = 1;
     std::uint64_t startTimestampMs = 0;
@@ -25,13 +32,17 @@ struct FederationBridgeConfig
     bool requireMonotonicSourceTimestamp = true;
     std::uint64_t maxFutureSkewMs = 0;
     std::vector<std::string> allowedSourceIds{};
+    std::string federateKeyId = "key_default";
+    std::vector<EndpointConfig> endpoints{};
 };
 
 struct FederationEventFrame
 {
     std::string schemaVersion = "1.0.0";
     std::string interfaceId = "airtrace.federation_event";
+    std::string endpointId;
     std::string federateId;
+    std::string federateKeyId;
     std::string routeKey;
     std::uint64_t routeSequence = 0;
     std::uint64_t logicalTick = 0;
@@ -53,17 +64,25 @@ struct FederationBridgeResult
     FederationEventFrame frame{};
 };
 
+struct FederationFanoutResult
+{
+    bool ok = false;
+    std::string error;
+    std::vector<FederationEventFrame> frames{};
+};
+
 class FederationBridge
 {
 public:
     explicit FederationBridge(FederationBridgeConfig config);
     FederationBridgeResult publish(const ExternalIoEnvelope &envelope);
+    FederationFanoutResult publishFanout(const ExternalIoEnvelope &envelope);
 
 private:
     FederationBridgeConfig config_{};
     std::uint64_t nextLogicalTick_ = 0;
     std::vector<std::string> allowedSourcesNormalized_{};
-    std::unordered_map<std::string, std::uint64_t> routeSequenceByKey_{};
+    std::unordered_map<std::string, std::uint64_t> routeSequenceByKeyAndEndpoint_{};
     std::unordered_map<std::string, std::uint64_t> lastSourceTimestampByKey_{};
 };
 

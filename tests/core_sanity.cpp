@@ -1273,6 +1273,7 @@ int main()
     bridgeConfig.requireSourceTimestamp = true;
     bridgeConfig.requireMonotonicSourceTimestamp = true;
     bridgeConfig.maxFutureSkewMs = 0;
+    bridgeConfig.federateKeyId = "key_alpha";
     tools::FederationBridge bridge(bridgeConfig);
 
     packagerEnvelope.frontView.timestampMs = 1100;
@@ -1284,6 +1285,8 @@ int main()
     assert(bridgeFrame1.frame.sourceTimestampMs == 1100U);
     assert(bridgeFrame1.frame.sourceLatencyMs == 1900.0);
     assert(bridgeFrame1.frame.federateId == "edge_node_1");
+    assert(bridgeFrame1.frame.federateKeyId == "key_alpha");
+    assert(bridgeFrame1.frame.endpointId == "endpoint_default");
     assert(bridgeFrame1.frame.routeKey == "theater_alpha/air/front_sensor");
     assert(bridgeFrame1.frame.routeSequence == 0U);
     assert(bridgeFrame1.frame.payloadFormat == "ie_json_v1");
@@ -1294,6 +1297,7 @@ int main()
     const std::string bridgeJson = tools::serializeFederationEventFrameJson(bridgeFrame1.frame);
     assert(bridgeJson.find("\"logical_tick\":100") != std::string::npos);
     assert(bridgeJson.find("\"payload_format\":\"ie_json_v1\"") != std::string::npos);
+    assert(bridgeJson.find("\"endpoint_id\":\"endpoint_default\"") != std::string::npos);
 
     tools::FederationBridgeResult bridgeFrame2 = bridge.publish(packagerEnvelope);
     assert(bridgeFrame2.ok);
@@ -1306,6 +1310,12 @@ int main()
     tools::FederationBridge unsupportedBridge(unsupportedCodecConfig);
     tools::FederationBridgeResult unsupportedCodecResult = unsupportedBridge.publish(packagerEnvelope);
     assert(!unsupportedCodecResult.ok);
+
+    tools::FederationBridgeConfig invalidEndpointCodecConfig = bridgeConfig;
+    invalidEndpointCodecConfig.endpoints = {{"edge_a", "yaml", true}};
+    tools::FederationBridge invalidEndpointCodecBridge(invalidEndpointCodecConfig);
+    tools::FederationBridgeResult invalidEndpointCodecResult = invalidEndpointCodecBridge.publish(packagerEnvelope);
+    assert(!invalidEndpointCodecResult.ok);
 
     tools::FederationBridgeConfig nondeterministicRequiredConfig = bridgeConfig;
     nondeterministicRequiredConfig.requireDeterministic = true;
@@ -1364,6 +1374,38 @@ int main()
     monotonicEnvelope.frontView.timestampMs = 1040U;
     tools::FederationBridgeResult monotonicSecond = monotonicBridge.publish(monotonicEnvelope);
     assert(!monotonicSecond.ok);
+
+    tools::FederationBridgeConfig fanoutConfig = bridgeConfig;
+    fanoutConfig.startLogicalTick = 0;
+    fanoutConfig.tickStep = 1;
+    fanoutConfig.startTimestampMs = 0;
+    fanoutConfig.tickDurationMs = 10;
+    fanoutConfig.maxLatencyBudgetMs = 1000.0;
+    fanoutConfig.maxFutureSkewMs = 1000U;
+    fanoutConfig.requireSourceTimestamp = false;
+    fanoutConfig.endpoints = {
+        {"edge_a", "ie_json_v1", true},
+        {"edge_b", "ie_kv_v1", true}};
+    tools::FederationBridge fanoutBridge(fanoutConfig);
+    ExternalIoEnvelope fanoutEnvelope = packagerEnvelope;
+    fanoutEnvelope.frontView.timestampMs = 0U;
+    tools::FederationFanoutResult fanoutResult = fanoutBridge.publishFanout(fanoutEnvelope);
+    assert(fanoutResult.ok);
+    assert(fanoutResult.frames.size() == 2U);
+    assert(fanoutResult.frames[0].routeSequence == 0U);
+    assert(fanoutResult.frames[1].routeSequence == 0U);
+    assert(fanoutResult.frames[0].endpointId == "edge_a");
+    assert(fanoutResult.frames[1].endpointId == "edge_b");
+    tools::IoEnvelopeParseResult fanoutParsedA =
+        tools::parseExternalIoEnvelope(fanoutResult.frames[0].payloadFormat, fanoutResult.frames[0].payload);
+    assert(fanoutParsedA.ok);
+    tools::IoEnvelopeParseResult fanoutParsedB =
+        tools::parseExternalIoEnvelope(fanoutResult.frames[1].payloadFormat, fanoutResult.frames[1].payload);
+    assert(fanoutParsedB.ok);
+    tools::FederationFanoutResult fanoutResult2 = fanoutBridge.publishFanout(fanoutEnvelope);
+    assert(fanoutResult2.ok);
+    assert(fanoutResult2.frames[0].routeSequence == 1U);
+    assert(fanoutResult2.frames[1].routeSequence == 1U);
 
     return 0;
 }

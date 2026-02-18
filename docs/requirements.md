@@ -124,6 +124,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-INT-034: The UI initialization path shall apply active-role UI presets deterministically (surface and front-view defaults) so each operator role receives the configured, fail-closed interface profile at startup and profile-switch transitions.
 - REQ-INT-035: The tools layer shall provide a deterministic federation-bridge event framing API that maps canonical external I/O envelopes to logical ticks and bounded-latency event timestamps, and shall fail closed on unsupported codecs, invalid timing configuration, missing required envelope fields, or deterministic-policy violations.
 - REQ-INT-036: Federation-bridge event frames shall include federate identity and route-scoped sequencing, and shall enforce time-authority policy controls for source timestamps (required presence, max future skew, and monotonic progression per route) with fail-closed rejection on violations.
+- REQ-INT-037: The federation bridge shall support deterministic fan-out to multiple configured endpoints with explicit endpoint identity and federate key identifier metadata, and shall fail closed when endpoint formats or endpoint policies are invalid.
 
 ## Modularity Requirements (MOD)
 - REQ-MOD-001: The system shall provide independently buildable modules for core, tools, UI, and adapters with explicit, versioned interfaces.

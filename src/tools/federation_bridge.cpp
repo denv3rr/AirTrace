@@ -5,6 +5,7 @@
 #include <limits>
 #include <sstream>
 #include <utility>
+#include <vector>
 
 #include "tools/io_packager.h"
 
@@ -53,6 +54,32 @@ std::string buildRouteKey(
     return toLower(routeDomain) + "/" + toLower(platformProfile) + "/" + toLower(sourceId);
 }
 
+std::string buildRouteEndpointKey(const std::string &routeKey, const std::string &endpointId)
+{
+    return routeKey + "@" + toLower(endpointId);
+}
+
+std::vector<FederationBridgeConfig::EndpointConfig> activeEndpoints(const FederationBridgeConfig &config)
+{
+    std::vector<FederationBridgeConfig::EndpointConfig> endpoints;
+    for (const auto &endpoint : config.endpoints)
+    {
+        if (endpoint.enabled)
+        {
+            endpoints.push_back(endpoint);
+        }
+    }
+    if (endpoints.empty())
+    {
+        FederationBridgeConfig::EndpointConfig fallback;
+        fallback.endpointId = "endpoint_default";
+        fallback.outputFormatName = config.outputFormatName;
+        fallback.enabled = true;
+        endpoints.push_back(fallback);
+    }
+    return endpoints;
+}
+
 bool validateConfig(const FederationBridgeConfig &config, std::string &error)
 {
     if (config.tickStep == 0)
@@ -85,6 +112,11 @@ bool validateConfig(const FederationBridgeConfig &config, std::string &error)
         error = "route_domain is missing or invalid";
         return false;
     }
+    if (!isValidToken(config.federateKeyId))
+    {
+        error = "federate_key_id is missing or invalid";
+        return false;
+    }
     for (const auto &sourceId : config.allowedSourceIds)
     {
         if (!isValidToken(toLower(sourceId)))
@@ -92,6 +124,27 @@ bool validateConfig(const FederationBridgeConfig &config, std::string &error)
             error = "allowed source id is invalid";
             return false;
         }
+    }
+    std::vector<std::string> endpointIds;
+    for (const auto &endpoint : config.endpoints)
+    {
+        if (!isValidToken(endpoint.endpointId))
+        {
+            error = "endpoint id is missing or invalid";
+            return false;
+        }
+        if (!isSupportedIoEnvelopeFormat(endpoint.outputFormatName))
+        {
+            error = "unsupported endpoint output format: " + endpoint.outputFormatName;
+            return false;
+        }
+        const std::string loweredEndpointId = toLower(endpoint.endpointId);
+        if (std::find(endpointIds.begin(), endpointIds.end(), loweredEndpointId) != endpointIds.end())
+        {
+            error = "duplicate endpoint id";
+            return false;
+        }
+        endpointIds.push_back(loweredEndpointId);
     }
     return true;
 }
@@ -153,9 +206,9 @@ FederationBridge::FederationBridge(FederationBridgeConfig config)
     }
 }
 
-FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envelope)
+FederationFanoutResult FederationBridge::publishFanout(const ExternalIoEnvelope &envelope)
 {
-    FederationBridgeResult result;
+    FederationFanoutResult result;
 
     if (envelope.metadata.schemaVersion.empty())
     {
@@ -211,6 +264,12 @@ FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envel
         return result;
     }
     const std::string routeKey = buildRouteKey(config_.routeDomain, envelope.metadata.platformProfile, sourceId);
+    const std::vector<FederationBridgeConfig::EndpointConfig> endpoints = activeEndpoints(config_);
+    if (endpoints.empty())
+    {
+        result.error = "no active endpoints";
+        return result;
+    }
 
     if (willOverflowMul(nextLogicalTick_, config_.tickDurationMs))
     {
@@ -265,47 +324,71 @@ FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envel
         return result;
     }
 
-    const IoEnvelopeSerializeResult serialized = serializeExternalIoEnvelope(config_.outputFormatName, envelope);
-    if (!serialized.ok)
-    {
-        result.error = serialized.error;
-        return result;
-    }
+    std::vector<FederationEventFrame> frames;
+    frames.reserve(endpoints.size());
+    std::vector<std::string> routeEndpointKeys;
+    routeEndpointKeys.reserve(endpoints.size());
+    std::vector<std::uint64_t> routeSequences;
+    routeSequences.reserve(endpoints.size());
 
-    result.frame.schemaVersion = "1.0.0";
-    result.frame.interfaceId = "airtrace.federation_event";
-    result.frame.federateId = toLower(config_.federateId);
-    result.frame.routeKey = routeKey;
-    result.frame.routeSequence = routeSequenceByKey_[routeKey];
-    result.frame.logicalTick = nextLogicalTick_;
-    result.frame.eventTimestampMs = eventTimestampMs;
-    result.frame.sourceTimestampMs = sourceTimestampMs;
-    result.frame.sourceLatencyMs = latencyMs;
-    result.frame.latencyBudgetMs = config_.maxLatencyBudgetMs;
-    result.frame.sourceId = sourceId;
-    result.frame.payloadFormat = ioEnvelopeFormatName(IoEnvelopeFormat::Json);
-    if (!config_.outputFormatName.empty())
+    for (const auto &endpoint : endpoints)
     {
-        IoEnvelopeFormat parsed = IoEnvelopeFormat::Json;
-        if (parseIoEnvelopeFormat(config_.outputFormatName, parsed))
+        const std::string normalizedEndpointId = toLower(endpoint.endpointId);
+        const std::string routeEndpointKey = buildRouteEndpointKey(routeKey, normalizedEndpointId);
+        const std::uint64_t routeSequence = routeSequenceByKeyAndEndpoint_[routeEndpointKey];
+        if (routeSequence == std::numeric_limits<std::uint64_t>::max())
         {
-            result.frame.payloadFormat = ioEnvelopeFormatName(parsed);
+            result.error = "route sequence overflow";
+            return result;
+        }
+        const IoEnvelopeSerializeResult serialized = serializeExternalIoEnvelope(endpoint.outputFormatName, envelope);
+        if (!serialized.ok)
+        {
+            result.error = serialized.error;
+            return result;
+        }
+
+        FederationEventFrame frame;
+        frame.schemaVersion = "1.0.0";
+        frame.interfaceId = "airtrace.federation_event";
+        frame.endpointId = normalizedEndpointId;
+        frame.federateId = toLower(config_.federateId);
+        frame.federateKeyId = toLower(config_.federateKeyId);
+        frame.routeKey = routeKey;
+        frame.routeSequence = routeSequence;
+        frame.logicalTick = nextLogicalTick_;
+        frame.eventTimestampMs = eventTimestampMs;
+        frame.sourceTimestampMs = sourceTimestampMs;
+        frame.sourceLatencyMs = latencyMs;
+        frame.latencyBudgetMs = config_.maxLatencyBudgetMs;
+        frame.sourceId = sourceId;
+        frame.payloadFormat = ioEnvelopeFormatName(IoEnvelopeFormat::Json);
+        IoEnvelopeFormat parsed = IoEnvelopeFormat::Json;
+        if (parseIoEnvelopeFormat(endpoint.outputFormatName, parsed))
+        {
+            frame.payloadFormat = ioEnvelopeFormatName(parsed);
         }
         else
         {
-            result.frame.payloadFormat = config_.outputFormatName;
+            frame.payloadFormat = endpoint.outputFormatName;
         }
+        frame.payload = serialized.payload;
+        frame.seed = envelope.metadata.seed;
+        frame.deterministic = envelope.metadata.deterministic;
+
+        routeEndpointKeys.push_back(routeEndpointKey);
+        routeSequences.push_back(routeSequence);
+        frames.push_back(std::move(frame));
     }
-    result.frame.payload = serialized.payload;
-    result.frame.seed = envelope.metadata.seed;
-    result.frame.deterministic = envelope.metadata.deterministic;
-    lastSourceTimestampByKey_[routeKey] = sourceTimestampMs;
-    if (routeSequenceByKey_[routeKey] == std::numeric_limits<std::uint64_t>::max())
+
+    for (std::size_t idx = 0; idx < routeEndpointKeys.size(); ++idx)
     {
-        result.error = "route sequence overflow";
-        return result;
+        routeSequenceByKeyAndEndpoint_[routeEndpointKeys[idx]] = routeSequences[idx] + 1U;
     }
-    routeSequenceByKey_[routeKey] += 1U;
+    if (sourceTimestampMs > 0U)
+    {
+        lastSourceTimestampByKey_[routeKey] = sourceTimestampMs;
+    }
 
     if (willOverflowAdd(nextLogicalTick_, config_.tickStep))
     {
@@ -313,7 +396,27 @@ FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envel
         return result;
     }
     nextLogicalTick_ += config_.tickStep;
+    result.frames = std::move(frames);
     result.ok = true;
+    return result;
+}
+
+FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envelope)
+{
+    FederationBridgeResult result;
+    const FederationFanoutResult fanout = publishFanout(envelope);
+    if (!fanout.ok)
+    {
+        result.error = fanout.error;
+        return result;
+    }
+    if (fanout.frames.empty())
+    {
+        result.error = "fanout produced no frames";
+        return result;
+    }
+    result.ok = true;
+    result.frame = fanout.frames.front();
     return result;
 }
 
@@ -323,7 +426,9 @@ std::string serializeFederationEventFrameJson(const FederationEventFrame &frame)
     out << "{";
     out << "\"schema_version\":\"" << jsonEscape(frame.schemaVersion) << "\",";
     out << "\"interface_id\":\"" << jsonEscape(frame.interfaceId) << "\",";
+    out << "\"endpoint_id\":\"" << jsonEscape(frame.endpointId) << "\",";
     out << "\"federate_id\":\"" << jsonEscape(frame.federateId) << "\",";
+    out << "\"federate_key_id\":\"" << jsonEscape(frame.federateKeyId) << "\",";
     out << "\"route_key\":\"" << jsonEscape(frame.routeKey) << "\",";
     out << "\"route_sequence\":" << frame.routeSequence << ",";
     out << "\"logical_tick\":" << frame.logicalTick << ",";
