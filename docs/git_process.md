@@ -25,6 +25,18 @@ Define a consistent branch and pull-request workflow for multi-agent execution w
 - Keep commits scoped to one coherent requirement change set when possible.
 - Do not merge documentation-only policy changes without matching traceability updates.
 
+## Agentic Research Publication Controls
+- Agentic research is private-by-default in version control.
+- Keep only control artifacts tracked under `docs/agents_research/`:
+  - `README.md`
+  - `backlog.md`
+- Raw research notes, exploratory analyses, and archive bundles must remain ignored unless explicitly approved for publication.
+- Before publishing any research note:
+  - perform security/compliance review (CUI/export-control/legal-policy boundary check)
+  - convert findings into formal `REQ-*`, `V-*`, `HZ-*`, and traceability entries
+  - sanitize mission-sensitive details and keep only gate-appropriate rationale
+- If a file is already tracked but violates this policy, untrack it with `git rm --cached <path>` and keep it local/ignored.
+
 ## Pull Request Evidence Checklist
 - Linked `REQ-*` IDs.
 - Linked `V-*` IDs.

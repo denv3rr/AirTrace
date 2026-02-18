@@ -25,6 +25,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-SYS-019 | docs/multi_modal_switching_design.md | src/core/mode_manager.cpp | V-095 |
 | REQ-SYS-020 | docs/architecture.md; docs/module_contracts.md | src/tools/sim_config_loader.cpp; src/tools/audit_log.cpp | V-114 |
 | REQ-SYS-021 | docs/operational_concepts.md | src/core/Tracker.cpp | V-119 |
+| REQ-SYS-022 | docs/operational_concepts.md; docs/agents_research/mission_scope_audit_2026-02-18.md | TBD (planned: src/tools/sim_config_loader.cpp; src/ui/main.cpp) | V-140 |
 | REQ-FUNC-001 | docs/architecture.md | src/core/sensors.cpp | V-007 |
 | REQ-FUNC-002 | docs/operational_concepts.md | src/core/mode_manager.cpp | V-008 |
 | REQ-FUNC-003 | docs/config_schema.md | src/tools/sim_config_loader.cpp | V-009 |
@@ -116,6 +117,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-INT-036 | docs/module_contracts.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/federation_bridge.cpp | V-137 |
 | REQ-INT-037 | docs/module_contracts.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/federation_bridge.cpp | V-138 |
 | REQ-INT-038 | docs/module_contracts.md; docs/security_threat_model.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/federation_bridge.cpp | V-139 |
+| REQ-INT-039 | docs/ui_standards.md; docs/operational_concepts.md; docs/agents_research/mission_scope_audit_2026-02-18.md | TBD (planned: src/ui/alerts.cpp; src/ui/simulation.cpp; src/ui/menu.cpp) | V-141 |
 | REQ-MOD-001 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; adapters/sdk/CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
 | REQ-MOD-002 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
 | REQ-MOD-003 | docs/architecture.md; docs/module_contracts.md | CMakeLists.txt; cmake/check_module_dependencies.cmake | V-106 |
@@ -144,11 +146,14 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-CFG-014 | docs/config_schema.md; docs/front_view_display_architecture.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h; src/ui/front_view.cpp | V-130 |
 | REQ-CFG-015 | docs/config_schema.md; docs/ui_standards.md | src/tools/sim_config_loader.cpp; include/core/sim_config.h; tests/core_sanity.cpp | V-134 |
 | REQ-CM-001 | docs/git_process.md; docs/plan.md; AGENTS.md | docs/git_process.md; AGENTS.md | V-133 |
+| REQ-CM-002 | docs/git_process.md | .gitignore; docs/git_process.md | V-144 |
 | REQ-VER-001 | docs/verification_plan.md | docs/verification_plan.md | V-030 |
 | REQ-VER-002 | docs/verification_plan.md | tests/core_sanity.cpp | V-031 |
 | REQ-VER-003 | docs/verification_plan.md | scripts/test.ps1; scripts/test.sh | V-068 |
 | REQ-VER-004 | docs/verification_plan.md | src/ui/input_harness.cpp | V-071 |
 | REQ-VER-005 | docs/verification_plan.md | scripts/test.ps1; scripts/test.sh | V-072 |
 | REQ-VER-006 | docs/verification_plan.md | tests/integration_flows.cpp | V-076 |
+| REQ-VER-007 | docs/verification_plan.md; docs/agents_research/mission_scope_audit_2026-02-18.md | TBD (planned: tests/integration_flows.cpp; tests/ui_status.cpp; scripts/test.ps1; scripts/test.sh) | V-142 |
 | REQ-DOC-001 | docs/requirements.md | README.md | V-048 |
+| REQ-DOC-002 | docs/agents_research/mission_scope_audit_2026-02-18.md | TBD (planned: release evidence bundle process) | V-143 |
 

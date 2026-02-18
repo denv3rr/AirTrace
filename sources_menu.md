@@ -687,3 +687,15 @@ Informs:
 - https://www.jcs.mil/Doctrine/Joint-Doctrine-Pubs/Cyberspace-Operations/
 
 ---
+
+### 2026 Mission-Customer Scope Audit Additions
+
+- https://www.media.defense.gov/2026/Jan/23/2003624409/-1/-1/1/NATIONAL-DEFENSE-STRATEGY-2026.PDF
+- https://www.gao.gov/assets/gao-24-107165.pdf
+- https://www.gao.gov/assets/gao-25-106800.pdf
+- https://www.gao.gov/assets/gao-24-106721.pdf
+- https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodi/500087p.pdf
+- https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodi/500095p.PDF
+- https://csrc.nist.gov/pubs/sp/800/171/r3/final
+- https://public-inspection.federalregister.gov/2025-17359.pdf
+- https://www.esd.whs.mil/Portals/54/Documents/DD/issuances/dodd/300009p.pdf

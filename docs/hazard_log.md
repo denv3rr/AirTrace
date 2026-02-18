@@ -42,6 +42,11 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-036 | Front-view display renders stale, invalid, or unauthorized imagery and misleads operator decisions. | Critical | Occasional | Front-view frame contract validation, spoof/config validation, fail-closed denial banners, and explicit latency/drop telemetry. | V-125, V-126, V-127 |
 | HZ-037 | Multi-view front-view streams become unsynchronized or unstabilized, causing incorrect operator interpretation of target geometry. | Critical | Occasional | Enforce deterministic frame timestamp/age contract, stabilization/gimbal validation, stream-ID constraints, and fail-closed denial on invalid stream/stabilization/gimbal combinations. | V-128, V-129, V-130 |
 | HZ-038 | Federation bridge accepts untrusted/expired federate key material or missing attestation, enabling unsafe cross-domain data propagation without accountable denial evidence. | Critical | Occasional | Enforce key-validity windows, endpoint key allowlists, endpoint attestation requirements, deterministic fail-closed denial, and auditable publish/deny events with route/endpoint context. | V-139 |
+| HZ-039 | Missing or invalid mission-thread profile and primary-role declaration causes operation under incorrect constraints. | Critical | Occasional | Require startup declaration gate, deny fail-closed on unknown/missing declarations, and expose resolved thread/role in status outputs. | V-140 |
+| HZ-040 | Non-specific degraded-mode guidance causes incorrect operator recovery actions under stress. | Critical | Occasional | Provide mission-thread and role-specific denial/recovery guidance with deterministic action order and bounded interaction steps. | V-141 |
+| HZ-041 | Mission-thread degraded-mode defects remain undetected without explicit acceptance metrics. | Critical | Occasional | Require mission-thread metric verification for false-denial, false-acceptance, recovery latency, and deterministic replay pass rate. | V-142 |
+| HZ-042 | Missing release scope declaration permits out-of-scope deployment and unsafe assumptions. | Critical | Remote | Require release scope declaration of intended users, exclusions, and legal/policy boundaries before release approval. | V-143 |
+| HZ-043 | Public exposure of raw agentic research artifacts reveals internal assumptions, test constraints, or sensitive engineering context. | Critical | Occasional | Enforce private-by-default research tracking policy, keep only approved control artifacts in version control, and require publication review plus REQ/V/HZ promotion before sharing findings. | V-144 |
 
 ## Requirement and Control Crosswalk
 | Hazard ID | Requirement Links | Security/Interface Control Links |
@@ -84,3 +89,8 @@ Severity: Catastrophic, Critical, Marginal, Negligible. Likelihood: Frequent, Pr
 | HZ-036 | REQ-INT-028; REQ-INT-029; REQ-CFG-013 | Front-view display contract + spoof/cycle validation controls |
 | HZ-037 | REQ-INT-030; REQ-INT-031; REQ-CFG-014 | Front-view multi-view timing/stabilization contract + fail-closed validation controls |
 | HZ-038 | REQ-INT-038; REQ-SEC-014; REQ-SAFE-011 | Federation bridge trust-policy + key-lifecycle + auditable fail-closed controls |
+| HZ-039 | REQ-SYS-022; REQ-INT-011 | Startup mission-thread/role declaration gate + status banner controls |
+| HZ-040 | REQ-INT-039; REQ-INT-020 | Role/thread denial-messaging controls + interaction-budget policy |
+| HZ-041 | REQ-VER-007 | Mission-thread metric verification controls |
+| HZ-042 | REQ-DOC-002 | Release evidence checklist + scope declaration control |
+| HZ-043 | REQ-CM-002 | Agentic research publication-control policy + version-control allowlist |

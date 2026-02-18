@@ -36,6 +36,7 @@ university sources with unclassified guidance.
 21) External integration outputs use a machine-readable, versioned envelope with stable field semantics and reason codes.
 22) Front-view display workbench provides deterministic mode rendering and cycle behavior with explicit mode/state/source/stream/timestamp/frame-age/latency/drop indicators.
 23) Front-view denials (invalid mode/source/spoof/stream/stabilization/gimbal config) must be fail-closed with explicit recovery guidance.
+24) Degraded-mode denial/recovery guidance is mission-thread and role specific, deterministic, and bounded by an interaction-budget policy.
 
 ## Implementation Notes
 - Menus must show platform profile, active source, and authorization
@@ -66,6 +67,8 @@ university sources with unclassified guidance.
   and recovery guidance rules as baseline fields.
 - UI interface contracts (fields, labels, layout invariants) must be
   versioned and remain backward-compatible to prevent breaking updates.
+- Startup status must show the resolved mission-thread profile and
+  primary role, and deny operation when either declaration is invalid.
 - External I/O envelopes exported for integration must preserve a stable
   schema version and deterministic metadata fields.
 - Inputs must be validated with bounds and handled safely on EOF or
