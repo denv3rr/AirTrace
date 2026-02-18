@@ -1,5 +1,7 @@
 #include "tools/federation_bridge.h"
 
+#include <algorithm>
+#include <cctype>
 #include <limits>
 #include <sstream>
 #include <utility>
@@ -10,6 +12,47 @@ namespace tools
 {
 namespace
 {
+std::string toLower(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return value;
+}
+
+bool isValidToken(const std::string &value)
+{
+    if (value.empty())
+    {
+        return false;
+    }
+    for (char ch : value)
+    {
+        if (!(std::isalnum(static_cast<unsigned char>(ch)) || ch == '_' || ch == '-' || ch == '.'))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::string deriveSourceId(const ExternalIoEnvelope &envelope)
+{
+    if (!envelope.frontView.sourceId.empty())
+    {
+        return toLower(envelope.frontView.sourceId);
+    }
+    return toLower(envelope.mode.activeMode);
+}
+
+std::string buildRouteKey(
+    const std::string &routeDomain,
+    const std::string &platformProfile,
+    const std::string &sourceId)
+{
+    return toLower(routeDomain) + "/" + toLower(platformProfile) + "/" + toLower(sourceId);
+}
+
 bool validateConfig(const FederationBridgeConfig &config, std::string &error)
 {
     if (config.tickStep == 0)
@@ -31,6 +74,24 @@ bool validateConfig(const FederationBridgeConfig &config, std::string &error)
     {
         error = "unsupported output format: " + config.outputFormatName;
         return false;
+    }
+    if (!isValidToken(config.federateId))
+    {
+        error = "federate_id is missing or invalid";
+        return false;
+    }
+    if (!isValidToken(config.routeDomain))
+    {
+        error = "route_domain is missing or invalid";
+        return false;
+    }
+    for (const auto &sourceId : config.allowedSourceIds)
+    {
+        if (!isValidToken(toLower(sourceId)))
+        {
+            error = "allowed source id is invalid";
+            return false;
+        }
     }
     return true;
 }
@@ -85,6 +146,11 @@ FederationBridge::FederationBridge(FederationBridgeConfig config)
     : config_(std::move(config)),
       nextLogicalTick_(config_.startLogicalTick)
 {
+    allowedSourcesNormalized_.reserve(config_.allowedSourceIds.size());
+    for (const auto &sourceId : config_.allowedSourceIds)
+    {
+        allowedSourcesNormalized_.push_back(toLower(sourceId));
+    }
 }
 
 FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envelope)
@@ -120,6 +186,32 @@ FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envel
         return result;
     }
 
+    if (envelope.metadata.platformProfile.empty())
+    {
+        result.error = "metadata.platform_profile is required";
+        return result;
+    }
+    const std::string sourceId = deriveSourceId(envelope);
+    if (!isValidToken(sourceId))
+    {
+        result.error = "source identifier is missing or invalid";
+        return result;
+    }
+    if (!allowedSourcesNormalized_.empty())
+    {
+        if (std::find(allowedSourcesNormalized_.begin(), allowedSourcesNormalized_.end(), sourceId) == allowedSourcesNormalized_.end())
+        {
+            result.error = "source not allowed by route policy";
+            return result;
+        }
+    }
+    if (!isValidToken(envelope.metadata.platformProfile))
+    {
+        result.error = "metadata.platform_profile is invalid";
+        return result;
+    }
+    const std::string routeKey = buildRouteKey(config_.routeDomain, envelope.metadata.platformProfile, sourceId);
+
     if (willOverflowMul(nextLogicalTick_, config_.tickDurationMs))
     {
         result.error = "timestamp overflow";
@@ -133,6 +225,35 @@ FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envel
     }
     const std::uint64_t eventTimestampMs = config_.startTimestampMs + tickOffsetMs;
     const std::uint64_t sourceTimestampMs = envelope.frontView.timestampMs;
+    if (config_.requireSourceTimestamp && sourceTimestampMs == 0U)
+    {
+        result.error = "source timestamp is required";
+        return result;
+    }
+    if (sourceTimestampMs > 0U)
+    {
+        if (willOverflowAdd(eventTimestampMs, config_.maxFutureSkewMs))
+        {
+            result.error = "time-authority overflow";
+            return result;
+        }
+        const std::uint64_t maxAuthorizedSourceTimestamp = eventTimestampMs + config_.maxFutureSkewMs;
+        if (sourceTimestampMs > maxAuthorizedSourceTimestamp)
+        {
+            result.error = "source timestamp ahead of time authority";
+            return result;
+        }
+        if (config_.requireMonotonicSourceTimestamp)
+        {
+            auto lastIt = lastSourceTimestampByKey_.find(routeKey);
+            if (lastIt != lastSourceTimestampByKey_.end() && sourceTimestampMs < lastIt->second)
+            {
+                result.error = "source timestamp regressed for route";
+                return result;
+            }
+        }
+    }
+
     double latencyMs = 0.0;
     if (sourceTimestampMs > 0 && eventTimestampMs >= sourceTimestampMs)
     {
@@ -153,12 +274,15 @@ FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envel
 
     result.frame.schemaVersion = "1.0.0";
     result.frame.interfaceId = "airtrace.federation_event";
+    result.frame.federateId = toLower(config_.federateId);
+    result.frame.routeKey = routeKey;
+    result.frame.routeSequence = routeSequenceByKey_[routeKey];
     result.frame.logicalTick = nextLogicalTick_;
     result.frame.eventTimestampMs = eventTimestampMs;
     result.frame.sourceTimestampMs = sourceTimestampMs;
     result.frame.sourceLatencyMs = latencyMs;
     result.frame.latencyBudgetMs = config_.maxLatencyBudgetMs;
-    result.frame.sourceId = envelope.frontView.sourceId.empty() ? envelope.mode.activeMode : envelope.frontView.sourceId;
+    result.frame.sourceId = sourceId;
     result.frame.payloadFormat = ioEnvelopeFormatName(IoEnvelopeFormat::Json);
     if (!config_.outputFormatName.empty())
     {
@@ -175,6 +299,13 @@ FederationBridgeResult FederationBridge::publish(const ExternalIoEnvelope &envel
     result.frame.payload = serialized.payload;
     result.frame.seed = envelope.metadata.seed;
     result.frame.deterministic = envelope.metadata.deterministic;
+    lastSourceTimestampByKey_[routeKey] = sourceTimestampMs;
+    if (routeSequenceByKey_[routeKey] == std::numeric_limits<std::uint64_t>::max())
+    {
+        result.error = "route sequence overflow";
+        return result;
+    }
+    routeSequenceByKey_[routeKey] += 1U;
 
     if (willOverflowAdd(nextLogicalTick_, config_.tickStep))
     {
@@ -192,6 +323,9 @@ std::string serializeFederationEventFrameJson(const FederationEventFrame &frame)
     out << "{";
     out << "\"schema_version\":\"" << jsonEscape(frame.schemaVersion) << "\",";
     out << "\"interface_id\":\"" << jsonEscape(frame.interfaceId) << "\",";
+    out << "\"federate_id\":\"" << jsonEscape(frame.federateId) << "\",";
+    out << "\"route_key\":\"" << jsonEscape(frame.routeKey) << "\",";
+    out << "\"route_sequence\":" << frame.routeSequence << ",";
     out << "\"logical_tick\":" << frame.logicalTick << ",";
     out << "\"event_timestamp_ms\":" << frame.eventTimestampMs << ",";
     out << "\"source_timestamp_ms\":" << frame.sourceTimestampMs << ",";

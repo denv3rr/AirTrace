@@ -2,11 +2,11 @@
 
 ## Queue
 
-1. Federation Bridge Spike (v0 implemented in tools)
+1. Federation Bridge Spike (v1 route/time-authority controls implemented in tools)
 - Goal: map canonical envelope events into a deterministic federation timeline.
 - Owner: tools/integration research agent.
 - Acceptance: prototype design note + deterministic replay evidence outline.
-- Status: baseline API implemented (`include/tools/federation_bridge.h`, `src/tools/federation_bridge.cpp`) with test coverage in `tests/core_sanity.cpp`; next increment is multi-endpoint/federate identity and stricter time-authority policy.
+- Status: route identity (`federate_id`, `route_key`, `route_sequence`), source allowlist routing, and time-authority guards (required timestamp, max future skew, monotonic per-route timestamp) are implemented with test coverage in `tests/core_sanity.cpp`; next increment is multi-endpoint fan-out and federate-level keying/material controls.
 
 2. Timing Contract Extension
 - Goal: define required timing metadata for cross-platform synchronization and stale-data rejection.

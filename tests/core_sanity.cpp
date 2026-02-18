@@ -1268,6 +1268,11 @@ int main()
     bridgeConfig.maxLatencyBudgetMs = 2500.0;
     bridgeConfig.requireDeterministic = true;
     bridgeConfig.outputFormatName = "ie_json_v1";
+    bridgeConfig.federateId = "edge_node_1";
+    bridgeConfig.routeDomain = "theater_alpha";
+    bridgeConfig.requireSourceTimestamp = true;
+    bridgeConfig.requireMonotonicSourceTimestamp = true;
+    bridgeConfig.maxFutureSkewMs = 0;
     tools::FederationBridge bridge(bridgeConfig);
 
     packagerEnvelope.frontView.timestampMs = 1100;
@@ -1278,6 +1283,9 @@ int main()
     assert(bridgeFrame1.frame.eventTimestampMs == 3000U);
     assert(bridgeFrame1.frame.sourceTimestampMs == 1100U);
     assert(bridgeFrame1.frame.sourceLatencyMs == 1900.0);
+    assert(bridgeFrame1.frame.federateId == "edge_node_1");
+    assert(bridgeFrame1.frame.routeKey == "theater_alpha/air/front_sensor");
+    assert(bridgeFrame1.frame.routeSequence == 0U);
     assert(bridgeFrame1.frame.payloadFormat == "ie_json_v1");
     tools::IoEnvelopeParseResult bridgePayloadParsed =
         tools::parseExternalIoEnvelope(bridgeFrame1.frame.payloadFormat, bridgeFrame1.frame.payload);
@@ -1291,6 +1299,7 @@ int main()
     assert(bridgeFrame2.ok);
     assert(bridgeFrame2.frame.logicalTick == 105U);
     assert(bridgeFrame2.frame.eventTimestampMs == 3100U);
+    assert(bridgeFrame2.frame.routeSequence == 1U);
 
     tools::FederationBridgeConfig unsupportedCodecConfig = bridgeConfig;
     unsupportedCodecConfig.outputFormatName = "yaml";
@@ -1317,6 +1326,44 @@ int main()
     tools::FederationBridge invalidTickBridge(invalidTickConfig);
     tools::FederationBridgeResult invalidTickResult = invalidTickBridge.publish(packagerEnvelope);
     assert(!invalidTickResult.ok);
+
+    tools::FederationBridgeConfig allowedSourceConfig = bridgeConfig;
+    allowedSourceConfig.allowedSourceIds = {"front_sensor"};
+    tools::FederationBridge allowedSourceBridge(allowedSourceConfig);
+    tools::FederationBridgeResult allowedSourceResult = allowedSourceBridge.publish(packagerEnvelope);
+    assert(allowedSourceResult.ok);
+    allowedSourceConfig.allowedSourceIds = {"other_source"};
+    tools::FederationBridge deniedSourceBridge(allowedSourceConfig);
+    tools::FederationBridgeResult deniedSourceResult = deniedSourceBridge.publish(packagerEnvelope);
+    assert(!deniedSourceResult.ok);
+
+    tools::FederationBridgeConfig missingSourceTimestampConfig = bridgeConfig;
+    missingSourceTimestampConfig.requireSourceTimestamp = true;
+    tools::FederationBridge missingSourceTimestampBridge(missingSourceTimestampConfig);
+    ExternalIoEnvelope missingSourceTimestampEnvelope = packagerEnvelope;
+    missingSourceTimestampEnvelope.frontView.timestampMs = 0U;
+    tools::FederationBridgeResult missingSourceTimestampResult =
+        missingSourceTimestampBridge.publish(missingSourceTimestampEnvelope);
+    assert(!missingSourceTimestampResult.ok);
+
+    tools::FederationBridgeConfig futureSkewConfig = bridgeConfig;
+    futureSkewConfig.maxFutureSkewMs = 50U;
+    tools::FederationBridge futureSkewBridge(futureSkewConfig);
+    ExternalIoEnvelope futureSkewEnvelope = packagerEnvelope;
+    futureSkewEnvelope.frontView.timestampMs = 3100U;
+    tools::FederationBridgeResult futureSkewResult = futureSkewBridge.publish(futureSkewEnvelope);
+    assert(!futureSkewResult.ok);
+
+    tools::FederationBridgeConfig monotonicConfig = bridgeConfig;
+    monotonicConfig.maxFutureSkewMs = 1000U;
+    tools::FederationBridge monotonicBridge(monotonicConfig);
+    ExternalIoEnvelope monotonicEnvelope = packagerEnvelope;
+    monotonicEnvelope.frontView.timestampMs = 1050U;
+    tools::FederationBridgeResult monotonicFirst = monotonicBridge.publish(monotonicEnvelope);
+    assert(monotonicFirst.ok);
+    monotonicEnvelope.frontView.timestampMs = 1040U;
+    tools::FederationBridgeResult monotonicSecond = monotonicBridge.publish(monotonicEnvelope);
+    assert(!monotonicSecond.ok);
 
     return 0;
 }
