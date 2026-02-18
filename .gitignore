@@ -84,6 +84,15 @@ agents_abstract.md
 .codex/**
 .codex-cache/**
 
+# Agent research workspace (private-by-default)
+docs/agents_research/*
+!docs/agents_research/README.md
+!docs/agents_research/backlog.md
+docs/agents_research/**/*.zip
+docs/agents_research/**/*.tar
+docs/agents_research/**/*.tar.gz
+docs/agents_research/**/*.7z
+
 # Local harness commands
 configs/harness_commands.txt
 

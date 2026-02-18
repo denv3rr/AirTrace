@@ -26,6 +26,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-SYS-019: The system shall evaluate mode eligibility via a deterministic, fail-closed pipeline that denies activation if any required eligibility input is missing or invalid (health, freshness, policy, provenance, dataset availability).
 - REQ-SYS-020: The tools layer shall own configuration and audit logging I/O; the core shall not perform file I/O or wall-clock operations.
 - REQ-SYS-021: Core tracking loops shall reject non-positive operator speed divisors, log an explicit denial, and enter an inactive safe state.
+- REQ-SYS-022: The system shall require an explicit mission-thread profile and primary user role declaration at startup; missing, unknown, or invalid declarations shall fail closed before active operations begin.
 
 ## Functional Requirements (FUNC)
 - REQ-FUNC-001: The core shall ingest sensor measurements using a common state and measurement contract.
@@ -127,6 +128,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-INT-036: Federation-bridge event frames shall include federate identity and route-scoped sequencing, and shall enforce time-authority policy controls for source timestamps (required presence, max future skew, and monotonic progression per route) with fail-closed rejection on violations.
 - REQ-INT-037: The federation bridge shall support deterministic fan-out to multiple configured endpoints with explicit endpoint identity and federate key identifier metadata, and shall fail closed when endpoint formats or endpoint policies are invalid.
 - REQ-INT-038: Federation bridge fan-out shall enforce federate trust policy and key lifecycle controls (key validity windows, key epoch metadata, endpoint key allowlists, and attestation requirements) and shall fail closed on policy violations.
+- REQ-INT-039: The UI shall provide mission-thread and role-specific denial/recovery guidance for critical degraded-mode decisions, and the guidance flow shall be deterministic and bounded by a configured interaction budget.
 
 ## Modularity Requirements (MOD)
 - REQ-MOD-001: The system shall provide independently buildable modules for core, tools, UI, and adapters with explicit, versioned interfaces.
@@ -163,6 +165,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 
 ## Configuration Management Requirements (CM)
 - REQ-CM-001: Pull requests to protected branches shall use standardized branch naming (`feature/REQ-...`, `bugfix/V-...`, `integration/...`) and include evidence checklist entries (linked REQ/V/HZ IDs, deterministic test results, and safety/security impact summary) before merge approval.
+- REQ-CM-002: Agentic research artifacts shall be private-by-default in version control; only approved control artifacts may remain tracked in `docs/agents_research/`, and publication of research findings shall require security/compliance review and promotion into formal REQ/V/HZ traceability artifacts.
 
 ## Verification Requirements (VER)
 - REQ-VER-001: Every requirement shall be mapped to at least one verification method (test, analysis, inspection).
@@ -171,6 +174,8 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-VER-004: Test harness inputs shall be authenticated by build-time gating and runtime enablement before use.
 - REQ-VER-005: Test scripts shall normalize test summary labels to avoid redundant qualifiers (e.g., omit "real").
 - REQ-VER-006: Integration tests shall cover dropout ladder selection, dataset gating, and UI menu flows.
+- REQ-VER-007: Verification shall include mission-thread acceptance metrics for degraded operations, including operator recovery time, false-denial rate, false-acceptance rate, and deterministic replay pass rate.
 
 ## Documentation Requirements (DOC)
 - REQ-DOC-001: The README shall include submodule-aware clone/pull instructions and non-duplicative build/run guidance, with a quick-start summary that may repeat the core steps.
+- REQ-DOC-002: Each release shall include a scope declaration that names intended users, mission-thread constraints, excluded use cases, and applicable legal/policy compliance boundaries.

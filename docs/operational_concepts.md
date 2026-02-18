@@ -19,6 +19,11 @@
 - Simulation and test modes are explicitly identified, gated, and prohibited in operational runs unless authorized by policy.
 - Mixed provenance (sim + operational) is rejected and triggers a safe-state denial.
 
+## Mission-Thread and Role Declaration
+- Startup resolves an active mission-thread profile and primary operator role before active operations.
+- Unknown or invalid mission-thread/role declarations are denied fail-closed with explicit denial reason codes.
+- Mission-thread profile and primary role are shown in operator status outputs for auditability.
+
 ## Operator Displays and UI Surfaces
 - The system supports multiple operator surfaces: cockpit UI, remote operator visuals, C2 screens, and TUI.
 - Active-role UI presets may override default surface and front-view startup behavior to enforce role-specific workflows deterministically.

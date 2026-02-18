@@ -27,3 +27,9 @@
 - Goal: define backward compatibility process for new codecs and platform fields.
 - Owner: module-contract research agent.
 - Acceptance: proposed versioning lifecycle and deprecation policy language.
+
+6. Mission-Customer Scope Lock
+- Goal: convert mission-customer scope audit findings into one primary mission thread, one primary user, and formal REQ/V/HZ updates.
+- Owner: systems/research + requirements leads.
+- Acceptance: approved scope declaration plus promoted requirement and verification entries linked in traceability.
+- Status: baseline promotion completed for REQ-SYS-022, REQ-INT-039, REQ-VER-007, REQ-DOC-002, HZ-039..HZ-043, and V-140..V-144.
