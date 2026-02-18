@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "tools/audit_log.h"
 #include "tools/io_packager.h"
 
 namespace tools
@@ -235,112 +236,104 @@ FederationBridge::FederationBridge(FederationBridgeConfig config)
 FederationFanoutResult FederationBridge::publishFanout(const ExternalIoEnvelope &envelope)
 {
     FederationFanoutResult result;
+    const std::string federateContext =
+        "federate=" + toLower(config_.federateId) + " key_id=" + toLower(config_.federateKeyId);
+    auto reject = [&](const std::string &reason, const std::string &detail = std::string()) -> FederationFanoutResult
+    {
+        result.error = reason;
+        const std::string mergedDetail = detail.empty() ? federateContext : (federateContext + " " + detail);
+        (void)logAuditEvent("federation_bridge_denied", reason, mergedDetail);
+        return result;
+    };
 
     if (envelope.metadata.schemaVersion.empty())
     {
-        result.error = "metadata.schema_version is required";
-        return result;
+        return reject("metadata.schema_version is required");
     }
     if (envelope.metadata.interfaceId.empty())
     {
-        result.error = "metadata.interface_id is required";
-        return result;
+        return reject("metadata.interface_id is required");
     }
     if (envelope.mode.activeMode.empty())
     {
-        result.error = "mode.active is required";
-        return result;
+        return reject("mode.active is required");
     }
 
     std::string configError;
     if (!validateConfig(config_, configError))
     {
-        result.error = configError;
-        return result;
+        return reject(configError);
     }
 
     if (config_.requireDeterministic && !envelope.metadata.deterministic)
     {
-        result.error = "non-deterministic envelope rejected";
-        return result;
+        return reject("non-deterministic envelope rejected");
     }
 
     if (envelope.metadata.platformProfile.empty())
     {
-        result.error = "metadata.platform_profile is required";
-        return result;
+        return reject("metadata.platform_profile is required");
     }
     const std::string sourceId = deriveSourceId(envelope);
     if (!isValidToken(sourceId))
     {
-        result.error = "source identifier is missing or invalid";
-        return result;
+        return reject("source identifier is missing or invalid");
     }
     if (!allowedSourcesNormalized_.empty())
     {
         if (std::find(allowedSourcesNormalized_.begin(), allowedSourcesNormalized_.end(), sourceId) == allowedSourcesNormalized_.end())
         {
-            result.error = "source not allowed by route policy";
-            return result;
+            return reject("source not allowed by route policy", "source=" + sourceId);
         }
     }
     if (!isValidToken(envelope.metadata.platformProfile))
     {
-        result.error = "metadata.platform_profile is invalid";
-        return result;
+        return reject("metadata.platform_profile is invalid");
     }
     const std::string routeKey = buildRouteKey(config_.routeDomain, envelope.metadata.platformProfile, sourceId);
     const std::vector<FederationBridgeConfig::EndpointConfig> endpoints = activeEndpoints(config_);
     if (endpoints.empty())
     {
-        result.error = "no active endpoints";
-        return result;
+        return reject("no active endpoints");
     }
 
     if (willOverflowMul(nextLogicalTick_, config_.tickDurationMs))
     {
-        result.error = "timestamp overflow";
-        return result;
+        return reject("timestamp overflow");
     }
     const std::uint64_t tickOffsetMs = nextLogicalTick_ * config_.tickDurationMs;
     if (willOverflowAdd(config_.startTimestampMs, tickOffsetMs))
     {
-        result.error = "timestamp overflow";
-        return result;
+        return reject("timestamp overflow");
     }
     const std::uint64_t eventTimestampMs = config_.startTimestampMs + tickOffsetMs;
     if (eventTimestampMs < config_.federateKeyValidFromTimestampMs ||
         eventTimestampMs > config_.federateKeyValidUntilTimestampMs)
     {
-        result.error = "federate key material not valid for event timestamp";
-        return result;
+        return reject("federate key material not valid for event timestamp", "route=" + routeKey);
     }
     const std::uint64_t sourceTimestampMs = envelope.frontView.timestampMs;
     if (config_.requireSourceTimestamp && sourceTimestampMs == 0U)
     {
-        result.error = "source timestamp is required";
-        return result;
+        return reject("source timestamp is required", "route=" + routeKey);
     }
     if (sourceTimestampMs > 0U)
     {
         if (willOverflowAdd(eventTimestampMs, config_.maxFutureSkewMs))
         {
-            result.error = "time-authority overflow";
-            return result;
+            return reject("time-authority overflow", "route=" + routeKey);
         }
         const std::uint64_t maxAuthorizedSourceTimestamp = eventTimestampMs + config_.maxFutureSkewMs;
         if (sourceTimestampMs > maxAuthorizedSourceTimestamp)
         {
-            result.error = "source timestamp ahead of time authority";
-            return result;
+            return reject("source timestamp ahead of time authority", "route=" + routeKey);
         }
         if (config_.requireMonotonicSourceTimestamp)
         {
             auto lastIt = lastSourceTimestampByKey_.find(routeKey);
             if (lastIt != lastSourceTimestampByKey_.end() && sourceTimestampMs < lastIt->second)
             {
-                result.error = "source timestamp regressed for route";
-                return result;
+                return reject("source timestamp regressed for route", "route=" + routeKey);
             }
         }
     }
@@ -352,8 +345,7 @@ FederationFanoutResult FederationBridge::publishFanout(const ExternalIoEnvelope 
     }
     if (latencyMs > config_.maxLatencyBudgetMs)
     {
-        result.error = "latency budget exceeded";
-        return result;
+        return reject("latency budget exceeded", "route=" + routeKey);
     }
 
     std::vector<FederationEventFrame> frames;
@@ -380,30 +372,26 @@ FederationFanoutResult FederationBridge::publishFanout(const ExternalIoEnvelope 
             }
             if (!trustedKeyFound)
             {
-                result.error = "federate key id not trusted for endpoint";
-                return result;
+                return reject("federate key id not trusted for endpoint", "endpoint=" + normalizedEndpointId);
             }
         }
         if (endpoint.requireFederateAttestation)
         {
             if (!config_.requireFederateAttestation || config_.federateAttestationTag.empty())
             {
-                result.error = "federate attestation required by endpoint policy";
-                return result;
+                return reject("federate attestation required by endpoint policy", "endpoint=" + normalizedEndpointId);
             }
         }
         const std::string routeEndpointKey = buildRouteEndpointKey(routeKey, normalizedEndpointId);
         const std::uint64_t routeSequence = routeSequenceByKeyAndEndpoint_[routeEndpointKey];
         if (routeSequence == std::numeric_limits<std::uint64_t>::max())
         {
-            result.error = "route sequence overflow";
-            return result;
+            return reject("route sequence overflow", "endpoint=" + normalizedEndpointId);
         }
         const IoEnvelopeSerializeResult serialized = serializeExternalIoEnvelope(endpoint.outputFormatName, envelope);
         if (!serialized.ok)
         {
-            result.error = serialized.error;
-            return result;
+            return reject(serialized.error, "endpoint=" + normalizedEndpointId);
         }
 
         FederationEventFrame frame;
@@ -453,12 +441,15 @@ FederationFanoutResult FederationBridge::publishFanout(const ExternalIoEnvelope 
 
     if (willOverflowAdd(nextLogicalTick_, config_.tickStep))
     {
-        result.error = "logical tick overflow";
-        return result;
+        return reject("logical tick overflow");
     }
     nextLogicalTick_ += config_.tickStep;
     result.frames = std::move(frames);
     result.ok = true;
+    (void)logAuditEvent(
+        "federation_bridge_publish",
+        "ok",
+        federateContext + " route=" + routeKey + " endpoints=" + std::to_string(result.frames.size()));
     return result;
 }
 

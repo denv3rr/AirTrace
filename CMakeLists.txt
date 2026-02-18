@@ -151,6 +151,13 @@ target_include_directories(AirTraceCoreTests PRIVATE include)
 target_link_libraries(AirTraceCoreTests PRIVATE airtrace_core airtrace_tools)
 add_test(NAME AirTraceCoreTests COMMAND AirTraceCoreTests)
 
+add_executable(AirTraceFederationBridgeTests
+        tests/federation_bridge.cpp
+)
+target_include_directories(AirTraceFederationBridgeTests PRIVATE include)
+target_link_libraries(AirTraceFederationBridgeTests PRIVATE airtrace_tools)
+add_test(NAME AirTraceFederationBridgeTests COMMAND AirTraceFederationBridgeTests)
+
 add_executable(AirTraceEdgeCaseTests
         tests/edge_case_integration.cpp
 )

@@ -73,7 +73,7 @@ $sdkEnabled = Select-String -Path $cachePath -Pattern "^AIRTRACE_BUILD_ADAPTER_S
 if ($sdkEnabled) {
     $moduleTargets += "airtrace_adapters_sdk"
 }
-$testTargets = @("AirTraceCoreTests", "AirTraceEdgeCaseTests", "AirTraceUiTests", "AirTraceHarnessTests", "AirTraceIntegrationTests")
+$testTargets = @("AirTraceCoreTests", "AirTraceFederationBridgeTests", "AirTraceEdgeCaseTests", "AirTraceUiTests", "AirTraceHarnessTests", "AirTraceIntegrationTests")
 $buildTargets = $moduleTargets + $testTargets
 cmake --build $BuildDir --target @buildTargets
 Assert-LastExitCode "CMake build"
