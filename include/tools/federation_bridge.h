@@ -2,6 +2,7 @@
 #define TOOLS_FEDERATION_BRIDGE_H
 
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -17,6 +18,8 @@ struct FederationBridgeConfig
         std::string endpointId = "endpoint_default";
         std::string outputFormatName = "ie_json_v1";
         bool enabled = true;
+        bool requireFederateAttestation = false;
+        std::vector<std::string> acceptedFederateKeyIds{};
     };
 
     std::uint64_t startLogicalTick = 0;
@@ -33,6 +36,11 @@ struct FederationBridgeConfig
     std::uint64_t maxFutureSkewMs = 0;
     std::vector<std::string> allowedSourceIds{};
     std::string federateKeyId = "key_default";
+    std::uint64_t federateKeyEpoch = 0;
+    std::uint64_t federateKeyValidFromTimestampMs = 0;
+    std::uint64_t federateKeyValidUntilTimestampMs = std::numeric_limits<std::uint64_t>::max();
+    bool requireFederateAttestation = false;
+    std::string federateAttestationTag{};
     std::vector<EndpointConfig> endpoints{};
 };
 
@@ -43,6 +51,9 @@ struct FederationEventFrame
     std::string endpointId;
     std::string federateId;
     std::string federateKeyId;
+    std::uint64_t federateKeyEpoch = 0;
+    std::uint64_t federateKeyValidUntilTimestampMs = 0;
+    std::string federateAttestationTag;
     std::string routeKey;
     std::uint64_t routeSequence = 0;
     std::uint64_t logicalTick = 0;

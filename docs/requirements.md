@@ -86,6 +86,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-SEC-011: Authorization decisions shall be versioned, auditable, and deny-by-default when policy provenance cannot be verified.
 - REQ-SEC-012: Adapters shall be signed, allowlisted, and validated before activation; failures shall be denied and logged.
 - REQ-SEC-013: Adapter allowlist approvals shall include a valid non-future date and shall be rejected when older than the configured freshness window.
+- REQ-SEC-014: Federation bridge endpoints shall enforce federate trust policy controls including federate key identifier allowlists, key-validity window checks, and required attestation tags when configured; policy violations shall be rejected fail closed.
 
 ## Interface Requirements (INT)
 - REQ-INT-001: All public interfaces shall declare units, valid ranges, and error behavior.
@@ -125,6 +126,7 @@ with explicit interfaces and no hidden cross-module dependencies or side effects
 - REQ-INT-035: The tools layer shall provide a deterministic federation-bridge event framing API that maps canonical external I/O envelopes to logical ticks and bounded-latency event timestamps, and shall fail closed on unsupported codecs, invalid timing configuration, missing required envelope fields, or deterministic-policy violations.
 - REQ-INT-036: Federation-bridge event frames shall include federate identity and route-scoped sequencing, and shall enforce time-authority policy controls for source timestamps (required presence, max future skew, and monotonic progression per route) with fail-closed rejection on violations.
 - REQ-INT-037: The federation bridge shall support deterministic fan-out to multiple configured endpoints with explicit endpoint identity and federate key identifier metadata, and shall fail closed when endpoint formats or endpoint policies are invalid.
+- REQ-INT-038: Federation event frames shall include federate key lifecycle metadata (`federate_key_epoch`, key-valid-until timestamp, attestation tag) so downstream federates can apply deterministic trust decisions without out-of-band interpretation.
 
 ## Modularity Requirements (MOD)
 - REQ-MOD-001: The system shall provide independently buildable modules for core, tools, UI, and adapters with explicit, versioned interfaces.
