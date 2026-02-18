@@ -117,6 +117,19 @@ bool validateConfig(const FederationBridgeConfig &config, std::string &error)
         error = "federate_key_id is missing or invalid";
         return false;
     }
+    if (config.federateKeyValidFromTimestampMs > config.federateKeyValidUntilTimestampMs)
+    {
+        error = "federate key validity window is invalid";
+        return false;
+    }
+    if (config.requireFederateAttestation)
+    {
+        if (!isValidToken(config.federateAttestationTag))
+        {
+            error = "federate attestation tag is missing or invalid";
+            return false;
+        }
+    }
     for (const auto &sourceId : config.allowedSourceIds)
     {
         if (!isValidToken(toLower(sourceId)))
@@ -142,6 +155,19 @@ bool validateConfig(const FederationBridgeConfig &config, std::string &error)
         if (std::find(endpointIds.begin(), endpointIds.end(), loweredEndpointId) != endpointIds.end())
         {
             error = "duplicate endpoint id";
+            return false;
+        }
+        for (const auto &trustedKey : endpoint.acceptedFederateKeyIds)
+        {
+            if (!isValidToken(toLower(trustedKey)))
+            {
+                error = "endpoint accepted federate key id is invalid";
+                return false;
+            }
+        }
+        if (endpoint.requireFederateAttestation && !config.requireFederateAttestation)
+        {
+            error = "endpoint requires federate attestation";
             return false;
         }
         endpointIds.push_back(loweredEndpointId);
@@ -283,6 +309,12 @@ FederationFanoutResult FederationBridge::publishFanout(const ExternalIoEnvelope 
         return result;
     }
     const std::uint64_t eventTimestampMs = config_.startTimestampMs + tickOffsetMs;
+    if (eventTimestampMs < config_.federateKeyValidFromTimestampMs ||
+        eventTimestampMs > config_.federateKeyValidUntilTimestampMs)
+    {
+        result.error = "federate key material not valid for event timestamp";
+        return result;
+    }
     const std::uint64_t sourceTimestampMs = envelope.frontView.timestampMs;
     if (config_.requireSourceTimestamp && sourceTimestampMs == 0U)
     {
@@ -334,6 +366,32 @@ FederationFanoutResult FederationBridge::publishFanout(const ExternalIoEnvelope 
     for (const auto &endpoint : endpoints)
     {
         const std::string normalizedEndpointId = toLower(endpoint.endpointId);
+        if (!endpoint.acceptedFederateKeyIds.empty())
+        {
+            bool trustedKeyFound = false;
+            const std::string normalizedFederateKeyId = toLower(config_.federateKeyId);
+            for (const auto &trustedKey : endpoint.acceptedFederateKeyIds)
+            {
+                if (toLower(trustedKey) == normalizedFederateKeyId)
+                {
+                    trustedKeyFound = true;
+                    break;
+                }
+            }
+            if (!trustedKeyFound)
+            {
+                result.error = "federate key id not trusted for endpoint";
+                return result;
+            }
+        }
+        if (endpoint.requireFederateAttestation)
+        {
+            if (!config_.requireFederateAttestation || config_.federateAttestationTag.empty())
+            {
+                result.error = "federate attestation required by endpoint policy";
+                return result;
+            }
+        }
         const std::string routeEndpointKey = buildRouteEndpointKey(routeKey, normalizedEndpointId);
         const std::uint64_t routeSequence = routeSequenceByKeyAndEndpoint_[routeEndpointKey];
         if (routeSequence == std::numeric_limits<std::uint64_t>::max())
@@ -354,6 +412,9 @@ FederationFanoutResult FederationBridge::publishFanout(const ExternalIoEnvelope 
         frame.endpointId = normalizedEndpointId;
         frame.federateId = toLower(config_.federateId);
         frame.federateKeyId = toLower(config_.federateKeyId);
+        frame.federateKeyEpoch = config_.federateKeyEpoch;
+        frame.federateKeyValidUntilTimestampMs = config_.federateKeyValidUntilTimestampMs;
+        frame.federateAttestationTag = config_.federateAttestationTag;
         frame.routeKey = routeKey;
         frame.routeSequence = routeSequence;
         frame.logicalTick = nextLogicalTick_;
@@ -429,6 +490,9 @@ std::string serializeFederationEventFrameJson(const FederationEventFrame &frame)
     out << "\"endpoint_id\":\"" << jsonEscape(frame.endpointId) << "\",";
     out << "\"federate_id\":\"" << jsonEscape(frame.federateId) << "\",";
     out << "\"federate_key_id\":\"" << jsonEscape(frame.federateKeyId) << "\",";
+    out << "\"federate_key_epoch\":" << frame.federateKeyEpoch << ",";
+    out << "\"federate_key_valid_until_timestamp_ms\":" << frame.federateKeyValidUntilTimestampMs << ",";
+    out << "\"federate_attestation_tag\":\"" << jsonEscape(frame.federateAttestationTag) << "\",";
     out << "\"route_key\":\"" << jsonEscape(frame.routeKey) << "\",";
     out << "\"route_sequence\":" << frame.routeSequence << ",";
     out << "\"logical_tick\":" << frame.logicalTick << ",";

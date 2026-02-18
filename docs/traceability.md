@@ -77,6 +77,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-SEC-011 | docs/security_threat_model.md | src/tools/sim_config_loader.cpp; src/core/mode_manager.cpp; src/ui/simulation.cpp | V-097 |
 | REQ-SEC-012 | docs/adapter_architecture.md; docs/security_threat_model.md | src/core/adapter_registry.cpp; src/tools/adapter_registry_loader.cpp; adapters/allowlist.json | V-113 |
 | REQ-SEC-013 | docs/security_threat_model.md; docs/adapter_contract.md | src/tools/adapter_registry_loader.cpp | V-118 |
+| REQ-SEC-014 | docs/security_threat_model.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/core_sanity.cpp | V-139 |
 | REQ-INT-001 | docs/architecture.md | include/core/*.h | V-024 |
 | REQ-INT-002 | docs/ui_standards.md | src/ui/*.cpp | V-025 |
 | REQ-INT-003 | docs/ui_standards.md | src/ui/*.cpp | V-026 |
@@ -114,6 +115,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-INT-035 | docs/module_contracts.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/core_sanity.cpp | V-136 |
 | REQ-INT-036 | docs/module_contracts.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/core_sanity.cpp | V-137 |
 | REQ-INT-037 | docs/module_contracts.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/core_sanity.cpp | V-138 |
+| REQ-INT-038 | docs/module_contracts.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/core_sanity.cpp | V-139 |
 | REQ-MOD-001 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; adapters/sdk/CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
 | REQ-MOD-002 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
 | REQ-MOD-003 | docs/architecture.md; docs/module_contracts.md | CMakeLists.txt; cmake/check_module_dependencies.cmake | V-106 |

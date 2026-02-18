@@ -39,7 +39,7 @@ Tools responsibilities:
 - Adapter registry I/O (manifest + allowlist) and signature/hash checks.
 - Adapter runtime context negotiation (core/tools/ui contract versions) and allowlist approval freshness checks.
 - External I/O envelope packaging and conversion across approved formats (`ie_json_v1`, `ie_kv_v1`) with deterministic numeric fidelity, explicit codec discovery, and fail-closed error handling.
-- Deterministic federation-bridge event framing from canonical envelopes to logical ticks/timestamps with route identity (`federate_id`, `route_key`, `route_sequence`), endpoint fan-out identity (`endpoint_id`, `federate_key_id`), bounded-latency validation, and fail-closed time-authority/policy rejection paths.
+- Deterministic federation-bridge event framing from canonical envelopes to logical ticks/timestamps with route identity (`federate_id`, `route_key`, `route_sequence`), endpoint fan-out identity (`endpoint_id`, `federate_key_id`), key lifecycle metadata (`federate_key_epoch`, key-valid-until, attestation tag), bounded-latency validation, and fail-closed time-authority/trust-policy rejection paths.
 
 Inputs:
 - Config files and policy bundles.

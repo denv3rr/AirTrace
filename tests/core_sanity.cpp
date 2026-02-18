@@ -1274,6 +1274,10 @@ int main()
     bridgeConfig.requireMonotonicSourceTimestamp = true;
     bridgeConfig.maxFutureSkewMs = 0;
     bridgeConfig.federateKeyId = "key_alpha";
+    bridgeConfig.federateKeyEpoch = 7U;
+    bridgeConfig.federateKeyValidFromTimestampMs = 0U;
+    bridgeConfig.federateKeyValidUntilTimestampMs = std::numeric_limits<std::uint64_t>::max();
+    bridgeConfig.requireFederateAttestation = false;
     tools::FederationBridge bridge(bridgeConfig);
 
     packagerEnvelope.frontView.timestampMs = 1100;
@@ -1286,6 +1290,8 @@ int main()
     assert(bridgeFrame1.frame.sourceLatencyMs == 1900.0);
     assert(bridgeFrame1.frame.federateId == "edge_node_1");
     assert(bridgeFrame1.frame.federateKeyId == "key_alpha");
+    assert(bridgeFrame1.frame.federateKeyEpoch == 7U);
+    assert(bridgeFrame1.frame.federateKeyValidUntilTimestampMs == std::numeric_limits<std::uint64_t>::max());
     assert(bridgeFrame1.frame.endpointId == "endpoint_default");
     assert(bridgeFrame1.frame.routeKey == "theater_alpha/air/front_sensor");
     assert(bridgeFrame1.frame.routeSequence == 0U);
@@ -1298,6 +1304,7 @@ int main()
     assert(bridgeJson.find("\"logical_tick\":100") != std::string::npos);
     assert(bridgeJson.find("\"payload_format\":\"ie_json_v1\"") != std::string::npos);
     assert(bridgeJson.find("\"endpoint_id\":\"endpoint_default\"") != std::string::npos);
+    assert(bridgeJson.find("\"federate_key_epoch\":7") != std::string::npos);
 
     tools::FederationBridgeResult bridgeFrame2 = bridge.publish(packagerEnvelope);
     assert(bridgeFrame2.ok);
@@ -1336,6 +1343,19 @@ int main()
     tools::FederationBridge invalidTickBridge(invalidTickConfig);
     tools::FederationBridgeResult invalidTickResult = invalidTickBridge.publish(packagerEnvelope);
     assert(!invalidTickResult.ok);
+
+    tools::FederationBridgeConfig invalidKeyWindowConfig = bridgeConfig;
+    invalidKeyWindowConfig.federateKeyValidFromTimestampMs = 5000U;
+    invalidKeyWindowConfig.federateKeyValidUntilTimestampMs = 4000U;
+    tools::FederationBridge invalidKeyWindowBridge(invalidKeyWindowConfig);
+    tools::FederationBridgeResult invalidKeyWindowResult = invalidKeyWindowBridge.publish(packagerEnvelope);
+    assert(!invalidKeyWindowResult.ok);
+
+    tools::FederationBridgeConfig expiredKeyConfig = bridgeConfig;
+    expiredKeyConfig.federateKeyValidUntilTimestampMs = 2000U;
+    tools::FederationBridge expiredKeyBridge(expiredKeyConfig);
+    tools::FederationBridgeResult expiredKeyResult = expiredKeyBridge.publish(packagerEnvelope);
+    assert(!expiredKeyResult.ok);
 
     tools::FederationBridgeConfig allowedSourceConfig = bridgeConfig;
     allowedSourceConfig.allowedSourceIds = {"front_sensor"};
@@ -1383,9 +1403,11 @@ int main()
     fanoutConfig.maxLatencyBudgetMs = 1000.0;
     fanoutConfig.maxFutureSkewMs = 1000U;
     fanoutConfig.requireSourceTimestamp = false;
+    fanoutConfig.requireFederateAttestation = true;
+    fanoutConfig.federateAttestationTag = "attest_alpha";
     fanoutConfig.endpoints = {
-        {"edge_a", "ie_json_v1", true},
-        {"edge_b", "ie_kv_v1", true}};
+        {"edge_a", "ie_json_v1", true, true, {"key_alpha"}},
+        {"edge_b", "ie_kv_v1", true, true, {"key_alpha"}}};
     tools::FederationBridge fanoutBridge(fanoutConfig);
     ExternalIoEnvelope fanoutEnvelope = packagerEnvelope;
     fanoutEnvelope.frontView.timestampMs = 0U;
@@ -1396,6 +1418,9 @@ int main()
     assert(fanoutResult.frames[1].routeSequence == 0U);
     assert(fanoutResult.frames[0].endpointId == "edge_a");
     assert(fanoutResult.frames[1].endpointId == "edge_b");
+    assert(fanoutResult.frames[0].federateAttestationTag == "attest_alpha");
+    assert(fanoutResult.frames[0].federateKeyId == "key_alpha");
+    assert(fanoutResult.frames[0].federateKeyEpoch == 7U);
     tools::IoEnvelopeParseResult fanoutParsedA =
         tools::parseExternalIoEnvelope(fanoutResult.frames[0].payloadFormat, fanoutResult.frames[0].payload);
     assert(fanoutParsedA.ok);
@@ -1406,6 +1431,19 @@ int main()
     assert(fanoutResult2.ok);
     assert(fanoutResult2.frames[0].routeSequence == 1U);
     assert(fanoutResult2.frames[1].routeSequence == 1U);
+
+    tools::FederationBridgeConfig untrustedKeyFanoutConfig = fanoutConfig;
+    untrustedKeyFanoutConfig.endpoints = {
+        {"edge_a", "ie_json_v1", true, true, {"key_other"}}};
+    tools::FederationBridge untrustedKeyFanoutBridge(untrustedKeyFanoutConfig);
+    tools::FederationFanoutResult untrustedKeyFanoutResult = untrustedKeyFanoutBridge.publishFanout(fanoutEnvelope);
+    assert(!untrustedKeyFanoutResult.ok);
+
+    tools::FederationBridgeConfig missingAttestationConfig = fanoutConfig;
+    missingAttestationConfig.federateAttestationTag.clear();
+    tools::FederationBridge missingAttestationBridge(missingAttestationConfig);
+    tools::FederationFanoutResult missingAttestationResult = missingAttestationBridge.publishFanout(fanoutEnvelope);
+    assert(!missingAttestationResult.ok);
 
     return 0;
 }
