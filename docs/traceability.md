@@ -1,6 +1,6 @@
 # Traceability Matrix
 
-Trace links are updated at each review gate. "TBD" indicates incomplete design/code linkage.
+Trace links are updated at each review gate. "NOT_IMPLEMENTED" indicates a requirement intentionally not yet delivered and requiring explicit implementation/rationale tracking.
 
 | Requirement ID | Design Doc | Code Reference | Verification ID |
 | --- | --- | --- | --- |
@@ -25,7 +25,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-SYS-019 | docs/multi_modal_switching_design.md | src/core/mode_manager.cpp | V-095 |
 | REQ-SYS-020 | docs/architecture.md; docs/module_contracts.md | src/tools/sim_config_loader.cpp; src/tools/audit_log.cpp | V-114 |
 | REQ-SYS-021 | docs/operational_concepts.md | src/core/Tracker.cpp | V-119 |
-| REQ-SYS-022 | docs/operational_concepts.md; docs/agents_research/mission_scope_audit_2026-02-18.md | TBD (planned: src/tools/sim_config_loader.cpp; src/ui/main.cpp) | V-140 |
+| REQ-SYS-022 | docs/operational_concepts.md; docs/agents_research/mission_scope_audit_2026-02-18.md | NOT_IMPLEMENTED (planned: src/tools/sim_config_loader.cpp; src/ui/main.cpp) | V-140 |
 | REQ-FUNC-001 | docs/architecture.md | src/core/sensors.cpp | V-007 |
 | REQ-FUNC-002 | docs/operational_concepts.md | src/core/mode_manager.cpp | V-008 |
 | REQ-FUNC-003 | docs/config_schema.md | src/tools/sim_config_loader.cpp | V-009 |
@@ -51,7 +51,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-FUNC-023 | docs/multi_modal_switching_design.md | src/core/mode_manager.cpp (policy only) | V-097 |
 | REQ-FUNC-024 | docs/operational_concepts.md | src/core/simulation_utils.cpp; include/core/simulation_utils.h | V-120 |
 | REQ-FUNC-025 | docs/operational_concepts.md | src/core/HeatSignature.cpp | V-121 |
-| REQ-PERF-001 | docs/architecture.md | TBD (not implemented) | V-014 |
+| REQ-PERF-001 | docs/architecture.md | NOT_IMPLEMENTED (planned: tests/perf_timing.cpp deterministic budget gate) | V-014 |
 | REQ-PERF-002 | docs/config_schema.md | src/core/sensors.cpp | V-015 |
 | REQ-SAFE-001 | docs/hazard_log.md | src/core/mode_manager.cpp; src/tools/sim_config_loader.cpp | V-016 |
 | REQ-SAFE-002 | docs/hazard_log.md | src/tools/audit_log.cpp | V-017 |
@@ -69,9 +69,9 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-SEC-002 | docs/security_threat_model.md | src/core/plugin_auth.cpp; include/core/plugin_auth.h; src/tools/sim_config_loader.cpp; include/core/sim_config.h | V-021 |
 | REQ-SEC-003 | docs/security_threat_model.md | src/core/plugin_auth.cpp; include/core/plugin_auth.h; src/tools/sim_config_loader.cpp; include/core/sim_config.h | V-022 |
 | REQ-SEC-004 | docs/security_threat_model.md | src/tools/audit_log.cpp | V-023 |
-| REQ-SEC-005 | docs/security_threat_model.md | TBD (planned: src/core/network_aid_policy.cpp; include/core/network_aid_policy.h) | V-037 |
-| REQ-SEC-006 | docs/security_threat_model.md | TBD (planned: src/core/network_aid_policy.cpp; include/core/network_aid_policy.h) | V-038 |
-| REQ-SEC-007 | docs/security_threat_model.md | TBD (planned: src/core/network_aid_policy.cpp; include/core/network_aid_policy.h) | V-043 |
+| REQ-SEC-005 | docs/security_threat_model.md | NOT_IMPLEMENTED (planned: src/core/network_aid_policy.cpp; include/core/network_aid_policy.h) | V-037 |
+| REQ-SEC-006 | docs/security_threat_model.md | NOT_IMPLEMENTED (planned: src/core/network_aid_policy.cpp; include/core/network_aid_policy.h) | V-038 |
+| REQ-SEC-007 | docs/security_threat_model.md | NOT_IMPLEMENTED (planned: src/core/network_aid_policy.cpp; include/core/network_aid_policy.h) | V-043 |
 | REQ-SEC-008 | docs/multi_modal_switching_design.md | include/core/multi_modal_types.h | V-055 |
 | REQ-SEC-009 | docs/security_threat_model.md | src/tools/audit_log.cpp | V-082 |
 | REQ-SEC-010 | docs/security_threat_model.md | src/tools/audit_log.cpp; include/tools/audit_log.h; src/ui/simulation.cpp | V-090 |
@@ -117,7 +117,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-INT-036 | docs/module_contracts.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/federation_bridge.cpp | V-137 |
 | REQ-INT-037 | docs/module_contracts.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/federation_bridge.cpp | V-138 |
 | REQ-INT-038 | docs/module_contracts.md; docs/security_threat_model.md; docs/agents_research/co_simulation_federation_architecture_2026-02-18.md | include/tools/federation_bridge.h; src/tools/federation_bridge.cpp; tests/federation_bridge.cpp | V-139 |
-| REQ-INT-039 | docs/ui_standards.md; docs/operational_concepts.md; docs/agents_research/mission_scope_audit_2026-02-18.md | TBD (planned: src/ui/alerts.cpp; src/ui/simulation.cpp; src/ui/menu.cpp) | V-141 |
+| REQ-INT-039 | docs/ui_standards.md; docs/operational_concepts.md; docs/agents_research/mission_scope_audit_2026-02-18.md | NOT_IMPLEMENTED (planned: src/ui/alerts.cpp; src/ui/simulation.cpp; src/ui/menu.cpp) | V-141 |
 | REQ-MOD-001 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; adapters/sdk/CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
 | REQ-MOD-002 | docs/architecture.md; docs/module_contracts.md; docs/adapter_architecture.md | CMakeLists.txt; scripts/test.ps1; scripts/test.sh | V-105 |
 | REQ-MOD-003 | docs/architecture.md; docs/module_contracts.md | CMakeLists.txt; cmake/check_module_dependencies.cmake | V-106 |
@@ -153,7 +153,7 @@ Trace links are updated at each review gate. "TBD" indicates incomplete design/c
 | REQ-VER-004 | docs/verification_plan.md | src/ui/input_harness.cpp | V-071 |
 | REQ-VER-005 | docs/verification_plan.md | scripts/test.ps1; scripts/test.sh | V-072 |
 | REQ-VER-006 | docs/verification_plan.md | tests/integration_flows.cpp | V-076 |
-| REQ-VER-007 | docs/verification_plan.md; docs/agents_research/mission_scope_audit_2026-02-18.md | TBD (planned: tests/integration_flows.cpp; tests/ui_status.cpp; scripts/test.ps1; scripts/test.sh) | V-142 |
+| REQ-VER-007 | docs/verification_plan.md; docs/agents_research/mission_scope_audit_2026-02-18.md | NOT_IMPLEMENTED (planned: tests/integration_flows.cpp; tests/ui_status.cpp; scripts/test.ps1; scripts/test.sh) | V-142 |
 | REQ-DOC-001 | docs/requirements.md | README.md | V-048 |
-| REQ-DOC-002 | docs/agents_research/mission_scope_audit_2026-02-18.md | TBD (planned: release evidence bundle process) | V-143 |
+| REQ-DOC-002 | docs/agents_research/mission_scope_audit_2026-02-18.md | NOT_IMPLEMENTED (planned: release evidence bundle process) | V-143 |
 
