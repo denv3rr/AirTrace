@@ -3,9 +3,12 @@
 > [!NOTE]
 > Work in progress.
 
-A deterministic tracking and interface testing tool for a variety of platforms and contexts. Design is intended for user-created modules and tests with standardized data structuring. You do not need to modify existing source code to run baseline checks.
+- A Sensor input orchestrator that handles source discovery, mode switching, and stream routing.
+Makes varied camera/input feeds plug-and-play for your selected downstream modules through stable interfaces.
 
-Built for researchers that need one operator surface to test platform behavior, adapter compatibility, mode decisions, and integration outputs across multiple profiles (air, ground, maritime, space, handheld, fixed-site, subsea).
+- For researchers that need one operator surface to test platform behavior, adapter compatibility, mode decisions, and integration outputs across multiple profiles (air, ground, maritime, space, handheld, fixed-site, subsea).
+
+- A deterministic tracking and interface testing tool for a variety of platforms and contexts. Design is intended for user-created modules and tests with standardized data structuring. You do not need to modify existing source code to run baseline checks.
 
 <details>
   <summary>More</summary>
