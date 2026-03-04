@@ -924,7 +924,7 @@ std::string ModeManager::modeName(TrackingMode mode)
     case TrackingMode::DeadReckoning:
         return "dead_reckoning";
     case TrackingMode::Inertial:
-        return "inertial";
+        return "imu";
     case TrackingMode::Hold:
         return "hold";
     default:
