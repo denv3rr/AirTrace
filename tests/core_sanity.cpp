@@ -884,6 +884,171 @@ int main()
     decision = ladderManager.decide(ladderSensors);
     assert(decision.mode == TrackingMode::Lidar);
 
+    const std::vector<std::string> portabilitySensorNames = {
+        "gps",
+        "imu",
+        "vision",
+        "lidar",
+        "radar",
+        "thermal",
+        "magnetometer",
+        "baro",
+        "celestial",
+        "dead_reckoning"};
+    std::vector<TestSensor> portabilitySensors;
+    portabilitySensors.reserve(portabilitySensorNames.size());
+    std::vector<SensorBase *> portabilitySensorPtrs;
+    portabilitySensorPtrs.reserve(portabilitySensorNames.size());
+    for (const auto &name : portabilitySensorNames)
+    {
+        portabilitySensors.emplace_back(name);
+        portabilitySensorPtrs.push_back(&portabilitySensors.back());
+    }
+
+    auto requiredSensorsForPortabilityMode = [](const std::string &mode) -> std::vector<std::string>
+    {
+        if (mode == "gps_ins")
+        {
+            return {"gps", "imu"};
+        }
+        if (mode == "vio")
+        {
+            return {"vision", "imu"};
+        }
+        if (mode == "lio")
+        {
+            return {"lidar", "imu"};
+        }
+        if (mode == "radar_inertial")
+        {
+            return {"radar", "imu"};
+        }
+        if (mode == "mag_baro")
+        {
+            return {"magnetometer", "baro"};
+        }
+        if (mode == "gps")
+        {
+            return {"gps"};
+        }
+        if (mode == "vision")
+        {
+            return {"vision"};
+        }
+        if (mode == "lidar")
+        {
+            return {"lidar"};
+        }
+        if (mode == "radar")
+        {
+            return {"radar"};
+        }
+        if (mode == "thermal")
+        {
+            return {"thermal"};
+        }
+        if (mode == "magnetometer")
+        {
+            return {"magnetometer"};
+        }
+        if (mode == "baro")
+        {
+            return {"baro"};
+        }
+        if (mode == "celestial")
+        {
+            return {"celestial"};
+        }
+        if (mode == "dead_reckoning")
+        {
+            return {"dead_reckoning"};
+        }
+        if (mode == "imu")
+        {
+            return {"imu"};
+        }
+        return {};
+    };
+
+    auto setPortabilitySensors = [&](const std::vector<std::string> &healthySensors)
+    {
+        for (auto &sensor : portabilitySensors)
+        {
+            bool healthy = false;
+            for (const auto &name : healthySensors)
+            {
+                if (sensor.getName() == name)
+                {
+                    healthy = true;
+                    break;
+                }
+            }
+            sensor.setHealthy(healthy);
+        }
+    };
+
+    const std::vector<std::string> portabilityModes = {
+        "gps_ins",
+        "gps",
+        "vio",
+        "lio",
+        "radar_inertial",
+        "thermal",
+        "radar",
+        "vision",
+        "lidar",
+        "mag_baro",
+        "magnetometer",
+        "baro",
+        "celestial",
+        "dead_reckoning",
+        "imu"};
+
+    for (const auto &mode : portabilityModes)
+    {
+        const std::vector<std::string> requiredSensors = requiredSensorsForPortabilityMode(mode);
+        assert(!requiredSensors.empty());
+        setPortabilitySensors(requiredSensors);
+
+        ModeManagerConfig portabilityConfig;
+        portabilityConfig.minHealthyCount = 1;
+        portabilityConfig.minDwellSteps = 0;
+        portabilityConfig.celestialAllowed = true;
+        portabilityConfig.celestialDatasetAvailable = true;
+        portabilityConfig.allowedProvenances = {ProvenanceTag::Operational};
+        portabilityConfig.permittedSensors = portabilitySensorNames;
+        portabilityConfig.ladderOrder = {mode, "hold"};
+
+        ModeManager portabilityManager(portabilityConfig);
+        decision = portabilityManager.decide(portabilitySensorPtrs);
+        assert(ModeManager::modeName(decision.mode) == mode);
+        ModeDecisionDetail portabilityDetail = portabilityManager.getLastDecisionDetail();
+        assert(portabilityDetail.selectedMode == mode);
+    }
+
+    ModeManagerConfig imuModeConfig;
+    imuModeConfig.minHealthyCount = 1;
+    imuModeConfig.minDwellSteps = 0;
+    imuModeConfig.permittedSensors = {"imu"};
+    imuModeConfig.ladderOrder = {"imu", "hold"};
+    imuModeConfig.allowedProvenances = {ProvenanceTag::Operational};
+    ModeManager imuModeManager(imuModeConfig);
+    TestSensor imuModeSensor("imu");
+    std::vector<SensorBase *> imuModeSensors{&imuModeSensor};
+    imuModeSensor.setHealthy(true);
+
+    decision = imuModeManager.decide(imuModeSensors);
+    assert(decision.mode == TrackingMode::Inertial);
+    assert(ModeManager::modeName(decision.mode) == "imu");
+    ModeDecisionDetail imuModeDetail = imuModeManager.getLastDecisionDetail();
+    assert(imuModeDetail.selectedMode == "imu");
+    assert(imuModeDetail.contributors.size() == 1);
+    assert(imuModeDetail.contributors[0] == "imu");
+
+    decision = imuModeManager.decide(imuModeSensors);
+    assert(decision.mode == TrackingMode::Inertial);
+    assert(decision.reason == "maintain_imu");
+
     ModeManagerConfig gatingConfig;
     gatingConfig.minHealthyCount = 1;
     gatingConfig.maxDataAgeSeconds = 0.5;

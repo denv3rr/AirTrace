@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <thread>
 #include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -726,10 +727,7 @@ bool applyPlatformProfile(SimConfig::PlatformProfile profile, std::string &reaso
         {
             updated.adapter.uiSurface = "tui";
         }
-        if (updated.adapter.manifestPath.empty())
-        {
-            updated.adapter.manifestPath = resolveProjectPath("adapters/official/" + profileLabel + "/manifest.json");
-        }
+        updated.adapter.manifestPath = resolveProjectPath("adapters/official/" + profileLabel + "/manifest.json");
         if (updated.adapter.allowlistPath.empty())
         {
             updated.adapter.allowlistPath = resolveProjectPath("adapters/allowlist.json");
@@ -863,6 +861,128 @@ std::vector<std::string> uiListPlatformProfiles()
     return supportedPlatformProfiles();
 }
 
+bool platformSuiteContainsSensor(const std::vector<std::string> &sensors, const std::string &name)
+{
+    return std::find(sensors.begin(), sensors.end(), name) != sensors.end();
+}
+
+std::vector<std::string> platformSuiteRequiredSensorsForMode(const std::string &modeName)
+{
+    if (modeName == "gps_ins")
+    {
+        return {"gps", "imu"};
+    }
+    if (modeName == "vio")
+    {
+        return {"vision", "imu"};
+    }
+    if (modeName == "lio")
+    {
+        return {"lidar", "imu"};
+    }
+    if (modeName == "radar_inertial")
+    {
+        return {"radar", "imu"};
+    }
+    if (modeName == "mag_baro")
+    {
+        return {"magnetometer", "baro"};
+    }
+    if (modeName == "gps")
+    {
+        return {"gps"};
+    }
+    if (modeName == "vision")
+    {
+        return {"vision"};
+    }
+    if (modeName == "lidar")
+    {
+        return {"lidar"};
+    }
+    if (modeName == "radar")
+    {
+        return {"radar"};
+    }
+    if (modeName == "thermal")
+    {
+        return {"thermal"};
+    }
+    if (modeName == "magnetometer")
+    {
+        return {"magnetometer"};
+    }
+    if (modeName == "baro")
+    {
+        return {"baro"};
+    }
+    if (modeName == "celestial")
+    {
+        return {"celestial"};
+    }
+    if (modeName == "dead_reckoning")
+    {
+        return {"dead_reckoning"};
+    }
+    if (modeName == "imu")
+    {
+        return {"imu"};
+    }
+    return {};
+}
+
+std::string platformSuiteSelectMode(const std::vector<std::string> &ladder,
+                                    const std::vector<std::string> &permittedSensors)
+{
+    for (const auto &modeName : ladder)
+    {
+        if (modeName == "hold")
+        {
+            continue;
+        }
+        const std::vector<std::string> required = platformSuiteRequiredSensorsForMode(modeName);
+        if (required.empty())
+        {
+            continue;
+        }
+        bool eligible = true;
+        for (const auto &sensor : required)
+        {
+            if (!platformSuiteContainsSensor(permittedSensors, sensor))
+            {
+                eligible = false;
+                break;
+            }
+        }
+        if (eligible)
+        {
+            return modeName;
+        }
+    }
+    return "hold";
+}
+
+std::vector<std::string> platformSuiteDefaultLadderOrder()
+{
+    return {
+        "gps_ins",
+        "gps",
+        "vio",
+        "lio",
+        "radar_inertial",
+        "vision",
+        "lidar",
+        "radar",
+        "thermal",
+        "mag_baro",
+        "magnetometer",
+        "baro",
+        "celestial",
+        "dead_reckoning",
+        "imu",
+        "hold"};
+}
+
 PlatformSuiteResult uiRunPlatformSuite(const std::string &profileNameValue)
 {
     PlatformSuiteResult result;
@@ -886,19 +1006,28 @@ PlatformSuiteResult uiRunPlatformSuite(const std::string &profileNameValue)
     }
 
     result.sensorsValidated = !uiContext.config.permittedSensors.empty();
+    const std::vector<std::string> ladder =
+        uiContext.config.mode.ladderOrder.empty() ? platformSuiteDefaultLadderOrder() : uiContext.config.mode.ladderOrder;
+    const std::string selectedMode = result.sensorsValidated
+                                         ? platformSuiteSelectMode(ladder, uiContext.config.permittedSensors)
+                                         : "hold";
 
     ModeDecisionDetail detail;
-    detail.selectedMode = result.sensorsValidated ? uiContext.config.permittedSensors.front() : "hold";
-    detail.contributors = {detail.selectedMode};
-    detail.confidence = 1.0;
-    detail.reason = "platform_suite";
-    detail.downgradeReason = "";
+    detail.selectedMode = selectedMode;
+    detail.contributors = platformSuiteRequiredSensorsForMode(selectedMode);
+    detail.confidence = detail.contributors.empty() ? 0.0 : 1.0;
+    detail.reason = selectedMode == "hold" ? "platform_suite_no_mode" : "platform_suite";
+    detail.downgradeReason = selectedMode == "hold" ? "platform_mode_output_invalid" : "";
 
     std::vector<SensorUiSnapshot> sensors = buildProfileSensors(uiContext.config.permittedSensors);
     setUiDenialReason("");
     updateUiFromModeDecision(detail, sensors);
 
-    result.modeOutputValidated = !uiContext.status.ladderStatus.empty() && !uiContext.status.sensorStatusSummary.empty();
+    result.modeOutputValidated =
+        selectedMode != "hold" &&
+        !detail.contributors.empty() &&
+        !uiContext.status.ladderStatus.empty() &&
+        !uiContext.status.sensorStatusSummary.empty();
     result.adapterValidated = (uiContext.status.adapterStatus == "ok" || uiContext.status.adapterStatus == "none");
     result.pass = result.sensorsValidated && result.adapterValidated && result.modeOutputValidated;
     if (result.pass)
@@ -1426,6 +1555,7 @@ std::vector<std::string> defaultLadderOrder()
         "imu",
         "hold"};
 }
+
 } // namespace
 
 void updateUiFromModeDecision(const ModeDecisionDetail &detail, const std::vector<SensorUiSnapshot> &sensors)
@@ -2173,8 +2303,12 @@ void logSimulationResult(const std::string &mode, const std::string &details, co
         auto now = std::chrono::system_clock::now();
         std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
 
-        std::tm localTime;
-        localtime_s(&localTime, &currentTime); // Use localtime_s instead of localtime
+        std::tm localTime{};
+#if defined(_WIN32)
+        localtime_s(&localTime, &currentTime);
+#else
+        localtime_r(&currentTime, &localTime);
+#endif
 
         file << "Simulation Mode: " << mode << "\n";
         file << "Time: " << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S") << "\n";

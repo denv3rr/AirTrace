@@ -4,6 +4,7 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -130,18 +131,47 @@ void runStatusTests()
     assert(airSuite.sensorsValidated);
     assert(airSuite.adapterValidated);
     assert(airSuite.modeOutputValidated);
+    const UiStatus &airSuiteStatus = getUiStatus();
+    assert(airSuiteStatus.activeSource == "gps_ins");
+    assert(airSuiteStatus.contributors == "gps,imu");
 
     const std::vector<PlatformSuiteResult> allSuites = uiRunAllPlatformSuites();
     assert(allSuites.size() == profiles.size());
     bool foundAir = false;
+    bool foundSubsea = false;
     for (const auto &entry : allSuites)
     {
+        if (!entry.pass)
+        {
+            std::cerr << "platform suite failed for profile=" << entry.profile
+                      << " reason=" << entry.reason
+                      << " sensors=" << (entry.sensorsValidated ? "ok" : "bad")
+                      << " adapter=" << (entry.adapterValidated ? "ok" : "bad")
+                      << " mode=" << (entry.modeOutputValidated ? "ok" : "bad")
+                      << "\n";
+        }
+        assert(entry.pass);
+        assert(entry.sensorsValidated);
+        assert(entry.adapterValidated);
+        assert(entry.modeOutputValidated);
+        assert(entry.reason == "ok");
         if (entry.profile == "air")
         {
             foundAir = true;
         }
+        if (entry.profile == "subsea")
+        {
+            foundSubsea = true;
+        }
     }
     assert(foundAir);
+    assert(foundSubsea);
+
+    PlatformSuiteResult subseaSuite = uiRunPlatformSuite("subsea");
+    assert(subseaSuite.pass);
+    const UiStatus &subseaSuiteStatus = getUiStatus();
+    assert(subseaSuiteStatus.activeSource == "mag_baro");
+    assert(subseaSuiteStatus.contributors == "magnetometer,baro");
 
     const ExternalIoEnvelope envelope = uiBuildExternalIoEnvelope();
     assert(envelope.metadata.schemaVersion == "1.0.0");

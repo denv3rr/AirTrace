@@ -63,13 +63,25 @@ std::string escapeJson(const std::string &value)
     return out.str();
 }
 
+bool toUtcTm(std::time_t timestamp, std::tm &out)
+{
+#if defined(_WIN32)
+    return gmtime_s(&out, &timestamp) == 0;
+#else
+    return gmtime_r(&timestamp, &out) != nullptr;
+#endif
+}
+
 std::string utcTimestamp()
 {
     using namespace std::chrono;
     auto now = system_clock::now();
     std::time_t tt = system_clock::to_time_t(now);
     std::tm tm{};
-    gmtime_s(&tm, &tt);
+    if (!toUtcTm(tt, tm))
+    {
+        return "1970-01-01T00:00:00Z";
+    }
     std::ostringstream out;
     out << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
     return out.str();
