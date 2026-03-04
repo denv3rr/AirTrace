@@ -6,6 +6,7 @@
 - Prefer stable URLs; add archive links when needed.
 - Check for duplicate links.
 - Use one URL per bullet for easy citation import.
+- The M.1 AIM subsection is generated from `docs/sources_menu_registry.json`; run `node ./scripts/sync_sources_menu_registry.mjs` after edits.
 
 ## Section Index
 - A. Project and Local References: [link](#a-project-and-local-references)
@@ -241,7 +242,8 @@
 ## M. Platforms, Archives, and Interfaces
 
 ### AIM and U.S. Air-to-Air Missiles
-- AIM platforms (archive URLs): TODO
+<!-- BEGIN GENERATED: M1_AIM_AND_US_AIR_TO_AIR_MISSILES -->
+- AIM platforms (archive URLs): AIM-9X product page=https://web.archive.org/web/*/https://www.navair.navy.mil/product/AIM-9X; AIM-120 product page=https://web.archive.org/web/*/https://www.navair.navy.mil/product/AIM-120; NAVAIR page=https://web.archive.org/web/*/https://www.navair.navy.mil/node/12701
 - AIM-9 Sidewinder (USAF fact sheet): https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104557/aim-9-sidewinder/
 - AIM-9X (US Navy fact file): https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2168989/aim-9x-sidewinder-missile/
 - AIM-9M/9X (ACC fact sheet PDF): https://www.acc.af.mil/Portals/92/Docs/Fact%20Sheets%20-%202020%20Update/Facts%20Sheets%202022%20Final/AIM-9M9X_final.pdf
@@ -257,6 +259,7 @@
 - NAVAIR page: https://www.navair.navy.mil/node/12701
 - AMRAAM guidance/engagement modeling thesis (PDF): https://apps.dtic.mil/sti/pdfs/AD1015787.pdf
 - AAM kinematics/endgame modeling thesis (PDF): https://apps.dtic.mil/sti/pdfs/AD1007741.pdf
+<!-- END GENERATED: M1_AIM_AND_US_AIR_TO_AIR_MISSILES -->
 
 ### AGM and Air-to-Ground Missiles
 - AGM-114 (ACC fact sheet PDF): https://www.acc.af.mil/Portals/92/Docs/Fact%20Sheets%20-%202020%20Update/Facts%20Sheets%202022%20Final/AGM-114_final.pdf
