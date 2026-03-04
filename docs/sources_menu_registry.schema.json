@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AirTrace sources menu registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registry_version",
+    "generated_sections"
+  ],
+  "properties": {
+    "registry_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generated_sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/generated_section"
+      }
+    }
+  },
+  "definitions": {
+    "id_string": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "url_string": {
+      "type": "string",
+      "pattern": "^https://\\S+$"
+    },
+    "labeled_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "url"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "$ref": "#/definitions/url_string"
+        }
+      }
+    },
+    "menu_entry_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entry_id",
+        "order",
+        "label",
+        "source_type"
+      ],
+      "properties": {
+        "entry_id": {
+          "$ref": "#/definitions/id_string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_type": {
+          "$ref": "#/definitions/id_string"
+        },
+        "url": {
+          "$ref": "#/definitions/url_string"
+        },
+        "links": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/labeled_link"
+          }
+        }
+      }
+    },
+    "single_url_entry": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/menu_entry_base"
+        },
+        {
+          "required": [
+            "url"
+          ],
+          "not": {
+            "required": [
+              "links"
+            ]
+          }
+        }
+      ]
+    },
+    "link_bundle_entry": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/menu_entry_base"
+        },
+        {
+          "required": [
+            "links"
+          ],
+          "not": {
+            "required": [
+              "url"
+            ]
+          }
+        }
+      ]
+    },
+    "menu_entry": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/single_url_entry"
+        },
+        {
+          "$ref": "#/definitions/link_bundle_entry"
+        }
+      ]
+    },
+    "generated_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "section_id",
+        "order",
+        "source_file",
+        "start_marker",
+        "end_marker",
+        "entries"
+      ],
+      "properties": {
+        "section_id": {
+          "$ref": "#/definitions/id_string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_file": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_./-]+\\.md$"
+        },
+        "start_marker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "end_marker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/menu_entry"
+          }
+        }
+      }
+    }
+  }
+}

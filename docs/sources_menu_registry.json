@@ -1,0 +1,139 @@
+{
+  "registry_version": 1,
+  "generated_sections": [
+    {
+      "section_id": "m1_aim_us_air_to_air_missiles",
+      "order": 1,
+      "source_file": "sources_menu.md",
+      "start_marker": "<!-- BEGIN GENERATED: M1_AIM_AND_US_AIR_TO_AIR_MISSILES -->",
+      "end_marker": "<!-- END GENERATED: M1_AIM_AND_US_AIR_TO_AIR_MISSILES -->",
+      "entries": [
+        {
+          "entry_id": "aim_platform_archive_urls",
+          "order": 10,
+          "label": "AIM platforms (archive URLs)",
+          "source_type": "archive_index",
+          "links": [
+            {
+              "label": "AIM-9X product page",
+              "url": "https://web.archive.org/web/*/https://www.navair.navy.mil/product/AIM-9X"
+            },
+            {
+              "label": "AIM-120 product page",
+              "url": "https://web.archive.org/web/*/https://www.navair.navy.mil/product/AIM-120"
+            },
+            {
+              "label": "NAVAIR page",
+              "url": "https://web.archive.org/web/*/https://www.navair.navy.mil/node/12701"
+            }
+          ]
+        },
+        {
+          "entry_id": "aim_9_sidewinder_usaf_fact_sheet",
+          "order": 20,
+          "label": "AIM-9 Sidewinder (USAF fact sheet)",
+          "source_type": "official_fact_sheet",
+          "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104557/aim-9-sidewinder/"
+        },
+        {
+          "entry_id": "aim_9x_us_navy_fact_file",
+          "order": 30,
+          "label": "AIM-9X (US Navy fact file)",
+          "source_type": "official_fact_file",
+          "url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2168989/aim-9x-sidewinder-missile/"
+        },
+        {
+          "entry_id": "aim_9m_9x_acc_fact_sheet_pdf",
+          "order": 40,
+          "label": "AIM-9M/9X (ACC fact sheet PDF)",
+          "source_type": "official_fact_sheet",
+          "url": "https://www.acc.af.mil/Portals/92/Docs/Fact%20Sheets%20-%202020%20Update/Facts%20Sheets%202022%20Final/AIM-9M9X_final.pdf"
+        },
+        {
+          "entry_id": "aim_9x_sar_pdf",
+          "order": 50,
+          "label": "AIM-9X SAR (PDF)",
+          "source_type": "acquisition_report",
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/FOID/Reading%20Room/Selected_Acquisition_Reports/FY_2019_SARS/20-F-0568_DOC_08_AIM-9X_Blk_II_SAR_Dec_2019_Full.pdf"
+        },
+        {
+          "entry_id": "aim_9x_dote_pdf",
+          "order": 60,
+          "label": "AIM-9X DOT&E (PDF)",
+          "source_type": "test_report",
+          "url": "https://www.dote.osd.mil/Portals/97/pub/reports/FY2010/navy/2010aim9x.pdf"
+        },
+        {
+          "entry_id": "aim_120_amraam_usaf_fact_sheet",
+          "order": 70,
+          "label": "AIM-120 AMRAAM (USAF fact sheet)",
+          "source_type": "official_fact_sheet",
+          "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104576/aim-120-amraam/"
+        },
+        {
+          "entry_id": "aim_7_sparrow_usaf_fact_sheet",
+          "order": 80,
+          "label": "AIM-7 Sparrow (USAF fact sheet)",
+          "source_type": "official_fact_sheet",
+          "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104575/aim-7-sparrow/"
+        },
+        {
+          "entry_id": "aim_120_acc_fact_sheet_pdf",
+          "order": 90,
+          "label": "AIM-120 (ACC fact sheet PDF)",
+          "source_type": "official_fact_sheet",
+          "url": "https://www.acc.af.mil/Portals/92/Docs/Fact%20Sheets%20-%202020%20Update/AIM-120_Formatted.pdf"
+        },
+        {
+          "entry_id": "amraam_dote_pdf",
+          "order": 100,
+          "label": "AMRAAM DOT&E (PDF)",
+          "source_type": "test_report",
+          "url": "https://www.dote.osd.mil/Portals/97/pub/reports/FY2022/af/2022amraam.pdf"
+        },
+        {
+          "entry_id": "amraam_sar_pdf",
+          "order": 110,
+          "label": "AMRAAM SAR (PDF)",
+          "source_type": "acquisition_report",
+          "url": "https://www.esd.whs.mil/Portals/54/Documents/FOID/Reading%20Room/Selected_Acquisition_Reports/FY_2015_SARS/16-F-0402_DOC_14_AMRAAM_DEC_2015_SAR.pdf"
+        },
+        {
+          "entry_id": "aim_9x_product_page",
+          "order": 120,
+          "label": "AIM-9X product page",
+          "source_type": "official_product_page",
+          "url": "https://www.navair.navy.mil/product/AIM-9X"
+        },
+        {
+          "entry_id": "aim_120_product_page",
+          "order": 130,
+          "label": "AIM-120 product page",
+          "source_type": "official_product_page",
+          "url": "https://www.navair.navy.mil/product/AIM-120"
+        },
+        {
+          "entry_id": "navair_page",
+          "order": 140,
+          "label": "NAVAIR page",
+          "source_type": "official_product_page",
+          "url": "https://www.navair.navy.mil/node/12701"
+        },
+        {
+          "entry_id": "amraam_guidance_engagement_modeling_thesis_pdf",
+          "order": 150,
+          "label": "AMRAAM guidance/engagement modeling thesis (PDF)",
+          "source_type": "technical_thesis",
+          "url": "https://apps.dtic.mil/sti/pdfs/AD1015787.pdf"
+        },
+        {
+          "entry_id": "aam_kinematics_endgame_modeling_thesis_pdf",
+          "order": 160,
+          "label": "AAM kinematics/endgame modeling thesis (PDF)",
+          "source_type": "technical_thesis",
+          "url": "https://apps.dtic.mil/sti/pdfs/AD1007741.pdf"
+        }
+      ]
+    }
+  ]
+}
