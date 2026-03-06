@@ -17,4 +17,4 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++
       - name: Run deterministic test suite
-        run: ./scripts/test.sh
+        run: bash ./scripts/test.sh
