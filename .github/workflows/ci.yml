@@ -7,14 +7,11 @@ on:
 
 jobs:
   airtrace-tests:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install build toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++
       - name: Run deterministic test suite
-        run: bash ./scripts/test.sh
+        shell: pwsh
+        run: .\scripts\test.ps1
