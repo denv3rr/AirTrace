@@ -8,6 +8,11 @@ BUILD_DIR="${BUILD_DIR:-$ROOT_DIR/build}"
 BUILD_TYPE="${BUILD_TYPE:-Debug}"
 TARGET="${AIRTRACE_TARGET:-AirTrace}"
 CONFIG_PATH="${AIRTRACE_CONFIG:-configs/sim_default.cfg}"
+DEBUG_ADMIN="${AIRTRACE_DEBUG_ADMIN:-0}"
+
+if [ "$DEBUG_ADMIN" = "1" ] && [ -z "${AIRTRACE_CONFIG:-}" ]; then
+  CONFIG_PATH="configs/sim_debug_admin.cfg"
+fi
 
 case "$BUILD_TYPE" in
   Debug|Release|RelWithDebInfo|MinSizeRel) ;;
@@ -54,7 +59,7 @@ else
 fi
 
 cd "$ROOT_DIR"
-if [ "$TARGET" = "AirTraceSimExample" ]; then
+if [ "$TARGET" = "AirTrace" ] || [ "$TARGET" = "AirTraceSimExample" ]; then
   "$EXE" "$CONFIG_PATH"
 else
   "$EXE"
