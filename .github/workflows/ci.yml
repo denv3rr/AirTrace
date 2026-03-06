@@ -1,0 +1,17 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  airtrace-tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Run deterministic test suite
+        shell: pwsh
+        run: .\scripts\test.ps1
