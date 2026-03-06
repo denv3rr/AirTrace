@@ -249,4 +249,19 @@ void runStatusTests()
     assert(postProfileStatus.frontViewAuthStatus == "not_configured");
 
     std::filesystem::remove(rolePresetConfigPath);
+
+    std::filesystem::path debugAdminConfigPath = writeConfigFile(
+        "airtrace_ui_status_debug_admin.cfg",
+        "config.version=1.0\n"
+        "provenance.run_mode=test\n"
+        "provenance.allowed_inputs=test\n"
+        "policy.debug_admin.enabled=true\n"
+        "policy.debug_admin.start_active=true\n");
+    bool debugAdminLoaded = initializeUiContext(debugAdminConfigPath.string());
+    assert(debugAdminLoaded);
+    const UiStatus &debugAdminStatus = getUiStatus();
+    assert(debugAdminStatus.debugAdminEnabled);
+    assert(debugAdminStatus.debugAdminActive);
+    assert(debugAdminStatus.authStatus.find("debug_admin=active(test_only)") != std::string::npos);
+    std::filesystem::remove(debugAdminConfigPath);
 }

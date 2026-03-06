@@ -59,6 +59,12 @@ Schema version: 1.0
 - policy.authorization.allowed_modes (list): optional; default empty (no additional allowances).
   - Format: comma-separated mode names (example: gps_ins,vio).
   - Unknown modes are errors.
+- policy.debug_admin.enabled (bool): optional; default false.
+  - Exposes a clearly labeled debug-admin toggle for local testing.
+  - Allowed only when `provenance.run_mode` is `simulation` or `test`; operational runs fail closed.
+- policy.debug_admin.start_active (bool): optional; default false.
+  - Starts the session with debug admin already active.
+  - Requires `policy.debug_admin.enabled=true`.
 
 ## Roles
 - policy.roles (list): optional; default ["operator"].

@@ -28,10 +28,14 @@ void runAlertsTests()
     assert(denialRecoveryHint("front_view_frame_stale") == "reduce source latency or increase front_view.frame.max_age_ms");
     assert(denialRecoveryHint("front_view_confidence_low") == "improve source quality or reduce front_view.frame.min_confidence");
     assert(denialRecoveryHint("render_latency_exceeded") == "reduce front-view pipeline load or increase latency budget");
+    assert(denialRecoveryHint("debug_admin_active") == "disable debug admin before operational use");
+    assert(denialRecoveryHint("debug_admin_unavailable") == "set policy.debug_admin.enabled=true in a non-operational run");
+    assert(denialRecoveryHint("debug_admin_not_allowed") == "set provenance.run_mode to simulation or test before enabling debug admin");
     assert(denialRecoveryHint("provenance_unknown_hold") == "inputs with unknown provenance are being held; tag source provenance or set unknown_action=deny");
     assert(denialRecoveryHint("unknown_reason") == "review logs and configuration");
 
     assert(buildDenialBanner("") == "");
     assert(buildDenialBanner("input_unavailable").find("WARNING: input_unavailable") == 0);
     assert(buildDenialBanner("input_unavailable").find("Recovery: verify input stream") != std::string::npos);
+    assert(buildDenialBanner("debug_admin_active").find("disable debug admin before operational use") != std::string::npos);
 }

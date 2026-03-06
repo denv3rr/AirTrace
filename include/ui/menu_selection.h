@@ -13,6 +13,7 @@ enum class MainMenuAction
     FrontViewWorkbench,
     ViewHistory,
     DeleteHistory,
+    DebugAdminToggle,
     Exit,
     Cancel,
     InputError

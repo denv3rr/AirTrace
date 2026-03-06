@@ -474,6 +474,10 @@ void applyValue(SimConfig &config, ConfigResult &result, const std::string &key,
     else if (key == "policy.authorization.version") config.policy.authorization.version = value;
     else if (key == "policy.authorization.source") config.policy.authorization.source = value;
     else if (key == "policy.authorization.allowed_modes") config.policy.authorization.allowedModes = splitList(value);
+    else if (key == "policy.debug_admin.enabled" && toBool(value, bval)) config.policy.debugAdmin.enabled = bval;
+    else if (key == "policy.debug_admin.enabled") setIssue(result, key, "invalid boolean");
+    else if (key == "policy.debug_admin.start_active" && toBool(value, bval)) config.policy.debugAdmin.startActive = bval;
+    else if (key == "policy.debug_admin.start_active") setIssue(result, key, "invalid boolean");
     else if (key == "provenance.run_mode" && toProvenanceMode(value, provenanceMode)) config.provenance.runMode = provenanceMode;
     else if (key == "provenance.run_mode") setIssue(result, key, "invalid provenance run_mode");
     else if (key == "provenance.allowed_inputs")
@@ -938,6 +942,16 @@ void validateConfig(ConfigResult &result)
                 break;
             }
         }
+    }
+
+    if (config.policy.debugAdmin.startActive && !config.policy.debugAdmin.enabled)
+    {
+        setIssue(result, "policy.debug_admin.start_active", "requires policy.debug_admin.enabled=true");
+    }
+    if ((config.policy.debugAdmin.enabled || config.policy.debugAdmin.startActive) &&
+        config.provenance.runMode == SimConfig::ProvenanceMode::Operational)
+    {
+        setIssue(result, "policy.debug_admin.enabled", "not allowed when provenance.run_mode=operational");
     }
 
     if (config.provenance.allowedInputs.empty())

@@ -41,6 +41,8 @@ struct UiContext
 {
     SimConfig config{};
     bool configLoaded = false;
+    bool debugAdminEnabled = false;
+    bool debugAdminActive = false;
     unsigned int seed = 42;
     std::mt19937 rng{seed};
     UiStatus status{};
@@ -51,13 +53,10 @@ UiContext uiContext{};
 
 bool hasPermission(const std::string &permission)
 {
-#if defined(AIRTRACE_TEST_HARNESS)
-    if (permission == "test_mode" || permission == "simulation_history" || permission == "simulation_delete" ||
-        permission == "platform_workbench" || permission == "front_view_workbench")
+    if (uiContext.debugAdminEnabled && uiContext.debugAdminActive)
     {
         return true;
     }
-#endif
     const auto &policy = uiContext.config.policy;
     auto it = policy.rolePermissions.find(policy.activeRole);
     if (it == policy.rolePermissions.end())
@@ -469,7 +468,7 @@ std::string modulesToString(const std::vector<std::string> &modules)
     return out.str();
 }
 
-std::string buildAuthStatus(const SimConfig &config)
+std::string buildAuthStatus(const SimConfig &config, bool debugAdminEnabled, bool debugAdminActive)
 {
     std::ostringstream out;
     out << "net=" << networkAidModeName(config.policy.networkAidMode)
@@ -490,7 +489,26 @@ std::string buildAuthStatus(const SimConfig &config)
     {
         out << " auth_bundle=missing";
     }
+    if (!debugAdminEnabled)
+    {
+        out << " debug_admin=disabled";
+    }
+    else if (debugAdminActive)
+    {
+        out << " debug_admin=active(test_only)";
+    }
+    else
+    {
+        out << " debug_admin=available";
+    }
     return out.str();
+}
+
+void refreshAuthStatus()
+{
+    uiContext.status.debugAdminEnabled = uiContext.debugAdminEnabled;
+    uiContext.status.debugAdminActive = uiContext.debugAdminEnabled && uiContext.debugAdminActive;
+    uiContext.status.authStatus = buildAuthStatus(uiContext.config, uiContext.debugAdminEnabled, uiContext.debugAdminActive);
 }
 
 std::string provenanceModeName(SimConfig::ProvenanceMode mode)
@@ -668,7 +686,7 @@ void updateStatusFromConfig(const SimConfig &config)
     uiContext.status.platformProfile = profileName(config.platformProfile);
     uiContext.status.parentProfile = config.hasParentProfile ? profileName(config.parentProfile) : "none";
     uiContext.status.childModules = modulesToString(config.childModules);
-    uiContext.status.authStatus = buildAuthStatus(config);
+    refreshAuthStatus();
     uiContext.status.provenanceStatus = buildProvenanceStatus(config);
     uiContext.status.adapterId = config.adapter.id;
     uiContext.status.adapterVersion = config.adapter.version;
@@ -780,6 +798,61 @@ bool uiHasPermission(const std::string &permission)
     return hasPermission(permission);
 }
 
+bool uiDebugAdminToggleAvailable()
+{
+    return uiContext.configLoaded && uiContext.debugAdminEnabled;
+}
+
+bool uiDebugAdminActive()
+{
+    return uiContext.configLoaded && uiContext.debugAdminEnabled && uiContext.debugAdminActive;
+}
+
+bool uiToggleDebugAdmin(std::string &reason)
+{
+    if (!uiContext.configLoaded)
+    {
+        reason = "config_invalid";
+        setUiDenialReason(reason);
+        return false;
+    }
+    if (!uiContext.debugAdminEnabled)
+    {
+        reason = "debug_admin_unavailable";
+        setUiDenialReason(reason);
+        return false;
+    }
+    if (uiContext.config.provenance.runMode == SimConfig::ProvenanceMode::Operational)
+    {
+        reason = "debug_admin_not_allowed";
+        setUiDenialReason(reason);
+        return false;
+    }
+
+    const bool previous = uiContext.debugAdminActive;
+    uiContext.debugAdminActive = !uiContext.debugAdminActive;
+    refreshAuthStatus();
+    tools::setAuditRole(uiContext.status.authStatus);
+
+    const std::string detail = std::string("state=") + (uiContext.debugAdminActive ? "active" : "inactive") +
+                               " run_mode=" + provenanceModeName(uiContext.config.provenance.runMode);
+    if (!tools::logAuditEvent("debug_admin_toggle",
+                              uiContext.debugAdminActive ? "debug admin enabled" : "debug admin disabled",
+                              detail))
+    {
+        uiContext.debugAdminActive = previous;
+        refreshAuthStatus();
+        tools::setAuditRole(uiContext.status.authStatus);
+        reason = "audit_unavailable";
+        setUiDenialReason(reason);
+        return false;
+    }
+
+    setUiDenialReason("");
+    reason = uiContext.debugAdminActive ? "debug_admin_active" : "debug_admin_inactive";
+    return true;
+}
+
 void uiRenderStatusBanner(const std::string &context)
 {
     renderStatusBanner(context);
@@ -791,11 +864,15 @@ bool initializeUiContext(const std::string &configPath)
     if (!loaded.ok)
     {
         uiContext.configLoaded = false;
+        uiContext.debugAdminEnabled = false;
+        uiContext.debugAdminActive = false;
         uiContext.lastSensors.clear();
         uiContext.status.platformProfile = "base";
         uiContext.status.parentProfile = "none";
         uiContext.status.childModules = "none";
         uiContext.status.authStatus = "config_invalid";
+        uiContext.status.debugAdminEnabled = false;
+        uiContext.status.debugAdminActive = false;
         uiContext.status.denialReason = "config_invalid";
         uiContext.status.adapterId = "";
         uiContext.status.adapterVersion = "";
@@ -827,6 +904,8 @@ bool initializeUiContext(const std::string &configPath)
     }
 
     uiContext.config = loaded.config;
+    uiContext.debugAdminEnabled = uiContext.config.policy.debugAdmin.enabled;
+    uiContext.debugAdminActive = uiContext.debugAdminEnabled && uiContext.config.policy.debugAdmin.startActive;
     applyActiveRoleUiPreset(uiContext.config);
     uiContext.configLoaded = true;
     uiContext.seed = uiContext.config.seed;

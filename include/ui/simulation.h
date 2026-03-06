@@ -39,6 +39,8 @@ struct UiStatus
     std::string ladderStatus;
     std::string sensorStatusSummary;
     std::string authStatus;
+    bool debugAdminEnabled = false;
+    bool debugAdminActive = false;
     std::string provenanceStatus;
     std::string loggingStatus;
     std::string adapterId;
@@ -127,6 +129,9 @@ ExternalIoEnvelope uiBuildExternalIoEnvelope();
 std::string uiBuildExternalIoEnvelopeJson();
 bool uiEnsureAuditHealthy(const std::string &context);
 bool uiHasPermission(const std::string &permission);
+bool uiDebugAdminToggleAvailable();
+bool uiDebugAdminActive();
+bool uiToggleDebugAdmin(std::string &reason);
 void uiRenderStatusBanner(const std::string &context);
 void resetUiRng();
 int uiRandomInt(int minValue, int maxValue);

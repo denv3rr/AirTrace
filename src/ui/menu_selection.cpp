@@ -3,6 +3,7 @@
 namespace
 {
 constexpr size_t kMainMenuOptionCount = 7;
+constexpr size_t kMainMenuDebugOptionCount = 8;
 constexpr size_t kTestMenuOptionCount = 3;
 } // namespace
 
@@ -10,7 +11,7 @@ namespace ui
 {
 MainMenuAction resolveMainMenuAction(int selectedIndex, size_t optionCount)
 {
-    if (optionCount != kMainMenuOptionCount)
+    if (optionCount != kMainMenuOptionCount && optionCount != kMainMenuDebugOptionCount)
     {
         return MainMenuAction::InputError;
     }
@@ -38,6 +39,8 @@ MainMenuAction resolveMainMenuAction(int selectedIndex, size_t optionCount)
     case 5:
         return MainMenuAction::DeleteHistory;
     case 6:
+        return optionCount == kMainMenuDebugOptionCount ? MainMenuAction::DebugAdminToggle : MainMenuAction::Exit;
+    case 7:
         return MainMenuAction::Exit;
     default:
         return MainMenuAction::InputError;

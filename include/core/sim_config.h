@@ -87,6 +87,12 @@ struct SimConfig
             bool hasFrontViewFamilies = false;
         };
 
+        struct DebugAdminConfig
+        {
+            bool enabled = false;
+            bool startActive = false;
+        };
+
         NetworkAidMode networkAidMode = NetworkAidMode::Deny;
         bool overrideRequired = true;
         OverrideAuth overrideAuth = OverrideAuth::Credential;
@@ -96,6 +102,7 @@ struct SimConfig
         std::unordered_map<std::string, RoleUiPreset> roleUiPresets{};
         std::string activeRole = "operator";
         AuthorizationBundle authorization{};
+        DebugAdminConfig debugAdmin{};
     };
 
     struct ProvenancePolicy
