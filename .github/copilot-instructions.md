@@ -25,3 +25,6 @@ Use this repository for deterministic sensor and mode-switch integration testing
 - Fail closed on missing/invalid data.
 - Preserve deterministic execution characteristics.
 - Treat all external input as untrusted and validate explicitly.
+- Palette/filter views are visualization-only test aids and must be explicitly labeled as non-truth renderings.
+- Mock/synthetic/spoof/test-harness outputs must be marked as non-true data in UI or metadata surfaces.
+- For 2D-only capture-card/video feeds, keep relative depth distinct from calibrated metric range estimates.
