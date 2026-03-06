@@ -242,6 +242,39 @@ int main()
     assert(!provenanceInvalidResult.ok);
     std::filesystem::remove(provenanceInvalidConfig);
 
+    std::filesystem::path debugAdminOperationalConfig = writeConfigFile(
+        "airtrace_debug_admin_operational.cfg",
+        "config.version=1.0\n"
+        "provenance.run_mode=operational\n"
+        "provenance.allowed_inputs=operational\n"
+        "policy.debug_admin.enabled=true\n");
+    ConfigResult debugAdminOperationalResult = loadSimConfig(debugAdminOperationalConfig.string());
+    assert(!debugAdminOperationalResult.ok);
+    std::filesystem::remove(debugAdminOperationalConfig);
+
+    std::filesystem::path debugAdminMissingEnableConfig = writeConfigFile(
+        "airtrace_debug_admin_missing_enable.cfg",
+        "config.version=1.0\n"
+        "provenance.run_mode=test\n"
+        "provenance.allowed_inputs=test\n"
+        "policy.debug_admin.start_active=true\n");
+    ConfigResult debugAdminMissingEnableResult = loadSimConfig(debugAdminMissingEnableConfig.string());
+    assert(!debugAdminMissingEnableResult.ok);
+    std::filesystem::remove(debugAdminMissingEnableConfig);
+
+    std::filesystem::path debugAdminValidConfig = writeConfigFile(
+        "airtrace_debug_admin_valid.cfg",
+        "config.version=1.0\n"
+        "provenance.run_mode=test\n"
+        "provenance.allowed_inputs=test\n"
+        "policy.debug_admin.enabled=true\n"
+        "policy.debug_admin.start_active=true\n");
+    ConfigResult debugAdminValidResult = loadSimConfig(debugAdminValidConfig.string());
+    assert(debugAdminValidResult.ok);
+    assert(debugAdminValidResult.config.policy.debugAdmin.enabled);
+    assert(debugAdminValidResult.config.policy.debugAdmin.startActive);
+    std::filesystem::remove(debugAdminValidConfig);
+
     std::filesystem::path sensorConfig = writeConfigFile(
         "airtrace_sensor_config.cfg",
         "config.version=1.0\n"

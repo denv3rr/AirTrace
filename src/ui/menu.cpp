@@ -40,20 +40,28 @@ std::string buildHelp(const std::string &baseHelp)
     {
         out << "\n" << ui::buildDenialBanner(status.denialReason);
     }
+    if (status.debugAdminActive)
+    {
+        out << "\n" << ui::buildDenialBanner("debug_admin_active");
+    }
     return out.str();
 }
 } // namespace
 
 bool showMainMenu()
 {
-    const std::vector<std::string> options = {
+    std::vector<std::string> options = {
         "Scenario Mode",
         "Test Mode",
         "Platform Workbench",
         "Front-View Display Workbench",
         "View and Rerun Previous Simulations",
-        "Delete a Previous Simulation",
-        "Exit"};
+        "Delete a Previous Simulation"};
+    if (uiDebugAdminToggleAvailable())
+    {
+        options.push_back(uiDebugAdminActive() ? "Disable Debug Admin (TEST ONLY)" : "Enable Debug Admin (TEST ONLY)");
+    }
+    options.push_back("Exit");
     const std::string helpBase = "Use Up/Down to move, Space or Enter to select, Esc to exit.";
 
     if (!tui::isInteractiveInput())
@@ -157,6 +165,31 @@ bool showMainMenu()
             }
             deletePreviousSimulation();
             break;
+        case ui::MainMenuAction::DebugAdminToggle:
+        {
+            if (!uiEnsureAuditHealthy("debug_admin_toggle"))
+            {
+                return false;
+            }
+            std::string reason;
+            if (!uiToggleDebugAdmin(reason))
+            {
+                std::cout << ui::buildDenialBanner(reason) << "\n";
+                continue;
+            }
+            if (uiDebugAdminActive())
+            {
+                std::cout << ui::buildDenialBanner(reason) << "\n";
+            }
+            else
+            {
+                std::cout << "Debug admin disabled.\n";
+            }
+            break;
+        }
+        case ui::MainMenuAction::Exit:
+            std::cout << "Exiting the system.\n";
+            return true;
         default:
             setUiDenialReason("menu_selection_invalid");
             std::cerr << "Menu selection failed. Exiting.\n";

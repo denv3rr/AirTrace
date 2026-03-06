@@ -2,7 +2,8 @@ param(
     [string]$BuildDir = $env:BUILD_DIR,
     [string]$BuildType = $env:BUILD_TYPE,
     [string]$Target = $env:AIRTRACE_TARGET,
-    [string]$ConfigPath = $env:AIRTRACE_CONFIG
+    [string]$ConfigPath = $env:AIRTRACE_CONFIG,
+    [switch]$DebugAdmin
 )
 
 if (-not $BuildDir) {
@@ -26,6 +27,10 @@ if (-not $Target) {
 
 if (-not $ConfigPath) {
     $ConfigPath = "configs/sim_default.cfg"
+}
+
+if ($DebugAdmin -and -not $PSBoundParameters.ContainsKey("ConfigPath") -and -not $env:AIRTRACE_CONFIG) {
+    $ConfigPath = "configs/sim_debug_admin.cfg"
 }
 
 $RootDir = Resolve-Path (Join-Path $PSScriptRoot "..")
@@ -54,10 +59,10 @@ cmake @cmakeArgs
 cmake --build $BuildDir
 
 $exeCandidates = @(
-    Join-Path $BuildDir "$Target.exe",
-    Join-Path $BuildDir $BuildType | Join-Path -ChildPath "$Target.exe",
-    Join-Path $BuildDir "$Target",
-    Join-Path (Join-Path $BuildDir $BuildType) "$Target"
+    (Join-Path $BuildDir "$Target.exe"),
+    (Join-Path (Join-Path $BuildDir $BuildType) "$Target.exe"),
+    (Join-Path $BuildDir "$Target"),
+    (Join-Path (Join-Path $BuildDir $BuildType) "$Target")
 )
 
 $exePath = $exeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
@@ -68,7 +73,7 @@ if (-not $exePath) {
 
 Push-Location $RootDir
 try {
-    if ($Target -eq "AirTraceSimExample") {
+    if ($Target -eq "AirTrace" -or $Target -eq "AirTraceSimExample") {
         & $exePath $ConfigPath
     } else {
         & $exePath

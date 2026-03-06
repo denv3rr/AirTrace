@@ -65,6 +65,8 @@ Contact:
 3. Run:
    - Windows: `.\build\AirTrace.exe`
    - Linux/macOS: `./build/AirTrace`
+   - Windows debug-admin launch: `.\scripts\run.ps1 -DebugAdmin`
+   - Linux/macOS debug-admin launch: `AIRTRACE_DEBUG_ADMIN=1 ./scripts/run.sh`
 4. Run tests:
    - Windows: `.\scripts\test.ps1`
    - Linux/macOS: `./scripts/test.sh`
@@ -111,6 +113,8 @@ Contact:
 - Main config keys are documented in `docs/config_schema.md`.
 - Front-view scaffolding keys use the `front_view.*` namespace.
 - Unknown keys or invalid values are rejected.
+- `configs/sim_default.cfg` is the normal simulation profile.
+- `configs/sim_debug_admin.cfg` is an explicit test-only launch profile that starts with debug admin active.
 
 ## Test Harness (Non-Interactive)
 - Enable harness:

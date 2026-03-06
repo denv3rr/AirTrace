@@ -19,3 +19,5 @@ Run:
 - `./build/AirTraceExample` (or `./build/Debug/AirTraceExample` on multi-config generators)
 - `./build/AirTraceSimExample` (or `./build/Debug/AirTraceSimExample` on multi-config generators)
 - `./build/AirTraceSimExample configs/sim_default.cfg`
+- `pwsh -File ./scripts/run.ps1 -DebugAdmin`
+- `AIRTRACE_DEBUG_ADMIN=1 ./scripts/run.sh`

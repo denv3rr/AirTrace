@@ -136,6 +136,18 @@ std::string denialRecoveryHint(const std::string &denialReason)
     {
         return "update authorization bundle to allow the requested mode";
     }
+    if (denialReason == "debug_admin_active")
+    {
+        return "disable debug admin before operational use";
+    }
+    if (denialReason == "debug_admin_unavailable")
+    {
+        return "set policy.debug_admin.enabled=true in a non-operational run";
+    }
+    if (denialReason == "debug_admin_not_allowed")
+    {
+        return "set provenance.run_mode to simulation or test before enabling debug admin";
+    }
     if (denialReason == "provenance_denied")
     {
         return "align inputs with allowed provenance or update policy";

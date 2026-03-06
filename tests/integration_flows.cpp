@@ -253,9 +253,14 @@ int main()
 
     std::filesystem::path uiConfig = writeConfigFile(
         "airtrace_ui.cfg",
-        "config.version=1.0\n");
+        "config.version=1.0\n"
+        "provenance.run_mode=test\n"
+        "provenance.allowed_inputs=test\n"
+        "policy.debug_admin.enabled=true\n"
+        "policy.debug_admin.start_active=true\n");
     std::filesystem::path harnessCommands = writeConfigFile(
         "airtrace_ui_harness.txt",
+        "select|AirTrace - Main Menu|6\n"
         "select|AirTrace - Main Menu|1\n"
         "select|AirTrace - Test Menu|2\n"
         "select|AirTrace - Main Menu|2\n"
@@ -266,11 +271,15 @@ int main()
         "select|AirTrace - Main Menu|3\n"
         "select|AirTrace - Front-View Workbench|0\n"
         "select|AirTrace - Front-View Workbench|3\n"
-        "select|AirTrace - Main Menu|6\n");
+        "select|AirTrace - Main Menu|7\n");
 
     std::filesystem::path profileConfig = writeConfigFile(
         "airtrace_ui_profile.cfg",
         "config.version=1.0\n"
+        "provenance.run_mode=test\n"
+        "provenance.allowed_inputs=test\n"
+        "policy.debug_admin.enabled=true\n"
+        "policy.debug_admin.start_active=false\n"
         "platform.profile=ground\n"
         "platform.profile_parent=space\n"
         "platform.child_modules=imu_stack,radar_frontend\n"
@@ -290,6 +299,7 @@ int main()
     assert(status.childModules == "imu_stack,radar_frontend");
     bool menuResult = showMainMenu();
     assert(menuResult);
+    assert(getUiStatus().debugAdminActive);
     assert(getUiStatus().platformProfile == "subsea");
     assert(!getUiStatus().frontViewMode.empty());
     assert(getUiStatus().frontViewSpoofActive);

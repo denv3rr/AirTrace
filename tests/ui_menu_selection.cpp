@@ -16,6 +16,9 @@ void runMenuSelectionTests()
     assert(ui::resolveMainMenuAction(5, 7) == MainMenuAction::DeleteHistory);
     assert(ui::resolveMainMenuAction(6, 7) == MainMenuAction::Exit);
     assert(ui::resolveMainMenuAction(7, 7) == MainMenuAction::InputError);
+    assert(ui::resolveMainMenuAction(6, 8) == MainMenuAction::DebugAdminToggle);
+    assert(ui::resolveMainMenuAction(7, 8) == MainMenuAction::Exit);
+    assert(ui::resolveMainMenuAction(8, 8) == MainMenuAction::InputError);
     assert(ui::resolveMainMenuAction(0, 6) == MainMenuAction::InputError);
 
     assert(ui::resolveTestMenuAction(-1, 3) == TestMenuAction::Cancel);
